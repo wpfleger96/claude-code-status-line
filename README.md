@@ -4,7 +4,7 @@
 
 A Python script that generates a formatted [status line](https://docs.anthropic.com/en/docs/claude-code/statusline) for Claude Code, displaying the current model, working directory, and context usage information. The script provides real-time feedback on token consumption relative to the model's context window limit.
 
-<img width="782" height="501" alt="image" src="https://github.com/user-attachments/assets/58b07f9c-dda8-4687-a0fe-477651534eab" />
+<img width="1217" height="427" alt="image" src="https://github.com/user-attachments/assets/a5542835-f523-402c-8364-9a3efa156a04" />
 
 ## Features
 

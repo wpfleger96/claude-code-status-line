@@ -420,9 +420,8 @@ def get_system_overhead_tokens() -> int:
         return DEFAULT_SYSTEM_OVERHEAD_TOKENS
 
 
-def format_context_info(transcript_path: str, model_id: str) -> str:
+def format_context_info(transcript: ParsedTranscript, model_id: str) -> str:
     """Format context usage information for display."""
-    transcript = parse_transcript(transcript_path)
 
     if transcript.context_chars == 0:
         return f" Context: {COLOR_DIM}No active transcript{COLOR_RESET}"
@@ -460,7 +459,7 @@ def format_context_info(transcript_path: str, model_id: str) -> str:
     return ""
 
 
-def parse_input_data() -> Tuple[str, str, str, str, Dict]:
+def parse_input_data() -> Tuple[str, str, str, str, Dict, str]:
     """Parse JSON input from stdin and extract relevant fields."""
     try:
         input_data = sys.stdin.read()
@@ -473,8 +472,9 @@ def parse_input_data() -> Tuple[str, str, str, str, Dict]:
     model_id = data.get("model", {}).get("id", "")
     model_name = data.get("model", {}).get("display_name", "")
     cost_data = data.get("cost", {})
+    claude_code_version = data.get("version", "unknown")
 
-    return cwd, transcript_path, model_id, model_name, cost_data
+    return cwd, transcript_path, model_id, model_name, cost_data, claude_code_version
 
 
 def get_dir_basename(cwd: str) -> str:
@@ -521,8 +521,22 @@ def format_cost(cost_data: Dict) -> str:
 
 def main():
     """Main entry point."""
-    cwd, transcript_path, model_id, model_name, cost_data = parse_input_data()
-    context_info = format_context_info(transcript_path, model_id)
+    cwd, transcript_path, model_id, model_name, cost_data, claude_code_version = (
+        parse_input_data()
+    )
+
+    # Parse transcript once and use it for both metadata logging and context info
+    transcript = parse_transcript(transcript_path)
+
+    # Log session metadata using direct debug_log calls
+    debug_log("=== SESSION METADATA ===", transcript.session_id)
+    debug_log(f"Working Directory: {cwd}", transcript.session_id)
+    debug_log(f"Model ID: {model_id}", transcript.session_id)
+    debug_log(f"Model Name: {model_name}", transcript.session_id)
+    debug_log(f"Claude Code Version: {claude_code_version}", transcript.session_id)
+    debug_log("=" * 25, transcript.session_id)
+
+    context_info = format_context_info(transcript, model_id)
     dir_basename = get_dir_basename(cwd)
     cost_info = format_cost(cost_data)
 

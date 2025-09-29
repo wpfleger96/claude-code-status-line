@@ -48,9 +48,14 @@ MODEL_LIMITS = {
     "default": 200000,
     "claude": 200000,
     "claude-sonnet-4": 200000,
+    "claude-sonnet-4-20250514": 200000,
+    "claude-sonnet-4-20250514[1m]": 1000000,
+    "claude-sonnet-4-5-20250929": 200000,
+    "claude-sonnet-4-5-20250929[1m]": 1000000,
     "claude-opus-4": 200000,
     "claude-opus-4.1": 200000,
     "claude-opus-4-1": 200000,
+    "claude-opus-4-1-20250805": 200000,
     "gemini": 1000000,
     "gpt-4": 8192,
     "gpt-4-32k": 32768,
@@ -385,12 +390,17 @@ def get_usage_color(usage_percent: int) -> str:
 
 
 def format_number(number: int) -> str:
-    """Format large numbers with K suffix."""
-    if number >= 10000:
+    """Format large numbers with K or M suffix."""
+    if number >= 10000 and number < 1000000:
         thousands = number / 1000
         if thousands == int(thousands):
             return f"{int(thousands)}K"
         return f"{thousands:.2f}".rstrip("0").rstrip(".") + "K"
+    elif number >= 1000000:
+        millions = number / 1000000
+        if millions == int(millions):
+            return f"{int(millions)}M"
+        return f"{millions:.2f}".rstrip("0").rstrip(".") + "M"
     return str(number)
 
 

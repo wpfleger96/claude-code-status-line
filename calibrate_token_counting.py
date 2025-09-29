@@ -1,34 +1,16 @@
 #!/usr/bin/env python3
 
-# Import functions from main script
-import importlib.util
 import os
 import sys
 import time
 from dataclasses import dataclass
 from typing import List, Optional
 
-# Import constants from the main script
-CHARS_PER_TOKEN = 4
-DEFAULT_SYSTEM_OVERHEAD_TOKENS = 15400
-
-script_dir = os.path.dirname(os.path.abspath(__file__))
-spec = importlib.util.spec_from_file_location(
-    "statusline_with_context", os.path.join(script_dir, "statusline-with-context.py")
+from common import (
+    calculate_total_tokens,
+    get_context_limit,
+    parse_transcript,
 )
-try:
-    statusline_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(statusline_module)
-    parse_transcript = statusline_module.parse_transcript
-    get_context_limit = statusline_module.get_context_limit
-    format_context_info = statusline_module.format_context_info
-except (ImportError, AttributeError, FileNotFoundError) as e:
-    print(
-        f"❌ Error: Could not import from statusline-with-context.py: {e}",
-        file=sys.stderr,
-    )
-    print("   Make sure the script is in the same directory", file=sys.stderr)
-    sys.exit(1)
 
 
 @dataclass
@@ -142,35 +124,13 @@ def get_claude_context_tokens(session_file: str) -> Optional[int]:
         return None
 
 
-def run_script_calculation(session_file: str, model_id: str) -> Optional[int]:
+def run_script_calculation(session_file: str) -> Optional[int]:
     """Run our token counting script and extract the token count."""
     try:
-        # Parse the transcript file first
         transcript = parse_transcript(session_file)
-        # Run the calculation with the parsed transcript
-        context_info = format_context_info(transcript, model_id)
-
-        # Parse the token information from the output
-        import re
-
-        token_pattern = r"(\d+(?:\.\d+)?[kK]?)/(\d+(?:\.\d+)?[kK]?)\s+tokens"
-        match = re.search(token_pattern, context_info)
-
-        if match:
-            used_str = match.group(1)
-
-            # Handle K suffix
-            if used_str.endswith("K") or used_str.endswith("k"):
-                used_tokens = float(used_str[:-1]) * 1000
-            else:
-                used_tokens = float(used_str)
-
-            debug_log(f"Script calculated tokens: {used_tokens}")
-            return int(used_tokens)
-
-        debug_log(f"Could not parse token info from script output: {context_info}")
-        return None
-
+        total_tokens = calculate_total_tokens(transcript)
+        debug_log(f"Script calculated tokens: {total_tokens}")
+        return total_tokens
     except Exception as e:
         debug_log(f"Error running script calculation: {e}")
         return None
@@ -196,7 +156,7 @@ def calibrate_session(
     debug_log(f"Calibrating {session_file} ({result.file_size_bytes} bytes)")
 
     # Get token count from our script
-    script_tokens = run_script_calculation(session_file, model_id)
+    script_tokens = run_script_calculation(session_file)
     if script_tokens is None:
         result.error_message = "Failed to get token count from script"
         return result
@@ -237,7 +197,7 @@ def find_session_files(root_directory: str) -> List[str]:
         return session_files
 
     # Recursively search all subdirectories under ~/.claude/projects/
-    for root, dirs, files in os.walk(root_directory):
+    for root, _, files in os.walk(root_directory):
         for filename in files:
             if filename.endswith(".jsonl"):
                 full_path = os.path.join(root, filename)

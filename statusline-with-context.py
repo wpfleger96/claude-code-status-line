@@ -41,7 +41,9 @@ CACHE_FILE = os.path.join(tempfile.gettempdir(), CACHE_FILE_NAME)
 CACHE_TTL_SECONDS = 604800  # 1 week (7 days)
 
 # System Overhead (tokens used by Claude Code's system prompt, tools, memory, etc.)
-DEFAULT_SYSTEM_OVERHEAD_TOKENS = 16500
+DEFAULT_SYSTEM_OVERHEAD_TOKENS = 15400
+# Reserved tokens for autocompact and output tokens
+DEFAULT_RESERVED_TOKENS = 45000
 
 # Model Context Limits (fallback when API data unavailable)
 MODEL_LIMITS = {
@@ -430,6 +432,14 @@ def get_system_overhead_tokens() -> int:
         return DEFAULT_SYSTEM_OVERHEAD_TOKENS
 
 
+def get_reserved_tokens() -> int:
+    """Get reserved tokens for autocompact and output."""
+    try:
+        return int(os.getenv("CLAUDE_CODE_RESERVED_TOKENS", DEFAULT_RESERVED_TOKENS))
+    except (ValueError, TypeError):
+        return DEFAULT_RESERVED_TOKENS
+
+
 def format_context_info(transcript: ParsedTranscript, model_id: str) -> str:
     """Format context usage information for display."""
 
@@ -438,7 +448,8 @@ def format_context_info(transcript: ParsedTranscript, model_id: str) -> str:
 
     conversation_tokens = transcript.context_chars // CHARS_PER_TOKEN
     system_overhead_tokens = get_system_overhead_tokens()
-    total_tokens = conversation_tokens + system_overhead_tokens
+    reserved_tokens = get_reserved_tokens()
+    total_tokens = conversation_tokens + system_overhead_tokens + reserved_tokens
     context_limit = get_context_limit(model_id)
 
     if context_limit > 0:
@@ -451,7 +462,7 @@ def format_context_info(transcript: ParsedTranscript, model_id: str) -> str:
         if os.getenv("CLAUDE_CODE_STATUSLINE_DEBUG") and transcript.is_jsonl:
             naive_tokens = transcript.total_file_chars // CHARS_PER_TOKEN
             debug_log(
-                f"Token breakdown: Conversation={conversation_tokens}, System={system_overhead_tokens}, Total={total_tokens}",
+                f"Token breakdown: Conversation={conversation_tokens}, System={system_overhead_tokens}, Reserved={reserved_tokens}, Total={total_tokens}",
                 transcript.session_id,
             )
             if transcript.boundaries_found > 0:

@@ -12,43 +12,9 @@ A Python script that generates a formatted [status line](https://docs.anthropic.
 - No external dependencies (uses Python standard library only)
 - Script must be executable (`chmod +x statusline-with-context.py`)
 
-## Features
-
-### Smart Context Tracking
-- **Compact-Aware Token Counting**: Accurately counts only active context after Claude Code's `/compact` command, ignoring compacted history
-- **JSONL Transcript Parsing**: Analyzes Claude Code's session files to find compact boundaries and count only relevant tokens
-- **Fallback Compatibility**: Falls back to simple file size calculation for non-JSONL transcript formats
-
-### Token Calculation
-- Estimates tokens by dividing character count by 4 (industry standard approximation)
-- Retrieves model-specific context limits from:
-  1. Cached API data (refreshed weekly)
-  2. Live API fetch from LiteLLM repository ([link](https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json))
-  3. Hardcoded fallback values
-
-### Visual Indicators
-- **Progress Bar**: 10-segment bar using filled (●) and empty (○) circles
-- **Color Coding**:
-  - Context usage:
-    - Grey: No active transcript or empty transcript
-    - Green: < 50% usage
-    - Yellow: 50-79% usage
-    - Red: >= 80% usage
-  - Cost tracking:
-    - Grey: $0.00 USD (no cost incurred yet)
-    - Green: $0.01-$4.99 USD
-    - Yellow: $5.00-$9.99 USD
-    - Red: >= $10.00 USD
-
-### Cost Tracking
-- Always displays total cost in USD for the current session (starts at $0.00)
-- Always shows lines added and lines removed for the session (starts at +0/-0)
-- Uses grey color for zero values, green for lines added (>0), red for lines removed (>0)
-- Cost information appears after context usage
-
 ## Usage
 
-Add a `statusLine` section to your `~/.claude/settings.json` file with the following configuration:
+Add a `statusLine` section to your `~/.claude/settings.json` file:
 ```json
 {
   "statusLine": {
@@ -60,6 +26,71 @@ Add a `statusLine` section to your `~/.claude/settings.json` file with the follo
 ```
 
 Replace `/full/path/to/` with the absolute path to where you downloaded this script.
+
+## Features
+
+### Smart Context Tracking
+- **Compact-Aware Token Counting**: Accurately counts only active context after Claude Code's `/compact` command, ignoring compacted history
+- **JSONL Transcript Parsing**: Analyzes Claude Code's session files to find compact boundaries and count only relevant tokens
+- **Fallback Compatibility**: Falls back to simple file size calculation for non-JSONL transcript formats
+- **Calibration Tool**: Includes `calibrate_token_counting.py` to validate and improve accuracy
+
+### Token Calculation
+
+#### How It Works
+- Estimates tokens by dividing character count by 4 (industry standard approximation)
+- Adds system overhead tokens (15400 by default) for Claude Code's system prompt, tools, and memory
+- Includes reserved tokens (45000 by default) for autocompact and output token allocation
+- Retrieves model-specific context limits from cached API data, live fetches, or hardcoded fallbacks
+
+#### Configuration
+Customize token calculations via environment variables:
+
+```bash
+# System overhead (default: 15400 tokens)
+export CLAUDE_CODE_SYSTEM_OVERHEAD=20000
+
+# Reserved tokens for autocompact + output (default: 45000 tokens)
+export CLAUDE_CODE_RESERVED_TOKENS=50000
+```
+
+#### API Cache System
+Context limits are retrieved from:
+1. **Local Cache**: `/tmp/claude_code_model_data_cache.json` (1-week TTL)
+2. **Live API**: [LiteLLM Model Database](https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json)
+3. **Fallback**: Hardcoded model limits
+
+Cache benefits: Faster rendering, reduced network dependency, automatic refresh.
+
+### Display Features
+
+**Progress Bar**: 10-segment bar using filled (●) and empty (○) circles
+
+**Context Usage Colors**:
+| Color | Usage | Condition |
+|-------|-------|-----------|
+| Grey  | 0%    | No active transcript |
+| Green | <50%  | Low usage |
+| Yellow| 50-79%| Medium usage |
+| Red   | 80%+  | High usage |
+
+**Cost Tracking Colors**:
+| Color | Cost Range |
+|-------|------------|
+| Grey  | $0.00 (exactly zero) |
+| Green | $0.01 - $4.99 |
+| Yellow| $5.00 - $9.99 |
+| Red   | $10.00+ |
+
+**Line Change Colors**:
+| Metric | Zero (Grey) | Non-Zero |
+|--------|-------------|----------|
+| Lines Added | 0 lines | Green (>0) |
+| Lines Removed | 0 lines | Red (>0) |
+
+Always displays: total session cost (USD), lines added/removed, appears after context usage.
+
+---
 
 ## Example Outputs
 
@@ -79,7 +110,9 @@ Opus 4.1 | wpfleger-ai-tools | Context: ○○○○○○○○○○ 0% (783/2
 Opus 4.1 | wpfleger-ai-tools | Context: No active transcript | Cost: $0.00 USD | +0 lines added | -0 lines removed
 ```
 
-## Debug Logging (Power Users)
+---
+
+## Debug Logging
 
 For debugging and understanding how the script processes Claude Code sessions, you can enable detailed logging:
 
@@ -89,32 +122,82 @@ export CLAUDE_CODE_STATUSLINE_DEBUG=1
 ```
 
 ### Log Files Location
-Debug logs are written to a single file in the `logs/` directory:
+Debug logs are written to **per-session files** in the `logs/` directory:
 
-- **All logs**: `logs/statusline_debug.log` (includes session ID prefixes when available)
+- **Session-specific logs**: `logs/statusline_debug_<session_id>.log`
+- **Examples**:
+  - `logs/statusline_debug_d6994160-5c39-4ecf-8922-65a36b984ec5.log` (UUID-based sessions)
+  - `logs/statusline_debug_unknown.log` (fallback for edge cases)
 
-### What Gets Logged
-- **Compact boundary detection**: Location of `/compact` markers in transcript
-- **Token calculations**: Before/after comparison showing token reduction from compaction
-- **Session information**: Session ID, total lines, active context analysis
-- **Error handling**: File parsing errors and fallback behavior
+### Debug Features
+- **Session metadata**: Model ID, version, working directory logging
+- **Token analysis**: Per-message-type breakdown with percentages and field contributions
+- **Compact detection**: Precise `/compact` boundary locations with token reduction stats
+- **Per-session logs**: Isolated debug files (`logs/statusline_debug_<session_id>.log`)
+- **Error handling**: Comprehensive parsing error logging and fallback behavior
 
 ### Example Debug Output
 ```
-[2025-09-25 13:43:42] Parsing transcript: claude_code_example_session.jsonl (8855 chars)
-[2025-09-25 13:43:42] [ddae8b71-a770-4e55-8246-50dc7280b9cd] Found compact boundary at line 5
-[2025-09-25 13:43:42] [ddae8b71-a770-4e55-8246-50dc7280b9cd] Session: ddae8b71-a770-4e55-8246-50dc7280b9cd, boundaries: 1
-[2025-09-25 13:43:42] [ddae8b71-a770-4e55-8246-50dc7280b9cd] Active chars: 3631/8855
-[2025-09-25 13:43:42] [ddae8b71-a770-4e55-8246-50dc7280b9cd] Token reduction: 1306
-[2025-09-25 13:43:57] Parsing transcript: statusline-with-context.py (12195 chars)
-[2025-09-25 13:43:57] File is not JSONL format, using fallback
+[2025-09-26 15:03:09] === SESSION METADATA ===
+[2025-09-26 15:03:09] Model: claude-opus-4-1-20250805 (Opus 4.1) | Version: 0.8.5
+[2025-09-26 15:03:09] Found compact boundary at line 148, using content from line 149 onwards
+[2025-09-26 15:03:09] Token Breakdown: assistant: 17,816 tokens (57%) | user: 13,275 tokens (42%)
+[2025-09-26 15:03:09] Total: Conversation=31,092, System=15,400, Reserved=45,000 → 91,492 tokens
+[2025-09-26 15:03:09] Token reduction from compaction: 146,759 tokens saved
 ```
 
-### Debug Mode Benefits
-- **Verify compact detection**: Confirm the script correctly identifies when `/compact` has been used
-- **Compare token calculations**: See the difference between naive file-size counting vs smart context-aware counting
-- **Session correlation**: Logs include session ID prefixes for easy correlation with Claude Code sessions
-- **Troubleshoot issues**: Debug transcript parsing problems or unexpected token counts
-- **Single file**: All debug information in one convenient location
+**Note**: Debug logs are automatically excluded from git via `.gitignore` to prevent accidental commits of session data.
 
-**Note**: Debug logs are automatically excluded from git via `.gitignore` to prevent accidental commits.
+---
+
+## Token Counting Calibration Tool
+
+The repository includes `calibrate_token_counting.py`, a standalone calibration tool to verify and improve token counting accuracy against Claude's official measurements. The script uses `uv run` for maximum Python environment portability.
+
+### Purpose
+- Compare script calculations against Claude's official `/context` command output
+- Identify discrepancies and suggest calibration factors
+- Validate token counting accuracy when new Claude Code versions are released
+
+### Usage
+
+#### Semi-Automated Mode (Default)
+```bash
+uv run calibrate_token_counting.py session1.jsonl session2.jsonl --verbose
+```
+The script provides precise instructions for resuming each session and prompts you to enter the official token counts.
+
+#### Manual Override Mode
+```bash
+uv run calibrate_token_counting.py session1.jsonl session2.jsonl \
+  --known-tokens 17.5k 68k --verbose
+```
+Provide known token counts to skip automatic session resumption (useful for sessions that can't be resumed).
+
+#### Auto-Discovery Mode
+```bash
+uv run calibrate_token_counting.py --max-sessions 3 --verbose
+```
+Automatically finds recent session files from all Claude Code project directories and provides instructions for manual calibration.
+
+### Example Calibration Report
+```
+📊 Successfully calibrated 2 session(s)
+
+INDIVIDUAL RESULTS:
+❌ session1.jsonl: Script 46,520 vs Claude 68,000 tokens (+31.6% difference)
+✅ session2.jsonl: Script 17,470 vs Claude 17,500 tokens (+0.2% difference)
+
+SUMMARY:
+Average discrepancy: +15.9% | Suggested calibration factor: 1.231
+⚠️  Token counting has moderate accuracy - consider adjusting CHARS_PER_TOKEN ratio
+```
+
+### Features
+- **Auto-discovery**: Finds recent sessions from all Claude Code project directories
+- **Semi-automated**: Provides precise resumption instructions for manual token collection
+- **Directory decoding**: Handles hyphenated paths (`-Users-name-Project` → `/Users/name/Project`)
+- **Flexible input**: Accepts raw numbers, K-suffixed values, or full `/context` output
+- **Accuracy validation**: Compares against Claude's official measurements
+- **Calibration recommendations**: Suggests specific improvements and correction factors
+- **uv compatibility**: Uses `uv run` for portable execution across Python environments

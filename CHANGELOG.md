@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.0 (2025-10-08)
+
+### Features
+
+- Initial release
+  ([`d99b281`](https://github.com/wpfleger96/claude-code-status-line/commit/d99b281a89749393617212eb7a4eb1dfbc00ce27))
+
+
 ## v0.0.0 (2025-10-08)
 
 ### Continuous Integration

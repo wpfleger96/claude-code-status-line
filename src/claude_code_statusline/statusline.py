@@ -59,14 +59,16 @@ def render_progress_bar(usage_percent: int) -> str:
     return f"{color}{'●' * filled}{'○' * empty}{COLOR_RESET}"
 
 
-def format_context_info(transcript: ParsedTranscript, model_id: str) -> str:
+def format_context_info(
+    transcript: ParsedTranscript, model_id: str, model_name: str = ""
+) -> str:
     """Format context usage information for display."""
 
     if transcript.context_chars == 0:
         return f" Context: {COLOR_DIM}No active transcript{COLOR_RESET}"
 
     total_tokens = calculate_total_tokens(transcript)
-    context_limit = get_context_limit(model_id)
+    context_limit = get_context_limit(model_id, model_name)
 
     if context_limit > 0:
         usage_percent = (total_tokens * 100) // context_limit
@@ -170,7 +172,7 @@ def main():
     debug_log(f"Claude Code Version: {claude_code_version}", transcript.session_id)
     debug_log("=" * 25, transcript.session_id)
 
-    context_info = format_context_info(transcript, model_id)
+    context_info = format_context_info(transcript, model_id, model_name)
     dir_basename = get_dir_basename(cwd)
     cost_info = format_cost(cost_data)
 

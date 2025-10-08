@@ -337,10 +337,16 @@ def get_cached_or_fetch_data() -> Optional[Dict]:
         return None
 
 
-def get_context_limit(model_id: str) -> int:
+def get_context_limit(model_id: str, model_name: str = "") -> int:
     """Get context limit for model from API data with fallback to hardcoded limits."""
     if not model_id:
         return MODEL_LIMITS["default"]
+
+    if "[1m]" in model_id.lower():
+        return 1000000
+
+    if model_name and "1m" in model_name.lower():
+        return 1000000
 
     api_data = get_cached_or_fetch_data()
 

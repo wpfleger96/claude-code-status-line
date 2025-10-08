@@ -117,9 +117,31 @@ def extract_message_content_chars(
         filtered_message["role"] = message["role"]
         field_contributions["role"] = len(field_value)
     if "content" in message:
-        field_value = json.dumps(message["content"])
-        filtered_message["content"] = message["content"]
+        content = message["content"]
+        filtered_content = content
+        images_skipped = 0
+
+        if isinstance(content, list):
+            filtered_content = []
+            for item in content:
+                if isinstance(item, dict) and item.get("type") == "image":
+                    images_skipped += 1
+                    debug_log(
+                        "Skipping base64-encoded image in message (not counted as text tokens)",
+                        session_id,
+                    )
+                else:
+                    filtered_content.append(item)
+
+        field_value = json.dumps(filtered_content)
+        filtered_message["content"] = filtered_content
         field_contributions["content"] = len(field_value)
+
+        if images_skipped > 0:
+            debug_log(
+                f"Excluded {images_skipped} base64-encoded image(s) from character count",
+                session_id,
+            )
 
     if "model" in message:
         field_value = json.dumps(message["model"])

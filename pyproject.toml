@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-code-status-line"
+version = "v0.0.0"
+description = "A Python script for Claude Code statusline with context usage tracking"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Will Pfleger", email = "pfleger.will@gmail.com"}]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/wpfleger96/claude-code-status-line"
+Repository = "https://github.com/wpfleger96/claude-code-status-line.git"
+Documentation = "https://github.com/wpfleger96/claude-code-status-line#readme"
+"Bug Tracker" = "https://github.com/wpfleger96/claude-code-status-line/issues"
+Changelog = "https://github.com/wpfleger96/claude-code-status-line/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "python-semantic-release>=9.0.0",
+]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version:tf"]
+version_variables = ["_version.py:__version__"]
+tag_format = "v{version}"
+branch = "main"
+commit_parser = "conventional"
+commit_message = "chore(release): {version}"
+
+[tool.semantic_release.branches.main]
+match = "main"
+prerelease = false
+
+[tool.semantic_release.commit_parser_options]
+allowed_types = ["feat", "fix", "chore", "ci", "docs", "style", "refactor", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+[tool.semantic_release.commit_type_map]
+chore = "patch"
+ci = "patch"
+docs = "patch"
+style = "patch"
+refactor = "patch"
+test = "patch"
+
+[tool.semantic_release.changelog]
+changelog_file = "CHANGELOG.md"
+exclude_commit_patterns = []
+
+[tool.semantic_release.remote]
+type = "github"
+
+[[tool.uv.index]]
+name = "default"
+url = "https://pypi.org/simple"

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.1 (2025-10-08)
+
+### Bug Fixes
+
+- 1m context models sometimes incorrectly showing 200K limit in statusline
+  ([`7311a1a`](https://github.com/wpfleger96/claude-code-status-line/commit/7311a1ac2d49acbe9a8661233a82806790fb4ff1))
+
+
 ## v0.1.0 (2025-10-08)
 
 ### Features

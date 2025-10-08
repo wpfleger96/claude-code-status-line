@@ -100,7 +100,7 @@ wheels = [
 ]
 
 [[package]]
-name = "claude-code-status-line"
+name = "claude-code-statusline"
 version = "0.0.0"
 source = { editable = "." }
 

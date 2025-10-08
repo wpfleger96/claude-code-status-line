@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "claude-code-status-line"
+name = "claude-code-statusline"
 version = "v0.0.0"
 description = "A Python script for Claude Code statusline with context usage tracking"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Will Pfleger", email = "pfleger.will@gmail.com"}]
 requires-python = ">=3.9"
 dependencies = []
@@ -19,14 +19,21 @@ Documentation = "https://github.com/wpfleger96/claude-code-status-line#readme"
 "Bug Tracker" = "https://github.com/wpfleger96/claude-code-status-line/issues"
 Changelog = "https://github.com/wpfleger96/claude-code-status-line/blob/main/CHANGELOG.md"
 
+[project.scripts]
+claude-statusline = "claude_code_statusline.statusline:main"
+claude-calibrate = "claude_code_statusline.calibrate:main"
+
 [dependency-groups]
 dev = [
     "python-semantic-release>=9.0.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version:tf"]
-version_variables = ["_version.py:__version__"]
+version_variables = ["src/claude_code_statusline/__version__.py:__version__"]
 tag_format = "v{version}"
 branch = "main"
 commit_parser = "conventional"

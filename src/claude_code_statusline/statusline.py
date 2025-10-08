@@ -5,7 +5,7 @@ import os
 import sys
 from typing import Dict, Tuple
 
-from common import (
+from claude_code_statusline.common import (
     CHARS_PER_TOKEN,
     ParsedTranscript,
     calculate_total_tokens,
@@ -16,11 +16,9 @@ from common import (
     parse_transcript,
 )
 
-# Display Constants
 PROGRESS_BAR_SEGMENTS = 10
 PERCENT_PER_SEGMENT = 10
 
-# ANSI Color Codes
 COLOR_GREEN = "\033[32m"
 COLOR_YELLOW = "\033[33m"
 COLOR_RED = "\033[31m"
@@ -145,15 +143,12 @@ def format_cost(cost_data: Dict) -> str:
 
     parts = []
 
-    # Always show cost, even if $0.00
     cost_color = get_cost_color(cost_usd)
     parts.append(f"Cost: {cost_color}${cost_usd:.2f}{COLOR_RESET} USD")
 
-    # Always show lines added, even if 0
     added_color = COLOR_DIM if lines_added == 0 else COLOR_GREEN
     parts.append(f"{added_color}+{lines_added} lines added{COLOR_RESET}")
 
-    # Always show lines removed, even if 0
     removed_color = COLOR_DIM if lines_removed == 0 else COLOR_RED
     parts.append(f"{removed_color}-{lines_removed} lines removed{COLOR_RESET}")
 
@@ -166,10 +161,8 @@ def main():
         parse_input_data()
     )
 
-    # Parse transcript once and use it for both metadata logging and context info
     transcript = parse_transcript(transcript_path)
 
-    # Log session metadata using direct debug_log calls
     debug_log("=== SESSION METADATA ===", transcript.session_id)
     debug_log(f"Working Directory: {cwd}", transcript.session_id)
     debug_log(f"Model ID: {model_id}", transcript.session_id)

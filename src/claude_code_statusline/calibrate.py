@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from typing import List, Optional
 
-from common import (
+from claude_code_statusline.common import (
     calculate_total_tokens,
     get_context_limit,
     parse_transcript,

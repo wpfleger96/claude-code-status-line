@@ -6,11 +6,47 @@ A Python script that generates a formatted [status line](https://docs.anthropic.
 
 <img width="1217" height="427" alt="image" src="https://github.com/user-attachments/assets/a5542835-f523-402c-8364-9a3efa156a04" />
 
+## Project Structure
+
+```
+claude-code-status-line/
+├── src/
+│   └── claude_code_statusline/
+│       ├── __init__.py          # Package initialization
+│       ├── __version__.py       # Version tracking
+│       ├── statusline.py        # Main statusline command
+│       ├── calibrate.py         # Token counting calibration tool
+│       └── common.py            # Shared utilities
+├── .github/workflows/
+│   └── release.yml              # Automated semantic versioning
+├── pyproject.toml               # Package configuration
+├── uv.lock                      # Dependency lock file
+└── README.md
+```
+
 ## Requirements
 
-- Python 3.6 or higher
-- No external dependencies (uses Python standard library only)
-- Script must be executable (`chmod +x statusline-with-context.py`)
+- Python 3.9 or higher
+- [uv](https://docs.astral.sh/uv/) for dependency management
+- No installation needed (uses `uv run`)
+
+## Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/wpfleger96/claude-code-status-line.git
+   cd claude-code-status-line
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   uv sync --no-config
+   ```
+
+3. **Verify installation:**
+   ```bash
+   uv run --no-config claude-statusline --help
+   ```
 
 ## Usage
 
@@ -19,13 +55,13 @@ Add a `statusLine` section to your `~/.claude/settings.json` file:
 {
   "statusLine": {
     "type": "command",
-    "command": "/full/path/to/statusline-with-context.py",
+    "command": "sh -c 'cd /path/to/claude-code-status-line && uv run --no-config claude-statusline'",
     "padding": 0
   }
 }
 ```
 
-Replace `/full/path/to/` with the absolute path to where you downloaded this script.
+Replace `/path/to/claude-code-status-line` with the absolute path to where you cloned this repository (e.g., `~/Development/Personal/claude-code-status-line`).
 
 ## Features
 
@@ -152,7 +188,7 @@ Debug logs are written to **per-session files** in the `logs/` directory:
 
 ## Token Counting Calibration Tool
 
-The repository includes `calibrate_token_counting.py`, a standalone calibration tool to verify and improve token counting accuracy against Claude's official measurements. The script uses `uv run` for maximum Python environment portability.
+The project includes `claude-calibrate`, a command-line tool to verify and improve token counting accuracy against Claude's official measurements.
 
 ### Purpose
 - Compare script calculations against Claude's official `/context` command output
@@ -163,20 +199,20 @@ The repository includes `calibrate_token_counting.py`, a standalone calibration 
 
 #### Semi-Automated Mode (Default)
 ```bash
-uv run calibrate_token_counting.py session1.jsonl session2.jsonl --verbose
+uv run --no-config claude-calibrate session1.jsonl session2.jsonl --verbose
 ```
-The script provides precise instructions for resuming each session and prompts you to enter the official token counts.
+The tool provides precise instructions for resuming each session and prompts you to enter the official token counts.
 
 #### Manual Override Mode
 ```bash
-uv run calibrate_token_counting.py session1.jsonl session2.jsonl \
+uv run --no-config claude-calibrate session1.jsonl session2.jsonl \
   --known-tokens 17.5k 68k --verbose
 ```
 Provide known token counts to skip automatic session resumption (useful for sessions that can't be resumed).
 
 #### Auto-Discovery Mode
 ```bash
-uv run calibrate_token_counting.py --max-sessions 3 --verbose
+uv run --no-config claude-calibrate --max-sessions 3 --verbose
 ```
 Automatically finds recent session files from all Claude Code project directories and provides instructions for manual calibration.
 
@@ -201,3 +237,92 @@ Average discrepancy: +15.9% | Suggested calibration factor: 1.231
 - **Accuracy validation**: Compares against Claude's official measurements
 - **Calibration recommendations**: Suggests specific improvements and correction factors
 - **uv compatibility**: Uses `uv run` for portable execution across Python environments
+
+---
+
+## Development
+
+### Package Structure
+
+The project uses a modern `src/` layout following Python packaging best practices:
+
+- **`src/claude_code_statusline/`**: Main package directory
+  - Enables proper import resolution
+  - Makes the package PyPI-ready
+  - Prevents accidental imports from source during development
+
+### Local Development
+
+1. **Clone and setup:**
+   ```bash
+   git clone https://github.com/wpfleger96/claude-code-status-line.git
+   cd claude-code-status-line
+   uv sync --no-config
+   ```
+
+2. **Make changes to source files:**
+   - Edit files in `src/claude_code_statusline/`
+   - Changes are automatically reflected when using `uv run`
+
+3. **Test your changes:**
+   ```bash
+   # Test statusline
+   echo '{"workspace": {"current_dir": "/test"}, "transcript_path": "", "model": {"id": "test", "display_name": "Test"}, "cost": {}, "version": "test"}' | uv run --no-config claude-statusline
+
+   # Test calibration
+   uv run --no-config claude-calibrate --help
+   ```
+
+4. **Debug mode:**
+   ```bash
+   export CLAUDE_CODE_STATUSLINE_DEBUG=1
+   # Debug logs will be written to logs/ directory
+   ```
+
+### Releases
+
+This project uses [semantic-release](https://python-semantic-release.readthedocs.io/) for automated versioning and releases.
+
+**Commit Message Format:**
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+- `feat:` New feature (minor version bump)
+- `fix:` Bug fix (patch version bump)
+- `docs:` Documentation changes (patch version bump)
+- `chore:` Maintenance tasks (patch version bump)
+- `refactor:` Code refactoring (patch version bump)
+- `BREAKING CHANGE:` in footer (major version bump)
+
+**Example:**
+```bash
+git commit -m "feat: add support for new Claude models"
+git commit -m "fix: correct token calculation for edge cases"
+```
+
+**Release Process:**
+1. Push commits to `main` branch
+2. GitHub Actions automatically:
+   - Analyzes commit messages
+   - Determines version bump
+   - Updates version in files
+   - Generates CHANGELOG.md
+   - Creates GitHub release and tag
+   - Commits changes back to repository
+
+### Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Use conventional commit messages
+4. Push to your branch
+5. Open a Pull Request
+
+For bug reports or feature requests, please [open an issue](https://github.com/wpfleger96/claude-code-status-line/issues).

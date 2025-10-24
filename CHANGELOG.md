@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.2 (2025-10-24)
+
+### Bug Fixes
+
+- Stop inflating token counts
+  ([`95813ab`](https://github.com/wpfleger96/claude-code-status-line/commit/95813abec5b4b2100c362e44d7c7d1de283d38a1))
+
+
 ## v0.1.1 (2025-10-08)
 
 ### Bug Fixes

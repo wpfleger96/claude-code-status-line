@@ -7,8 +7,8 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
-from typing import Dict, Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -22,13 +22,34 @@ class ParsedTranscript:
     is_jsonl: bool = False
 
 
+@dataclass
+class ExclusionRules:
+    """Configuration for which lines to exclude from token counting.
+
+    These fields are stored in Claude Code's JSONL files for debugging and
+    UI purposes but are not included in the actual context sent to Claude.
+    """
+
+    metadata_fields: List[str] = field(
+        default_factory=lambda: [
+            "toolUseResult",
+            "snapshot",
+            "thinkingMetadata",
+            "leafUuid",
+        ]
+    )
+    excluded_types: List[str] = field(default_factory=lambda: ["summary", "system"])
+    excluded_flags: List[str] = field(default_factory=lambda: ["isMeta"])
+
+
+EXCLUSION_RULES = ExclusionRules()
 CHARS_PER_TOKEN = 4
 
 CACHE_FILE_NAME = "claude_code_model_data_cache.json"
 CACHE_FILE = os.path.join(tempfile.gettempdir(), CACHE_FILE_NAME)
 CACHE_TTL_SECONDS = 604800  # 1 week (7 days)
 
-DEFAULT_SYSTEM_OVERHEAD_TOKENS = 15400
+DEFAULT_SYSTEM_OVERHEAD_TOKENS = 13250
 DEFAULT_RESERVED_TOKENS = 45000
 
 MODEL_LIMITS = {
@@ -91,7 +112,14 @@ def debug_log(message: str, session_id: str = "", transcript_path: str = "") -> 
 
 
 def is_real_compact_boundary(data: dict) -> bool:
-    """Check if this is a real compact boundary set by Claude Code."""
+    """Check if this is a real compact boundary set by Claude Code.
+
+    Args:
+        data: Parsed JSON line from transcript
+
+    Returns:
+        True if this line is a valid compact boundary marker
+    """
     return (
         data.get("type") == "system"
         and data.get("subtype") == "compact_boundary"
@@ -99,6 +127,55 @@ def is_real_compact_boundary(data: dict) -> bool:
         and isinstance(data["compactMetadata"], dict)
         and "trigger" in data["compactMetadata"]
     )
+
+
+def _is_valid_json(line: str) -> bool:
+    """Check if a line contains valid JSON.
+
+    Args:
+        line: Line of text to validate
+
+    Returns:
+        True if the line is valid JSON
+    """
+    try:
+        json.loads(line.strip())
+        return True
+    except json.JSONDecodeError:
+        return False
+
+
+def _find_session_metadata(lines: List[str]) -> tuple[str, Optional[int], int]:
+    """Extract session metadata from transcript lines.
+
+    Args:
+        lines: All lines from the transcript file
+
+    Returns:
+        Tuple of (session_id, last_boundary_line, boundary_count)
+    """
+    session_id = ""
+    last_boundary_line = None
+    boundary_count = 0
+
+    for line_num, line in enumerate(lines):
+        if not line.strip():
+            continue
+
+        try:
+            data = json.loads(line.strip())
+
+            if not session_id and data.get("sessionId"):
+                session_id = data["sessionId"]
+
+            if is_real_compact_boundary(data):
+                last_boundary_line = line_num
+                boundary_count += 1
+
+        except json.JSONDecodeError:
+            continue
+
+    return session_id, last_boundary_line, boundary_count
 
 
 def extract_message_content_chars(
@@ -182,8 +259,42 @@ def safe_get_file_size(file_path: str) -> int:
         return 0
 
 
+def should_exclude_line(
+    data: dict, rules: ExclusionRules = EXCLUSION_RULES
+) -> tuple[bool, str]:
+    """Check if a line should be excluded from token counting.
+
+    Args:
+        data: Parsed JSON line from transcript
+        rules: Exclusion rules configuration (defaults to global rules)
+
+    Returns:
+        Tuple of (should_exclude, reason) where reason is empty if not excluded
+    """
+    for metadata_field in rules.metadata_fields:
+        if metadata_field in data:
+            return True, f"has {metadata_field}"
+
+    line_type = data.get("type")
+    if line_type in rules.excluded_types:
+        return True, f"type={line_type}"
+
+    for flag_name in rules.excluded_flags:
+        if data.get(flag_name):
+            return True, f"{flag_name}=true"
+
+    return False, ""
+
+
 def parse_transcript(file_path: str) -> ParsedTranscript:
-    """Parse transcript file and return structured information."""
+    """Parse transcript file and return structured information.
+
+    Args:
+        file_path: Path to the JSONL transcript file
+
+    Returns:
+        ParsedTranscript with token counts and session metadata
+    """
     if not file_path or not os.path.isfile(file_path):
         debug_log("No valid transcript file", transcript_path=file_path)
         return ParsedTranscript()
@@ -201,39 +312,19 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
         debug_log(f"Failed to read file: {e}", transcript_path=file_path)
         return ParsedTranscript(total_file_chars=total_file_chars)
 
-    session_id = ""
-    last_boundary_line = None
-    boundary_count = 0
-    message_content_chars = 0
-    valid_json_lines = 0
-
-    for line_num, line in enumerate(lines):
-        if not line.strip():
-            continue
-
-        try:
-            data = json.loads(line.strip())
-            valid_json_lines += 1
-
-            if not session_id and data.get("sessionId"):
-                session_id = data["sessionId"]
-
-            if is_real_compact_boundary(data):
-                last_boundary_line = line_num
-                boundary_count += 1
-                debug_log(f"Found compact boundary at line {line_num + 1}", session_id)
-        except json.JSONDecodeError:
-            continue
+    valid_json_lines = sum(1 for line in lines if line.strip() and _is_valid_json(line))
 
     is_jsonl = valid_json_lines > 0
     if not is_jsonl:
-        debug_log("File is not JSONL format, using fallback", session_id)
+        debug_log("File is not JSONL format, using fallback", transcript_path=file_path)
         return ParsedTranscript(
-            session_id=session_id,
+            session_id="",
             total_file_chars=total_file_chars,
             context_chars=total_file_chars,
             is_jsonl=False,
         )
+
+    session_id, last_boundary_line, boundary_count = _find_session_metadata(lines)
 
     debug_log(f"Session: {session_id}, boundaries: {boundary_count}", session_id)
     if last_boundary_line is not None:
@@ -244,8 +335,11 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
     start_line = (last_boundary_line + 1) if last_boundary_line is not None else 0
 
     detailed_debug = os.getenv("CLAUDE_CODE_STATUSLINE_DEBUG")
+    message_content_chars = 0
     message_type_counts = {}
     message_type_chars = {}
+    excluded_line_counts = {}
+    total_excluded_lines = 0
 
     for line_num in range(start_line, len(lines)):
         line = lines[line_num].strip()
@@ -254,6 +348,15 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
 
         try:
             data = json.loads(line)
+
+            should_exclude, exclusion_reason = should_exclude_line(data)
+            if should_exclude:
+                total_excluded_lines += 1
+                excluded_line_counts[exclusion_reason] = (
+                    excluded_line_counts.get(exclusion_reason, 0) + 1
+                )
+                continue
+
             chars = extract_message_content_chars(
                 data, session_id, bool(detailed_debug)
             )
@@ -275,22 +378,34 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
         f"Message content chars: {message_content_chars}/{total_file_chars}", session_id
     )
 
-    if detailed_debug and message_type_chars:
-        debug_log("=== Token Breakdown by Message Type ===", session_id)
-        sorted_types = sorted(
-            message_type_chars.items(), key=lambda x: x[1], reverse=True
-        )
-        total_tracked = sum(message_type_chars.values())
-
-        for msg_type, chars in sorted_types:
-            count = message_type_counts.get(msg_type, 0)
-            tokens = chars // CHARS_PER_TOKEN
-            percentage = (chars * 100) // total_tracked if total_tracked > 0 else 0
+    if detailed_debug:
+        if total_excluded_lines > 0:
             debug_log(
-                f"  {msg_type}: {count} messages, {chars} chars, {tokens} tokens ({percentage}%)",
+                f"=== Excluded {total_excluded_lines} lines from token counting ===",
                 session_id,
             )
-        debug_log("=" * 40, session_id)
+            for reason, count in sorted(
+                excluded_line_counts.items(), key=lambda x: x[1], reverse=True
+            ):
+                debug_log(f"  {reason}: {count} lines", session_id)
+            debug_log("=" * 40, session_id)
+
+        if message_type_chars:
+            debug_log("=== Token Breakdown by Message Type ===", session_id)
+            sorted_types = sorted(
+                message_type_chars.items(), key=lambda x: x[1], reverse=True
+            )
+            total_tracked = sum(message_type_chars.values())
+
+            for msg_type, chars in sorted_types:
+                count = message_type_counts.get(msg_type, 0)
+                tokens = chars // CHARS_PER_TOKEN
+                percentage = (chars * 100) // total_tracked if total_tracked > 0 else 0
+                debug_log(
+                    f"  {msg_type}: {count} messages, {chars} chars, {tokens} tokens ({percentage}%)",
+                    session_id,
+                )
+            debug_log("=" * 40, session_id)
 
     return ParsedTranscript(
         session_id=session_id,

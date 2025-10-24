@@ -3,14 +3,28 @@
 import os
 import sys
 import time
-from dataclasses import dataclass
-from typing import List, Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
 from claude_code_statusline.common import (
     calculate_total_tokens,
     get_context_limit,
+    get_reserved_tokens,
+    get_system_overhead_tokens,
     parse_transcript,
+    should_exclude_line,
 )
+
+
+@dataclass
+class SessionAnalysis:
+    """Detailed analysis of a session file's token composition."""
+
+    message_tokens: int = 0
+    excluded_lines: int = 0
+    included_lines: int = 0
+    exclusion_breakdown: Dict[str, int] = field(default_factory=dict)
+    total_lines: int = 0
 
 
 @dataclass
@@ -27,6 +41,12 @@ class CalibrationResult:
     context_limit: int = 0
     success: bool = False
     error_message: str = ""
+    message_tokens: int = 0
+    system_overhead: int = 0
+    reserved_tokens: int = 0
+    excluded_lines: int = 0
+    included_lines: int = 0
+    exclusion_breakdown: dict = None
 
 
 def debug_log(message: str) -> None:
@@ -124,6 +144,82 @@ def get_claude_context_tokens(session_file: str) -> Optional[int]:
         return None
 
 
+def analyze_session_file(session_file: str) -> SessionAnalysis:
+    """Analyze session file to extract detailed token breakdown information.
+
+    Args:
+        session_file: Path to the JSONL session file
+
+    Returns:
+        SessionAnalysis with line counts and exclusion breakdown
+    """
+    import json
+
+    analysis = SessionAnalysis()
+
+    try:
+        with open(session_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        start_line = _find_compact_boundary_line(lines)
+
+        for line_num in range(start_line, len(lines)):
+            line = lines[line_num].strip()
+            if not line:
+                continue
+
+            analysis.total_lines += 1
+
+            try:
+                data = json.loads(line)
+
+                should_exclude, exclusion_reason = should_exclude_line(data)
+                if should_exclude:
+                    analysis.excluded_lines += 1
+                    analysis.exclusion_breakdown[exclusion_reason] = (
+                        analysis.exclusion_breakdown.get(exclusion_reason, 0) + 1
+                    )
+                elif "message" in data and data["message"]:
+                    analysis.included_lines += 1
+
+            except json.JSONDecodeError:
+                pass
+
+    except Exception as e:
+        debug_log(f"Error analyzing session file: {e}")
+
+    return analysis
+
+
+def _find_compact_boundary_line(lines: List[str]) -> int:
+    """Find the last compact boundary in the transcript.
+
+    Args:
+        lines: All lines from the transcript file
+
+    Returns:
+        Line number to start counting from (0 if no boundary found)
+    """
+    import json
+
+    start_line = 0
+    for line_num, line in enumerate(lines):
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line)
+            if (
+                data.get("type") == "system"
+                and data.get("subtype") == "compact_boundary"
+                and "compactMetadata" in data
+            ):
+                start_line = line_num + 1
+        except json.JSONDecodeError:
+            pass
+
+    return start_line
+
+
 def run_script_calculation(session_file: str) -> Optional[int]:
     """Run our token counting script and extract the token count."""
     try:
@@ -155,12 +251,25 @@ def calibrate_session(
     result.file_size_bytes = os.path.getsize(session_file)
     debug_log(f"Calibrating {session_file} ({result.file_size_bytes} bytes)")
 
+    # Analyze session file for detailed breakdown
+    analysis = analyze_session_file(session_file)
+    result.excluded_lines = analysis.excluded_lines
+    result.included_lines = analysis.included_lines
+    result.exclusion_breakdown = analysis.exclusion_breakdown
+
     # Get token count from our script
     script_tokens = run_script_calculation(session_file)
     if script_tokens is None:
         result.error_message = "Failed to get token count from script"
         return result
     result.script_tokens = script_tokens
+
+    # Get overhead values
+    result.system_overhead = get_system_overhead_tokens()
+    result.reserved_tokens = get_reserved_tokens()
+    result.message_tokens = (
+        script_tokens - result.system_overhead - result.reserved_tokens
+    )
 
     # Get token count from Claude's /context command or use provided value
     if known_claude_tokens is not None:
@@ -206,7 +315,9 @@ def find_session_files(root_directory: str) -> List[str]:
     return sorted(session_files, key=lambda x: os.path.getmtime(x), reverse=True)
 
 
-def print_calibration_report(results: List[CalibrationResult]) -> None:
+def print_calibration_report(
+    results: List[CalibrationResult], verbose: bool = False
+) -> None:
     """Print a detailed calibration report."""
     print("=" * 80)
     print("TOKEN COUNTING CALIBRATION REPORT")
@@ -250,6 +361,27 @@ def print_calibration_report(results: List[CalibrationResult]) -> None:
         print(
             f"   Difference: {result.discrepancy:+,} tokens ({result.discrepancy_percent:+.1f}%)"
         )
+
+        # Show detailed breakdown if verbose or if there's a significant discrepancy
+        if verbose or abs(result.discrepancy_percent) > 10:
+            print()
+            print("   Token Breakdown:")
+            print(f"     Message tokens:    {result.message_tokens:,}")
+            print(f"     System overhead:   {result.system_overhead:,}")
+            print(f"     Reserved tokens:   {result.reserved_tokens:,}")
+            print(f"     Total:             {result.script_tokens:,}")
+            print()
+            print("   Line Analysis:")
+            print(f"     Included messages: {result.included_lines:,} lines")
+            print(f"     Excluded metadata: {result.excluded_lines:,} lines")
+
+            if result.exclusion_breakdown:
+                print("     Exclusion reasons:")
+                for reason, count in sorted(
+                    result.exclusion_breakdown.items(), key=lambda x: x[1], reverse=True
+                ):
+                    print(f"       - {reason}: {count} lines")
+
         print()
 
     # Summary statistics
@@ -268,6 +400,46 @@ def print_calibration_report(results: List[CalibrationResult]) -> None:
     )
     print(f"Min discrepancy: {min(discrepancies):+,} tokens")
     print(f"Max discrepancy: {max(discrepancies):+,} tokens")
+    print()
+
+    # Sanity checks
+    print("SANITY CHECKS:")
+    print("-" * 80)
+    sanity_warnings = []
+
+    for result in successful_results:
+        filename = os.path.basename(result.session_file)
+
+        if result.system_overhead < 0:
+            sanity_warnings.append(
+                f"⚠️  {filename}: Negative system overhead ({result.system_overhead:,} tokens)"
+            )
+        elif result.system_overhead > 100000:
+            sanity_warnings.append(
+                f"⚠️  {filename}: Unusually high system overhead ({result.system_overhead:,} tokens)"
+            )
+
+        if result.message_tokens < 0:
+            sanity_warnings.append(
+                f"⚠️  {filename}: Negative message tokens ({result.message_tokens:,})"
+            )
+
+        exclusion_pct = (
+            (result.excluded_lines * 100)
+            / (result.included_lines + result.excluded_lines)
+            if (result.included_lines + result.excluded_lines) > 0
+            else 0
+        )
+        if exclusion_pct > 50:
+            sanity_warnings.append(
+                f"⚠️  {filename}: Excluding {exclusion_pct:.0f}% of lines - verify exclusion logic"
+            )
+
+    if sanity_warnings:
+        for warning in sanity_warnings:
+            print(warning)
+    else:
+        print("✅ All values appear reasonable")
     print()
 
     # Recommendations
@@ -417,7 +589,7 @@ def main():
 
     # Generate report
     if results:
-        print_calibration_report(results)
+        print_calibration_report(results, verbose=args.verbose)
     else:
         print("❌ No calibration results to report")
 

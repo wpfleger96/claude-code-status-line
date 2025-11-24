@@ -157,6 +157,14 @@ def format_cost(cost_data: Dict) -> str:
     return " | " + " | ".join(parts)
 
 
+def format_session_id(session_id: str) -> str:
+    """Format session ID for display in status line."""
+    if not session_id:
+        return ""
+
+    return f" | Session: {COLOR_DIM}{session_id}{COLOR_RESET}"
+
+
 def main():
     """Main entry point."""
     cwd, transcript_path, model_id, model_name, cost_data, claude_code_version = (
@@ -175,9 +183,10 @@ def main():
     context_info = format_context_info(transcript, model_id, model_name)
     dir_basename = get_dir_basename(cwd)
     cost_info = format_cost(cost_data)
+    session_info = format_session_id(transcript.session_id)
 
     print(
-        f"{COLOR_BLUE}{model_name}{COLOR_RESET} | {COLOR_DIM}{dir_basename}{COLOR_RESET} |{context_info}{cost_info}",
+        f"{COLOR_BLUE}{model_name}{COLOR_RESET} | {COLOR_DIM}{dir_basename}{COLOR_RESET} |{context_info}{cost_info}{session_info}",
         end="",
     )
 

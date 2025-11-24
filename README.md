@@ -124,26 +124,31 @@ Cache benefits: Faster rendering, reduced network dependency, automatic refresh.
 | Lines Added | 0 lines | Green (>0) |
 | Lines Removed | 0 lines | Red (>0) |
 
-Always displays: total session cost (USD), lines added/removed, appears after context usage.
+**Session ID**:
+- Displays the complete Claude Code session ID
+- Shown in dimmed text at the end of the status line
+- Enables quick visual matching of session files in `~/.claude/projects/<folder>` without needing to run `/status` and copy/paste the session ID
+
+Always displays: total session cost (USD), lines added/removed, and session ID, appears after context usage.
 
 ---
 
 ## Example Outputs
 
 ```
-Opus 4.1 | wpfleger-ai-tools | Context: ●●●●●●○○○○ 60% (120K/200K tokens) | Cost: $2.50 USD | +150 lines added | -25 lines removed
+Opus 4.1 | wpfleger-ai-tools | Context: ●●●●●●○○○○ 60% (120K/200K tokens) | Cost: $2.50 USD | +150 lines added | -25 lines removed | Session: 852d18cc-8599-47c3-840b-1e36c142f47f
 ```
 
 ```
-Opus 4.1 | wpfleger-ai-tools | Context: ●●●●●●●●●○ 90% (180K/200K tokens) | Cost: $8.75 USD | +500 lines added | -100 lines removed
+Opus 4.1 | wpfleger-ai-tools | Context: ●●●●●●●●●○ 90% (180K/200K tokens) | Cost: $8.75 USD | +500 lines added | -100 lines removed | Session: a3f7b2cd-4e1a-42d9-9f3c-8b7e5d2a1c0f
 ```
 
 ```
-Opus 4.1 | wpfleger-ai-tools | Context: ○○○○○○○○○○ 0% (783/200K tokens) | Cost: $0.00 USD | +0 lines added | -0 lines removed
+Opus 4.1 | wpfleger-ai-tools | Context: ○○○○○○○○○○ 0% (783/200K tokens) | Cost: $0.00 USD | +0 lines added | -0 lines removed | Session: d6994160-5c39-4ecf-8922-65a36b984ec5
 ```
 
 ```
-Opus 4.1 | wpfleger-ai-tools | Context: No active transcript | Cost: $0.00 USD | +0 lines added | -0 lines removed
+Opus 4.1 | wpfleger-ai-tools | Context: No active transcript | Cost: $0.00 USD | +0 lines added | -0 lines removed | Session: 7b89c123-6a2f-4d8e-9c5b-3f4e7a1d2b8c
 ```
 
 ---

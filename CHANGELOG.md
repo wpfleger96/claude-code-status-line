@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.2.0 (2025-11-24)
+
+### Features
+
+- Show CC session ID in status line for easy debugging
+  ([`81f27ad`](https://github.com/wpfleger96/claude-code-status-line/commit/81f27ad70acfcba361d57b6eecdfd10c7d65c6d0))
+
+
 ## v0.1.2 (2025-10-24)
 
 ### Bug Fixes

@@ -42,6 +42,14 @@ class ExclusionRules:
     excluded_flags: List[str] = field(default_factory=lambda: ["isMeta"])
 
 
+@dataclass
+class ModelInfo:
+    """Information about a specific model."""
+
+    display_name: str
+    context_limit: int
+
+
 EXCLUSION_RULES = ExclusionRules()
 CHARS_PER_TOKEN = 4
 
@@ -52,25 +60,28 @@ CACHE_TTL_SECONDS = 604800  # 1 week (7 days)
 DEFAULT_SYSTEM_OVERHEAD_TOKENS = 13250
 DEFAULT_RESERVED_TOKENS = 45000
 
-MODEL_LIMITS = {
-    "default": 200000,
-    "claude": 200000,
-    "claude-sonnet-4": 200000,
-    "claude-sonnet-4-20250514": 200000,
-    "claude-sonnet-4-20250514[1m]": 1000000,
-    "claude-sonnet-4-5-20250929": 200000,
-    "claude-sonnet-4-5-20250929[1m]": 1000000,
-    "claude-opus-4": 200000,
-    "claude-opus-4.1": 200000,
-    "claude-opus-4-1": 200000,
-    "claude-opus-4-1-20250805": 200000,
-    "gemini": 1000000,
-    "gpt-4": 8192,
-    "gpt-4-32k": 32768,
-    "gpt-4-turbo": 128000,
-    "gpt-4o": 128000,
-    "gpt-4o-mini": 128000,
-    "gpt-5": 400000,
+MODEL_INFO: Dict[str, ModelInfo] = {
+    "default": ModelInfo("Unknown Model", 200000),
+    "claude": ModelInfo("Claude", 200000),
+    "claude-sonnet-4": ModelInfo("Sonnet 4", 200000),
+    "claude-sonnet-4-20250514": ModelInfo("Sonnet 4", 200000),
+    "claude-sonnet-4-20250514[1m]": ModelInfo("Sonnet 4 (1M context)", 1000000),
+    "claude-sonnet-4-5-20250929": ModelInfo("Sonnet 4.5", 200000),
+    "claude-sonnet-4-5-20250929[1m]": ModelInfo("Sonnet 4.5 (1M context)", 1000000),
+    "claude-opus-4": ModelInfo("Opus 4", 200000),
+    "claude-opus-4.1": ModelInfo("Opus 4.1", 200000),
+    "claude-opus-4-1": ModelInfo("Opus 4.1", 200000),
+    "claude-opus-4-1-20250805": ModelInfo("Opus 4.1", 200000),
+    "claude-opus-4.5": ModelInfo("Opus 4.5", 200000),
+    "claude-opus-4-5": ModelInfo("Opus 4.5", 200000),
+    "claude-opus-4-5-20251101": ModelInfo("Opus 4.5", 200000),
+    "gemini": ModelInfo("Gemini", 1000000),
+    "gpt-4": ModelInfo("GPT-4", 8192),
+    "gpt-4-32k": ModelInfo("GPT-4 32K", 32768),
+    "gpt-4-turbo": ModelInfo("GPT-4 Turbo", 128000),
+    "gpt-4o": ModelInfo("GPT-4o", 128000),
+    "gpt-4o-mini": ModelInfo("GPT-4o mini", 128000),
+    "gpt-5": ModelInfo("GPT-5", 400000),
 }
 
 
@@ -455,7 +466,7 @@ def get_cached_or_fetch_data() -> Optional[Dict]:
 def get_context_limit(model_id: str, model_name: str = "") -> int:
     """Get context limit for model from API data with fallback to hardcoded limits."""
     if not model_id:
-        return MODEL_LIMITS["default"]
+        return MODEL_INFO["default"].context_limit
 
     if "[1m]" in model_id.lower():
         return 1000000
@@ -487,14 +498,39 @@ def get_context_limit(model_id: str, model_name: str = "") -> int:
 
     model_lower = model_id.lower()
 
-    if model_lower in MODEL_LIMITS:
-        return MODEL_LIMITS[model_lower]
+    if model_lower in MODEL_INFO:
+        return MODEL_INFO[model_lower].context_limit
 
-    for key in sorted(MODEL_LIMITS.keys(), key=len, reverse=True):
+    for key in sorted(MODEL_INFO.keys(), key=len, reverse=True):
         if key != "default" and (model_lower in key or key in model_lower):
-            return MODEL_LIMITS[key]
+            return MODEL_INFO[key].context_limit
 
-    return MODEL_LIMITS["default"]
+    return MODEL_INFO["default"].context_limit
+
+
+def get_model_display_name(model_id: str, provided_name: str = "") -> str:
+    """Get display name for model, preferring our lookup over provided name.
+
+    Args:
+        model_id: The model ID (e.g., "claude-opus-4-5-20251101")
+        provided_name: Display name provided by Claude Code (if any)
+
+    Returns:
+        Display name to show in status line
+    """
+    if not model_id:
+        return provided_name or MODEL_INFO["default"].display_name
+
+    model_lower = model_id.lower()
+
+    if model_lower in MODEL_INFO:
+        return MODEL_INFO[model_lower].display_name
+
+    for key in sorted(MODEL_INFO.keys(), key=len, reverse=True):
+        if key != "default" and (model_lower in key or key in model_lower):
+            return MODEL_INFO[key].display_name
+
+    return provided_name or model_id
 
 
 def get_system_overhead_tokens() -> int:

@@ -11,6 +11,7 @@ from claude_code_statusline.common import (
     calculate_total_tokens,
     debug_log,
     get_context_limit,
+    get_model_display_name,
     get_reserved_tokens,
     get_system_overhead_tokens,
     parse_transcript,
@@ -184,9 +185,10 @@ def main():
     dir_basename = get_dir_basename(cwd)
     cost_info = format_cost(cost_data)
     session_info = format_session_id(transcript.session_id)
+    display_name = get_model_display_name(model_id, model_name)
 
     print(
-        f"{COLOR_BLUE}{model_name}{COLOR_RESET} | {COLOR_DIM}{dir_basename}{COLOR_RESET} |{context_info}{cost_info}{session_info}",
+        f"{COLOR_BLUE}{display_name}{COLOR_RESET} | {COLOR_DIM}{dir_basename}{COLOR_RESET} |{context_info}{cost_info}{session_info}",
         end="",
     )
 

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.0 (2025-11-24)
+
+### Features
+
+- Add Opus 4.5 support and ensure we always display a human readable name instead of model ID
+  ([`9e85d89`](https://github.com/wpfleger96/claude-code-status-line/commit/9e85d898144dd75dd224f870fca02ac85a11162a))
+
+
 ## v0.2.0 (2025-11-24)
 
 ### Features

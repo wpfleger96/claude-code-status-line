@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+export RUN_TESTS=1
+
+./script/code_quality.sh

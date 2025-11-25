@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claude-code-statusline"
-version = "v0.3.0"
+version = "v0.3.1"
 description = "A Python script for Claude Code statusline with context usage tracking"
 readme = "README.md"
 license = "MIT"

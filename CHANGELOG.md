@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.1 (2025-11-25)
+
+### Bug Fixes
+
+- Get session ID from payload instead of filename to handle forked sessions correctly
+  ([`ab2022c`](https://github.com/wpfleger96/claude-code-status-line/commit/ab2022c4c89f4a353a0aa050baf91e2a431c2915))
+
+
 ## v0.3.0 (2025-11-24)
 
 ### Features

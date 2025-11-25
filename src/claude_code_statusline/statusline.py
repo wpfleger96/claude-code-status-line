@@ -61,7 +61,10 @@ def render_progress_bar(usage_percent: int) -> str:
 
 
 def format_context_info(
-    transcript: ParsedTranscript, model_id: str, model_name: str = ""
+    transcript: ParsedTranscript,
+    model_id: str,
+    model_name: str = "",
+    session_id: str = "",
 ) -> str:
     """Format context usage information for display."""
 
@@ -84,24 +87,22 @@ def format_context_info(
             naive_tokens = transcript.total_file_chars // CHARS_PER_TOKEN
             debug_log(
                 f"Token breakdown: Conversation={conversation_tokens}, System={system_overhead_tokens}, Reserved={reserved_tokens}, Total={total_tokens}",
-                transcript.session_id,
+                session_id,
             )
             if transcript.boundaries_found > 0:
                 debug_log(
                     f"Token reduction from compaction: {naive_tokens - conversation_tokens}",
-                    transcript.session_id,
+                    session_id,
                 )
             else:
-                debug_log(
-                    f"File size tokens (naive): {naive_tokens}", transcript.session_id
-                )
+                debug_log(f"File size tokens (naive): {naive_tokens}", session_id)
 
         return f" Context: {progress_bar} {usage_percent}% ({formatted_tokens}/{formatted_limit} tokens)"
 
     return ""
 
 
-def parse_input_data() -> Tuple[str, str, str, str, Dict, str]:
+def parse_input_data() -> Tuple[str, str, str, str, Dict, str, str]:
     """Parse JSON input from stdin and extract relevant fields."""
     try:
         input_data = sys.stdin.read()
@@ -115,8 +116,17 @@ def parse_input_data() -> Tuple[str, str, str, str, Dict, str]:
     model_name = data.get("model", {}).get("display_name", "")
     cost_data = data.get("cost", {})
     claude_code_version = data.get("version", "unknown")
+    session_id = data.get("session_id", "")
 
-    return cwd, transcript_path, model_id, model_name, cost_data, claude_code_version
+    return (
+        cwd,
+        transcript_path,
+        model_id,
+        model_name,
+        cost_data,
+        claude_code_version,
+        session_id,
+    )
 
 
 def get_dir_basename(cwd: str) -> str:
@@ -163,28 +173,38 @@ def format_session_id(session_id: str) -> str:
     if not session_id:
         return ""
 
-    return f" | Session: {COLOR_DIM}{session_id}{COLOR_RESET}"
+    return f" | Session ID: {COLOR_DIM}{session_id}{COLOR_RESET}"
 
 
 def main():
     """Main entry point."""
-    cwd, transcript_path, model_id, model_name, cost_data, claude_code_version = (
-        parse_input_data()
-    )
+    (
+        cwd,
+        transcript_path,
+        model_id,
+        model_name,
+        cost_data,
+        claude_code_version,
+        session_id,
+    ) = parse_input_data()
 
     transcript = parse_transcript(transcript_path)
 
-    debug_log("=== SESSION METADATA ===", transcript.session_id)
-    debug_log(f"Working Directory: {cwd}", transcript.session_id)
-    debug_log(f"Model ID: {model_id}", transcript.session_id)
-    debug_log(f"Model Name: {model_name}", transcript.session_id)
-    debug_log(f"Claude Code Version: {claude_code_version}", transcript.session_id)
-    debug_log("=" * 25, transcript.session_id)
+    effective_session_id = session_id if session_id else transcript.session_id
 
-    context_info = format_context_info(transcript, model_id, model_name)
+    debug_log("=== SESSION METADATA ===", effective_session_id)
+    debug_log(f"Working Directory: {cwd}", effective_session_id)
+    debug_log(f"Model ID: {model_id}", effective_session_id)
+    debug_log(f"Model Name: {model_name}", effective_session_id)
+    debug_log(f"Claude Code Version: {claude_code_version}", effective_session_id)
+    debug_log("=" * 25, effective_session_id)
+
+    context_info = format_context_info(
+        transcript, model_id, model_name, effective_session_id
+    )
     dir_basename = get_dir_basename(cwd)
     cost_info = format_cost(cost_data)
-    session_info = format_session_id(transcript.session_id)
+    session_info = format_session_id(effective_session_id)
     display_name = get_model_display_name(model_id, model_name)
 
     print(

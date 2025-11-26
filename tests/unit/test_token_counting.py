@@ -1,12 +1,13 @@
 import pytest
+
+from claude_code_statusline.calibrate import _find_compact_boundary_line
 from claude_code_statusline.common import (
+    ParsedTranscript,
+    calculate_total_tokens,
+    extract_message_content_chars,
     is_real_compact_boundary,
     should_exclude_line,
-    extract_message_content_chars,
-    calculate_total_tokens,
-    ParsedTranscript,
 )
-from claude_code_statusline.calibrate import _find_compact_boundary_line
 
 
 @pytest.mark.unit

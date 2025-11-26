@@ -65,6 +65,12 @@ exclude_commit_patterns = []
 [tool.semantic_release.remote]
 type = "github"
 
+[tool.ruff.lint]
+select = ["I", "F", "UP", "B"]  # isort, pyflakes, pyupgrade, bugbear
+
+[tool.ruff.lint.isort]
+lines-between-types = 1
+
 [[tool.uv.index]]
 name = "default"
 url = "https://pypi.org/simple"

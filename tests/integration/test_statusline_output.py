@@ -1,7 +1,9 @@
 import json
+
 import pytest
-from claude_code_statusline.statusline import parse_input_data
+
 from claude_code_statusline.common import parse_transcript
+from claude_code_statusline.statusline import parse_input_data
 
 
 @pytest.mark.integration

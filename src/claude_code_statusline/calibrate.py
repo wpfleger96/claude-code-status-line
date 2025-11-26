@@ -3,8 +3,9 @@
 import os
 import sys
 import time
+
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Optional
 
 from claude_code_statusline.common import (
     calculate_total_tokens,
@@ -22,7 +23,7 @@ class SessionAnalysis:
     message_tokens: int = 0
     excluded_lines: int = 0
     included_lines: int = 0
-    exclusion_breakdown: Dict[str, int] = field(default_factory=dict)
+    exclusion_breakdown: dict[str, int] = field(default_factory=dict)
     total_lines: int = 0
 
 
@@ -156,7 +157,7 @@ def analyze_session_file(session_file: str) -> SessionAnalysis:
     analysis = SessionAnalysis()
 
     try:
-        with open(session_file, "r", encoding="utf-8") as f:
+        with open(session_file, encoding="utf-8") as f:
             lines = f.readlines()
 
         start_line = _find_compact_boundary_line(lines)
@@ -189,7 +190,7 @@ def analyze_session_file(session_file: str) -> SessionAnalysis:
     return analysis
 
 
-def _find_compact_boundary_line(lines: List[str]) -> int:
+def _find_compact_boundary_line(lines: list[str]) -> int:
     """Find the last compact boundary in the transcript.
 
     Args:
@@ -293,7 +294,7 @@ def calibrate_session(
     return result
 
 
-def find_session_files(root_directory: str) -> List[str]:
+def find_session_files(root_directory: str) -> list[str]:
     """Find all JSONL session files recursively in all subdirectories."""
     session_files = []
 
@@ -311,7 +312,7 @@ def find_session_files(root_directory: str) -> List[str]:
 
 
 def print_calibration_report(
-    results: List[CalibrationResult], verbose: bool = False
+    results: list[CalibrationResult], verbose: bool = False
 ) -> None:
     """Print a detailed calibration report."""
     print("=" * 80)

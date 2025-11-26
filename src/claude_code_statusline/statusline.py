@@ -3,7 +3,6 @@
 import json
 import os
 import sys
-from typing import Dict, Tuple
 
 from claude_code_statusline.common import (
     CHARS_PER_TOKEN,
@@ -100,7 +99,7 @@ def format_context_info(
     return ""
 
 
-def parse_input_data() -> Tuple[str, str, str, str, Dict, str, str]:
+def parse_input_data() -> tuple[str, str, str, str, dict, str, str]:
     """Parse JSON input from stdin and extract relevant fields."""
     try:
         input_data = sys.stdin.read()
@@ -146,7 +145,7 @@ def get_cost_color(cost_usd: float) -> str:
     return COLOR_RED
 
 
-def format_cost(cost_data: Dict) -> str:
+def format_cost(cost_data: dict) -> str:
     """Format cost information for display."""
     cost_usd = cost_data.get("total_cost_usd", 0) if cost_data else 0
     lines_added = cost_data.get("total_lines_added", 0) if cost_data else 0

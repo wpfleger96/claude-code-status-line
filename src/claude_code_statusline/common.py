@@ -7,8 +7,9 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Optional
 
 
 @dataclass
@@ -30,14 +31,14 @@ class ExclusionRules:
     UI purposes but are not included in the actual context sent to Claude.
     """
 
-    metadata_fields: List[str] = field(
+    metadata_fields: list[str] = field(
         default_factory=lambda: [
             "snapshot",
             "leafUuid",
         ]
     )
-    excluded_types: List[str] = field(default_factory=lambda: ["summary", "system"])
-    excluded_flags: List[str] = field(default_factory=lambda: [])
+    excluded_types: list[str] = field(default_factory=lambda: ["summary", "system"])
+    excluded_flags: list[str] = field(default_factory=lambda: [])
 
 
 @dataclass
@@ -57,7 +58,7 @@ CACHE_TTL_SECONDS = 604800  # 1 week (7 days)
 
 DEFAULT_SYSTEM_OVERHEAD_TOKENS = 21400
 
-MODEL_INFO: Dict[str, ModelInfo] = {
+MODEL_INFO: dict[str, ModelInfo] = {
     "default": ModelInfo("Unknown Model", 200000),
     "claude": ModelInfo("Claude", 200000),
     "claude-sonnet-4": ModelInfo("Sonnet 4", 200000),
@@ -112,7 +113,7 @@ def debug_log(message: str, session_id: str = "", transcript_path: str = "") -> 
         os.makedirs(logs_dir, exist_ok=True)
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(log_message)
-    except (OSError, IOError):
+    except OSError:
         print(
             f"DEBUG (couldn't write to {log_file}): {session_prefix}{message}",
             file=sys.stderr,
@@ -153,7 +154,7 @@ def _is_valid_json(line: str) -> bool:
         return False
 
 
-def _find_session_metadata(lines: List[str]) -> tuple[str, Optional[int], int]:
+def _find_session_metadata(lines: list[str]) -> tuple[str, Optional[int], int]:
     """Extract session metadata from transcript lines.
 
     Args:
@@ -248,7 +249,7 @@ def safe_get_file_size(file_path: str) -> int:
     """Safely get file size, returning 0 on error."""
     try:
         return os.path.getsize(file_path)
-    except (OSError, IOError):
+    except OSError:
         return 0
 
 
@@ -299,9 +300,9 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
     )
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
-    except (OSError, IOError) as e:
+    except OSError as e:
         debug_log(f"Failed to read file: {e}", transcript_path=file_path)
         return ParsedTranscript(total_file_chars=total_file_chars)
 
@@ -409,19 +410,19 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
     )
 
 
-def extract_token_limit(model_info: Dict) -> Optional[int]:
+def extract_token_limit(model_info: dict) -> Optional[int]:
     """Extract token limit from model info dictionary."""
     limit = model_info.get("max_input_tokens") or model_info.get("max_tokens")
     return int(limit) if limit else None
 
 
-def get_cached_or_fetch_data() -> Optional[Dict]:
+def get_cached_or_fetch_data() -> Optional[dict]:
     """Get model data from cache or fetch from API if cache is expired or does not exist."""
     try:
         if os.path.exists(CACHE_FILE):
             cache_age = time.time() - os.path.getmtime(CACHE_FILE)
             if cache_age <= CACHE_TTL_SECONDS:
-                with open(CACHE_FILE, "r") as f:
+                with open(CACHE_FILE) as f:
                     return json.load(f)
     except (OSError, json.JSONDecodeError):
         pass
@@ -433,7 +434,7 @@ def get_cached_or_fetch_data() -> Optional[Dict]:
             try:
                 with open(CACHE_FILE, "w") as f:
                     json.dump(data, f)
-            except (OSError, IOError):
+            except OSError:
                 pass
             return data
     except (

@@ -1,6 +1,7 @@
 import pytest
-from claude_code_statusline.common import parse_transcript
+
 from claude_code_statusline.calibrate import analyze_session_file
+from claude_code_statusline.common import parse_transcript
 
 
 @pytest.mark.integration

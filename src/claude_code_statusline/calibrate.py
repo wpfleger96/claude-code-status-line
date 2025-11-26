@@ -9,7 +9,6 @@ from typing import Dict, List, Optional
 from claude_code_statusline.common import (
     calculate_total_tokens,
     get_context_limit,
-    get_reserved_tokens,
     get_system_overhead_tokens,
     parse_transcript,
     should_exclude_line,
@@ -43,7 +42,6 @@ class CalibrationResult:
     error_message: str = ""
     message_tokens: int = 0
     system_overhead: int = 0
-    reserved_tokens: int = 0
     excluded_lines: int = 0
     included_lines: int = 0
     exclusion_breakdown: dict = None
@@ -266,10 +264,7 @@ def calibrate_session(
 
     # Get overhead values
     result.system_overhead = get_system_overhead_tokens()
-    result.reserved_tokens = get_reserved_tokens()
-    result.message_tokens = (
-        script_tokens - result.system_overhead - result.reserved_tokens
-    )
+    result.message_tokens = script_tokens - result.system_overhead
 
     # Get token count from Claude's /context command or use provided value
     if known_claude_tokens is not None:
@@ -368,7 +363,6 @@ def print_calibration_report(
             print("   Token Breakdown:")
             print(f"     Message tokens:    {result.message_tokens:,}")
             print(f"     System overhead:   {result.system_overhead:,}")
-            print(f"     Reserved tokens:   {result.reserved_tokens:,}")
             print(f"     Total:             {result.script_tokens:,}")
             print()
             print("   Line Analysis:")

@@ -74,20 +74,16 @@ Replace `/path/to/claude-code-status-line` with the absolute path to where you c
 ### Token Calculation
 
 #### How It Works
-- Estimates tokens by dividing character count by 4 (industry standard approximation)
-- Adds system overhead tokens (15400 by default) for Claude Code's system prompt, tools, and memory
-- Includes reserved tokens (45000 by default) for autocompact and output token allocation
+- Estimates tokens by dividing character count by 3.31 (empirically derived from Claude's actual token counts)
+- Adds system overhead tokens (21400 by default) for Claude Code's system prompt, tools, and memory
 - Retrieves model-specific context limits from cached API data, live fetches, or hardcoded fallbacks
 
 #### Configuration
 Customize token calculations via environment variables:
 
 ```bash
-# System overhead (default: 15400 tokens)
+# System overhead (default: 21400 tokens)
 export CLAUDE_CODE_SYSTEM_OVERHEAD=20000
-
-# Reserved tokens for autocompact + output (default: 45000 tokens)
-export CLAUDE_CODE_RESERVED_TOKENS=50000
 ```
 
 #### API Cache System

@@ -54,11 +54,11 @@ class TestLineExclusion:
         should_exclude, _ = should_exclude_line(data)
         assert should_exclude is True
 
-    def test_excludes_toolUseResult(self):
-        """Tool results are stored separately, not in main context."""
+    def test_includes_toolUseResult(self):
+        """Tool results contain message content and should be counted."""
         data = {"type": "user", "toolUseResult": {"output": "result"}}
         should_exclude, _ = should_exclude_line(data)
-        assert should_exclude is True
+        assert should_exclude is False
 
     def test_excludes_snapshot(self):
         """File snapshots are metadata, not counted."""
@@ -66,17 +66,17 @@ class TestLineExclusion:
         should_exclude, _ = should_exclude_line(data)
         assert should_exclude is True
 
-    def test_excludes_isMeta_flag(self):
-        """Lines marked as meta are not sent to Claude."""
+    def test_includes_isMeta_flag(self):
+        """Lines with isMeta contain message content and should be counted."""
         data = {"type": "user", "isMeta": True}
         should_exclude, _ = should_exclude_line(data)
-        assert should_exclude is True
+        assert should_exclude is False
 
-    def test_excludes_thinkingMetadata(self):
-        """Thinking metadata is not sent to Claude."""
+    def test_includes_thinkingMetadata(self):
+        """Lines with thinkingMetadata contain message content and should be counted."""
         data = {"type": "assistant", "thinkingMetadata": {"duration": 1000}}
         should_exclude, _ = should_exclude_line(data)
-        assert should_exclude is True
+        assert should_exclude is False
 
     def test_excludes_leafUuid(self):
         """Leaf UUID tracking is metadata, not counted."""
@@ -135,16 +135,16 @@ class TestImageFiltering:
 class TestTokenCalculation:
     """Test the token calculation formula."""
 
-    def test_includes_system_overhead_and_reserved(self):
-        """Verify total includes conversation + overhead + reserved."""
+    def test_includes_system_overhead(self):
+        """Verify total includes conversation + overhead."""
         transcript = ParsedTranscript(context_chars=4000)
         tokens = calculate_total_tokens(transcript)
 
-        conversation_tokens = 4000 // 4
+        conversation_tokens = int(4000 // 3.31)
         assert tokens > conversation_tokens
 
     def test_zero_context_still_has_overhead(self):
-        """Even empty sessions have system overhead and reserved."""
+        """Even empty sessions have system overhead."""
         transcript = ParsedTranscript(context_chars=0)
         tokens = calculate_total_tokens(transcript)
 

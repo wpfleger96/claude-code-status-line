@@ -32,14 +32,12 @@ class ExclusionRules:
 
     metadata_fields: List[str] = field(
         default_factory=lambda: [
-            "toolUseResult",
             "snapshot",
-            "thinkingMetadata",
             "leafUuid",
         ]
     )
     excluded_types: List[str] = field(default_factory=lambda: ["summary", "system"])
-    excluded_flags: List[str] = field(default_factory=lambda: ["isMeta"])
+    excluded_flags: List[str] = field(default_factory=lambda: [])
 
 
 @dataclass
@@ -51,14 +49,13 @@ class ModelInfo:
 
 
 EXCLUSION_RULES = ExclusionRules()
-CHARS_PER_TOKEN = 4
+CHARS_PER_TOKEN = 3.31
 
 CACHE_FILE_NAME = "claude_code_model_data_cache.json"
 CACHE_FILE = os.path.join(tempfile.gettempdir(), CACHE_FILE_NAME)
 CACHE_TTL_SECONDS = 604800  # 1 week (7 days)
 
-DEFAULT_SYSTEM_OVERHEAD_TOKENS = 13250
-DEFAULT_RESERVED_TOKENS = 45000
+DEFAULT_SYSTEM_OVERHEAD_TOKENS = 21400
 
 MODEL_INFO: Dict[str, ModelInfo] = {
     "default": ModelInfo("Unknown Model", 200000),
@@ -192,7 +189,11 @@ def _find_session_metadata(lines: List[str]) -> tuple[str, Optional[int], int]:
 def extract_message_content_chars(
     data: dict, session_id: str = "", detailed_debug: bool = False
 ) -> int:
-    """Extract content that contributes to context, excluding excessive metadata."""
+    """Extract content that contributes to context.
+
+    Only counts role and content fields, as these are what actually gets sent to Claude.
+    Response metadata fields (model, type, stop_reason, etc.) are not counted.
+    """
     message = data.get("message", {})
     if not message:
         return 0
@@ -204,6 +205,7 @@ def extract_message_content_chars(
         field_value = json.dumps(message["role"])
         filtered_message["role"] = message["role"]
         field_contributions["role"] = len(field_value)
+
     if "content" in message:
         content = message["content"]
         filtered_content = content
@@ -231,21 +233,6 @@ def extract_message_content_chars(
                 session_id,
             )
 
-    if "model" in message:
-        field_value = json.dumps(message["model"])
-        filtered_message["model"] = message["model"]
-        field_contributions["model"] = len(field_value)
-    if "type" in message:
-        field_value = json.dumps(message["type"])
-        filtered_message["type"] = message["type"]
-        field_contributions["type"] = len(field_value)
-
-    for key in ["stop_reason", "stop_sequence"]:
-        if key in message:
-            field_value = json.dumps(message[key])
-            filtered_message[key] = message[key]
-            field_contributions[key] = len(field_value)
-
     total_chars = len(json.dumps(filtered_message))
 
     if detailed_debug and field_contributions:
@@ -253,11 +240,6 @@ def extract_message_content_chars(
         debug_log(
             f"Message field breakdown ({role}): {field_contributions}", session_id
         )
-        if total_chars > 1000:
-            top_fields = sorted(
-                field_contributions.items(), key=lambda x: x[1], reverse=True
-            )[:3]
-            debug_log(f"Top contributing fields: {top_fields}", session_id)
 
     return total_chars
 
@@ -543,17 +525,8 @@ def get_system_overhead_tokens() -> int:
         return DEFAULT_SYSTEM_OVERHEAD_TOKENS
 
 
-def get_reserved_tokens() -> int:
-    """Get reserved tokens for autocompact and output."""
-    try:
-        return int(os.getenv("CLAUDE_CODE_RESERVED_TOKENS", DEFAULT_RESERVED_TOKENS))
-    except (ValueError, TypeError):
-        return DEFAULT_RESERVED_TOKENS
-
-
 def calculate_total_tokens(transcript: ParsedTranscript) -> int:
-    """Calculate total tokens from a transcript including conversation, system overhead, and reserved tokens."""
-    conversation_tokens = transcript.context_chars // CHARS_PER_TOKEN
+    """Calculate total tokens from a transcript including conversation and system overhead."""
+    conversation_tokens = int(transcript.context_chars // CHARS_PER_TOKEN)
     system_overhead_tokens = get_system_overhead_tokens()
-    reserved_tokens = get_reserved_tokens()
-    return conversation_tokens + system_overhead_tokens + reserved_tokens
+    return conversation_tokens + system_overhead_tokens

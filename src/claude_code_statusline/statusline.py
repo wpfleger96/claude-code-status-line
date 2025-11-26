@@ -12,7 +12,6 @@ from claude_code_statusline.common import (
     debug_log,
     get_context_limit,
     get_model_display_name,
-    get_reserved_tokens,
     get_system_overhead_tokens,
     parse_transcript,
 )
@@ -83,10 +82,9 @@ def format_context_info(
         if os.getenv("CLAUDE_CODE_STATUSLINE_DEBUG") and transcript.is_jsonl:
             conversation_tokens = transcript.context_chars // CHARS_PER_TOKEN
             system_overhead_tokens = get_system_overhead_tokens()
-            reserved_tokens = get_reserved_tokens()
             naive_tokens = transcript.total_file_chars // CHARS_PER_TOKEN
             debug_log(
-                f"Token breakdown: Conversation={conversation_tokens}, System={system_overhead_tokens}, Reserved={reserved_tokens}, Total={total_tokens}",
+                f"Token breakdown: Conversation={conversation_tokens}, System={system_overhead_tokens}, Total={total_tokens}",
                 session_id,
             )
             if transcript.boundaries_found > 0:

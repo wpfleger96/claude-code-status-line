@@ -72,5 +72,5 @@ select = ["I", "F", "UP", "B"]  # isort, pyflakes, pyupgrade, bugbear
 lines-between-types = 1
 
 [[tool.uv.index]]
-name = "default"
+name = "pypi"
 url = "https://pypi.org/simple"

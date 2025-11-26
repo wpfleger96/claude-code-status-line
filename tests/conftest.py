@@ -7,7 +7,9 @@ def pytest_configure(config):
     """Register custom test markers."""
     config.addinivalue_line("markers", "unit: Unit tests that do not perform real I/O")
     config.addinivalue_line("markers", "integration: Integration tests with mocked I/O")
-    config.addinivalue_line("markers", "performance: Performance benchmarks (opt-in, slow)")
+    config.addinivalue_line(
+        "markers", "performance: Performance benchmarks (opt-in, slow)"
+    )
 
 
 @pytest.fixture

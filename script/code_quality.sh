@@ -14,8 +14,8 @@ echo "Running formatting"
 uvx ruff format .
 
 if [ -n "$STAGED_FILES" ]; then
-    for file in $STAGED_FILES; do
-        if [ -f "$file" ] && ! git diff --quiet -- "$file" 2>/dev/null; then
+    echo "$STAGED_FILES" | while IFS= read -r file; do
+        if [ -n "$file" ] && [ -f "$file" ] && ! git diff --quiet -- "$file" 2>/dev/null; then
             echo "Re-staging formatted/linted file: $file"
             git add "$file"
         fi

@@ -10,7 +10,9 @@ readme = "README.md"
 license = "MIT"
 authors = [{name = "Will Pfleger", email = "pfleger.will@gmail.com"}]
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "pytest-cov>=7.0.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/wpfleger96/claude-code-status-line"
@@ -42,7 +44,7 @@ markers = [
     "performance: Performance benchmarks (opt-in, slow)",
 ]
 # Default: skip performance tests unless explicitly requested
-addopts = "-m 'not performance'"
+addopts = "-m 'not performance' -v --cov=claude_code_statusline --cov-report=term-missing"
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version:tf"]

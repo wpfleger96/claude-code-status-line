@@ -1,6 +1,9 @@
 # CHANGELOG
 
 
+## v0.5.0 (2025-11-26)
+
+
 ## v0.4.0 (2025-11-26)
 
 ### Chores
@@ -12,6 +15,9 @@
 
 - Release improved token counting
   ([`842eed1`](https://github.com/wpfleger96/claude-code-status-line/commit/842eed188721232ac7f9040bc89fc664b76ca017))
+
+- Release improved token counting
+  ([`cc4ded8`](https://github.com/wpfleger96/claude-code-status-line/commit/cc4ded80c0b3091a9391dfa7ac21f17d87792529))
 
 
 ## v0.3.1 (2025-11-25)

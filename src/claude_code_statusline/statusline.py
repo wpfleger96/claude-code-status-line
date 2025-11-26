@@ -4,6 +4,8 @@ import json
 import os
 import sys
 
+from concurrent.futures import ThreadPoolExecutor
+
 from claude_code_statusline.common import (
     CHARS_PER_TOKEN,
     ParsedTranscript,
@@ -13,6 +15,7 @@ from claude_code_statusline.common import (
     get_model_display_name,
     get_system_overhead_tokens,
     parse_transcript,
+    prefetch_model_data,
 )
 
 PROGRESS_BAR_SEGMENTS = 10
@@ -174,7 +177,7 @@ def format_session_id(session_id: str) -> str:
 
 
 def main():
-    """Main entry point."""
+    """Main entry point with parallel I/O for faster startup."""
     (
         cwd,
         transcript_path,
@@ -185,9 +188,22 @@ def main():
         session_id,
     ) = parse_input_data()
 
-    transcript = parse_transcript(transcript_path)
+    # Run I/O operations in parallel
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        # Submit I/O tasks
+        transcript_future = executor.submit(parse_transcript, transcript_path)
+        executor.submit(prefetch_model_data)  # Fire and forget, populates cache
+
+        # Compute non-blocking parts while I/O runs
+        dir_basename = get_dir_basename(cwd)
+        cost_info = format_cost(cost_data)
+        display_name = get_model_display_name(model_id, model_name)
+
+        # Wait for transcript parsing to complete
+        transcript = transcript_future.result()
 
     effective_session_id = session_id if session_id else transcript.session_id
+    session_info = format_session_id(effective_session_id)
 
     debug_log("=== SESSION METADATA ===", effective_session_id)
     debug_log(f"Working Directory: {cwd}", effective_session_id)
@@ -196,13 +212,10 @@ def main():
     debug_log(f"Claude Code Version: {claude_code_version}", effective_session_id)
     debug_log("=" * 25, effective_session_id)
 
+    # Context info uses prefetched model data (should be fast now)
     context_info = format_context_info(
         transcript, model_id, model_name, effective_session_id
     )
-    dir_basename = get_dir_basename(cwd)
-    cost_info = format_cost(cost_data)
-    session_info = format_session_id(effective_session_id)
-    display_name = get_model_display_name(model_id, model_name)
 
     print(
         f"{COLOR_BLUE}{display_name}{COLOR_RESET} | {COLOR_DIM}{dir_basename}{COLOR_RESET} |{context_info}{cost_info}{session_info}",

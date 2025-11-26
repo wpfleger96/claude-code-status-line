@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -138,55 +139,6 @@ def is_real_compact_boundary(data: dict) -> bool:
     )
 
 
-def _is_valid_json(line: str) -> bool:
-    """Check if a line contains valid JSON.
-
-    Args:
-        line: Line of text to validate
-
-    Returns:
-        True if the line is valid JSON
-    """
-    try:
-        json.loads(line.strip())
-        return True
-    except json.JSONDecodeError:
-        return False
-
-
-def _find_session_metadata(lines: list[str]) -> tuple[str, Optional[int], int]:
-    """Extract session metadata from transcript lines.
-
-    Args:
-        lines: All lines from the transcript file
-
-    Returns:
-        Tuple of (session_id, last_boundary_line, boundary_count)
-    """
-    session_id = ""
-    last_boundary_line = None
-    boundary_count = 0
-
-    for line_num, line in enumerate(lines):
-        if not line.strip():
-            continue
-
-        try:
-            data = json.loads(line.strip())
-
-            if not session_id and data.get("sessionId"):
-                session_id = data["sessionId"]
-
-            if is_real_compact_boundary(data):
-                last_boundary_line = line_num
-                boundary_count += 1
-
-        except json.JSONDecodeError:
-            continue
-
-    return session_id, last_boundary_line, boundary_count
-
-
 def extract_message_content_chars(
     data: dict, session_id: str = "", detailed_debug: bool = False
 ) -> int:
@@ -281,7 +233,7 @@ def should_exclude_line(
 
 
 def parse_transcript(file_path: str) -> ParsedTranscript:
-    """Parse transcript file and return structured information.
+    """Parse transcript file in a single pass for better performance.
 
     Args:
         file_path: Path to the JSONL transcript file
@@ -306,43 +258,43 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
         debug_log(f"Failed to read file: {e}", transcript_path=file_path)
         return ParsedTranscript(total_file_chars=total_file_chars)
 
-    valid_json_lines = sum(1 for line in lines if line.strip() and _is_valid_json(line))
-
-    is_jsonl = valid_json_lines > 0
-    if not is_jsonl:
-        debug_log("File is not JSONL format, using fallback", transcript_path=file_path)
-        return ParsedTranscript(
-            session_id="",
-            total_file_chars=total_file_chars,
-            context_chars=total_file_chars,
-            is_jsonl=False,
-        )
-
-    session_id, last_boundary_line, boundary_count = _find_session_metadata(lines)
-
-    debug_log(f"Session: {session_id}, boundaries: {boundary_count}", session_id)
-    if last_boundary_line is not None:
-        debug_log(
-            f"Using content from line {last_boundary_line + 2} onwards", session_id
-        )
-
-    start_line = (last_boundary_line + 1) if last_boundary_line is not None else 0
-
+    # Single-pass parsing: track all state simultaneously
+    session_id = ""
+    boundary_count = 0
+    is_jsonl = False
     detailed_debug = os.getenv("CLAUDE_CODE_STATUSLINE_DEBUG")
-    message_content_chars = 0
+
+    # Track content chars before and after latest boundary separately
+    chars_before_latest_boundary = 0
+    chars_after_latest_boundary = 0
+
     message_type_counts = {}
     message_type_chars = {}
     excluded_line_counts = {}
     total_excluded_lines = 0
 
-    for line_num in range(start_line, len(lines)):
-        line = lines[line_num].strip()
-        if not line:
+    for _line_num, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
             continue
 
         try:
-            data = json.loads(line)
+            data = json.loads(stripped)
+            is_jsonl = True  # At least one valid JSON line
 
+            # Extract session_id on first occurrence
+            if not session_id and data.get("sessionId"):
+                session_id = data["sessionId"]
+
+            # Check for compact boundary
+            if is_real_compact_boundary(data):
+                boundary_count += 1
+                # Move current "after" to "before", start fresh after boundary
+                chars_before_latest_boundary += chars_after_latest_boundary
+                chars_after_latest_boundary = 0
+                continue
+
+            # Check exclusion
             should_exclude, exclusion_reason = should_exclude_line(data)
             if should_exclude:
                 total_excluded_lines += 1
@@ -351,11 +303,13 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
                 )
                 continue
 
+            # Count message content chars
             chars = extract_message_content_chars(
                 data, session_id, bool(detailed_debug)
             )
-            message_content_chars += chars
+            chars_after_latest_boundary += chars
 
+            # Track debug info
             if detailed_debug and chars > 0:
                 msg_type = data.get("type", "unknown")
                 role = data.get("message", {}).get("role", "")
@@ -365,9 +319,27 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
                 message_type_chars[type_key] = (
                     message_type_chars.get(type_key, 0) + chars
                 )
+
         except json.JSONDecodeError:
             continue
 
+    if not is_jsonl:
+        debug_log("File is not JSONL format, using fallback", transcript_path=file_path)
+        return ParsedTranscript(
+            session_id="",
+            total_file_chars=total_file_chars,
+            context_chars=total_file_chars,
+            is_jsonl=False,
+        )
+
+    # Use only post-boundary content if boundaries exist
+    message_content_chars = (
+        chars_after_latest_boundary
+        if boundary_count > 0
+        else (chars_before_latest_boundary + chars_after_latest_boundary)
+    )
+
+    debug_log(f"Session: {session_id}, boundaries: {boundary_count}", session_id)
     debug_log(
         f"Message content chars: {message_content_chars}/{total_file_chars}", session_id
     )
@@ -446,22 +418,70 @@ def get_cached_or_fetch_data() -> Optional[dict]:
         return None
 
 
+def _is_cache_stale() -> bool:
+    """Check if the model data cache is stale or missing."""
+    try:
+        if not os.path.exists(CACHE_FILE):
+            return True
+        cache_age = time.time() - os.path.getmtime(CACHE_FILE)
+        return cache_age > CACHE_TTL_SECONDS
+    except OSError:
+        return True
+
+
+def _maybe_refresh_cache_background() -> None:
+    """Refresh model cache in background if stale (non-blocking)."""
+    if _is_cache_stale():
+        # Fire and forget - don't wait for result
+        thread = threading.Thread(target=get_cached_or_fetch_data, daemon=True)
+        thread.start()
+
+
+# Module-level cache for prefetched model data
+_prefetched_model_data = None
+_prefetch_done = False
+
+
+def prefetch_model_data() -> None:
+    """Prefetch model data in background thread for parallel execution."""
+    global _prefetched_model_data, _prefetch_done
+    _prefetched_model_data = get_cached_or_fetch_data()
+    _prefetch_done = True
+
+
 def get_context_limit(model_id: str, model_name: str = "") -> int:
-    """Get context limit for model from API data with fallback to hardcoded limits."""
+    """Get context limit for model, checking hardcoded limits first for speed."""
     if not model_id:
         return MODEL_INFO["default"].context_limit
 
+    # Fast path: check for 1M context markers
     if "[1m]" in model_id.lower():
         return 1000000
 
     if model_name and "1m" in model_name.lower():
         return 1000000
 
-    api_data = get_cached_or_fetch_data()
+    # Fast path: check hardcoded MODEL_INFO first (instant for known models)
+    model_lower = model_id.lower()
+
+    if model_lower in MODEL_INFO:
+        _maybe_refresh_cache_background()  # Non-blocking cache refresh
+        return MODEL_INFO[model_lower].context_limit
+
+    for key in sorted(MODEL_INFO.keys(), key=len, reverse=True):
+        if key != "default" and (model_lower in key or key in model_lower):
+            _maybe_refresh_cache_background()  # Non-blocking cache refresh
+            return MODEL_INFO[key].context_limit
+
+    # Unknown model - check API data
+    # Use prefetched data if available, otherwise fetch (may block)
+    global _prefetched_model_data, _prefetch_done
+    if _prefetch_done:
+        api_data = _prefetched_model_data
+    else:
+        api_data = get_cached_or_fetch_data()
 
     if api_data:
-        model_lower = model_id.lower()
-
         if model_id in api_data:
             limit = extract_token_limit(api_data[model_id])
             if limit:
@@ -478,15 +498,6 @@ def get_context_limit(model_id: str, model_name: str = "") -> int:
                 limit = extract_token_limit(api_data[key])
                 if limit:
                     return limit
-
-    model_lower = model_id.lower()
-
-    if model_lower in MODEL_INFO:
-        return MODEL_INFO[model_lower].context_limit
-
-    for key in sorted(MODEL_INFO.keys(), key=len, reverse=True):
-        if key != "default" and (model_lower in key or key in model_lower):
-            return MODEL_INFO[key].context_limit
 
     return MODEL_INFO["default"].context_limit
 

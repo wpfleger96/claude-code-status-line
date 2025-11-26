@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.4.0 (2025-11-26)
+
+### Chores
+
+- Add proper testing suite
+  ([`0409290`](https://github.com/wpfleger96/claude-code-status-line/commit/04092909355e733f7a685cfcb0a7b047e4596481))
+
+### Features
+
+- Release improved token counting
+  ([`842eed1`](https://github.com/wpfleger96/claude-code-status-line/commit/842eed188721232ac7f9040bc89fc664b76ca017))
+
+
 ## v0.3.1 (2025-11-25)
 
 ### Bug Fixes

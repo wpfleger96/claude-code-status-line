@@ -37,7 +37,6 @@ class TestPerformanceBenchmarks:
         transcript = tmp_path / "perf_1k.jsonl"
         generate_large_transcript(1000, transcript)
 
-        # benchmark() runs the function multiple times and collects stats
         result = benchmark(parse_transcript, str(transcript))
         assert result.is_jsonl is True
 

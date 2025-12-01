@@ -33,13 +33,11 @@ def register_widget(
     """
 
     def decorator(cls: type[Widget]):
-        # Set metadata on class
         cls.display_name = display_name or widget_type.replace("-", " ").title()
         cls.default_color = default_color
         cls.description = description
         cls.fallback_text = fallback_text
 
-        # Register instance
         _WIDGET_REGISTRY[widget_type] = cls()
         return cls
 

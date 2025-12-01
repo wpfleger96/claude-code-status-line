@@ -220,7 +220,6 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
     is_jsonl = False
     detailed_debug = os.getenv("CLAUDE_CODE_STATUSLINE_DEBUG")
 
-    # Track content chars before and after latest boundary separately
     chars_before_latest_boundary = 0
     chars_after_latest_boundary = 0
 
@@ -238,19 +237,15 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
             data = json.loads(stripped)
             is_jsonl = True  # At least one valid JSON line
 
-            # Extract session_id on first occurrence
             if not session_id and data.get("sessionId"):
                 session_id = data["sessionId"]
 
-            # Check for compact boundary
             if is_real_compact_boundary(data):
                 boundary_count += 1
-                # Move current "after" to "before", start fresh after boundary
                 chars_before_latest_boundary += chars_after_latest_boundary
                 chars_after_latest_boundary = 0
                 continue
 
-            # Check exclusion
             should_exclude, exclusion_reason = should_exclude_line(data)
             if should_exclude:
                 total_excluded_lines += 1
@@ -259,13 +254,11 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
                 )
                 continue
 
-            # Count message content chars
             chars = extract_message_content_chars(
                 data, session_id, bool(detailed_debug)
             )
             chars_after_latest_boundary += chars
 
-            # Track debug info
             if detailed_debug and chars > 0:
                 msg_type = data.get("type", "unknown")
                 role = data.get("message", {}).get("role", "")
@@ -288,7 +281,6 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
             is_jsonl=False,
         )
 
-    # Use only post-boundary content if boundaries exist
     message_content_chars = (
         chars_after_latest_boundary
         if boundary_count > 0

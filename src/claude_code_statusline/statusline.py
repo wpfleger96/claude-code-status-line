@@ -6,7 +6,7 @@ import sys
 
 from concurrent.futures import ThreadPoolExecutor
 
-from .parsers.tokens import get_session_duration, get_token_metrics
+from .parsers.tokens import parse_transcript
 from .renderer import render_status_line_with_config
 from .types import RenderContext
 from .utils.debug import debug_log
@@ -35,12 +35,10 @@ def find_transcript_path(data: dict) -> str:
     Returns:
         Path to transcript file, or empty string if not found
     """
-    # Try provided path first
     transcript_path = data.get("transcript_path", "")
     if transcript_path and os.path.isfile(transcript_path):
         return transcript_path
 
-    # Fallback: construct from session_id and workspace
     session_id = data.get("session_id", "")
     workspace = data.get("workspace", {}).get("current_dir", "")
 
@@ -68,12 +66,10 @@ def extract_session_id(data: dict, transcript_path: str) -> str:
     Returns:
         Session ID or empty string
     """
-    # Try JSON input first
     session_id = data.get("session_id", "")
     if session_id:
         return session_id
 
-    # Fallback: extract from transcript filename
     if transcript_path:
         filename = os.path.basename(transcript_path)
         if filename.endswith(".jsonl"):
@@ -89,13 +85,10 @@ def main():
     """Main entry point with widget-based rendering and parallel I/O."""
     data = parse_input_data()
 
-    # Find transcript path with fallback for forked sessions
     transcript_path = find_transcript_path(data)
 
-    # Extract/infer session ID
     session_id = extract_session_id(data, transcript_path)
 
-    # Add session_id to data for widgets to use
     if session_id:
         data["session_id"] = session_id
 
@@ -108,17 +101,12 @@ def main():
     debug_log(f"Transcript Path: {transcript_path}", session_id)
 
     # Parallel I/O for fast startup
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        # Submit I/O tasks
-        token_future = executor.submit(get_token_metrics, transcript_path)
-        session_future = executor.submit(get_session_duration, transcript_path)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        transcript_future = executor.submit(parse_transcript, transcript_path)
         executor.submit(prefetch_model_data)  # Fire and forget
 
-        # Wait for results
-        token_metrics = token_future.result()
-        session_metrics = session_future.result()
+        token_metrics, session_metrics = transcript_future.result()
 
-    # Build render context
     context = RenderContext(
         data=data,
         token_metrics=token_metrics,
@@ -130,7 +118,6 @@ def main():
     debug_log(f"Session metrics: {session_metrics}", session_id)
     debug_log("=" * 25, session_id)
 
-    # Render using widget system
     output = render_status_line_with_config(context)
     print(output, end="")
 

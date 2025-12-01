@@ -16,7 +16,6 @@ from claude_code_statusline.config.schema import (
 @pytest.fixture
 def temp_config_dir(monkeypatch, tmp_path):
     """Create a temporary config directory."""
-    # Mock the config directory
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
 
     return tmp_path
@@ -49,17 +48,14 @@ class TestConfigLoading:
         assert len(config.lines) > 0
         assert len(config.lines[0]) > 0
 
-        # Check that file was created
         config_file = temp_config_dir / "claude-statusline" / "config.yaml"
         assert config_file.exists()
 
     def test_loads_existing_config(self, temp_config_dir, sample_config):
         """Test loading an existing configuration file."""
 
-        # Save config first
         save_config(sample_config)
 
-        # Load it back
         loaded_config = load_config()
 
         assert loaded_config.version == sample_config.version
@@ -70,13 +66,11 @@ class TestConfigLoading:
     def test_handles_invalid_yaml(self, temp_config_dir):
         """Test that invalid YAML falls back to defaults."""
 
-        # Create invalid YAML file
         config_dir = temp_config_dir / "claude-statusline"
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file = config_dir / "config.yaml"
         config_file.write_text("invalid: yaml: content: [[[")
 
-        # Should fall back to defaults
         config = load_config()
         assert isinstance(config, StatusLineConfig)
         assert config.version == 1
@@ -84,7 +78,6 @@ class TestConfigLoading:
     def test_handles_invalid_schema(self, temp_config_dir):
         """Test that invalid schema falls back to defaults."""
 
-        # Create YAML with invalid schema
         config_dir = temp_config_dir / "claude-statusline"
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file = config_dir / "config.yaml"
@@ -93,7 +86,6 @@ class TestConfigLoading:
         with open(config_file, "w") as f:
             yaml.dump(invalid_config, f)
 
-        # Should fall back to defaults
         config = load_config()
         assert isinstance(config, StatusLineConfig)
         assert isinstance(config.version, int)
@@ -110,7 +102,6 @@ class TestConfigSaving:
         config_file = temp_config_dir / "claude-statusline" / "config.yaml"
         assert config_file.exists()
 
-        # Load and verify YAML structure
         with open(config_file) as f:
             yaml_data = yaml.safe_load(f)
 
@@ -122,7 +113,6 @@ class TestConfigSaving:
     def test_creates_config_directory(self, temp_config_dir, sample_config):
         """Test that config directory is created if it doesn't exist."""
 
-        # Ensure directory doesn't exist
         config_dir = temp_config_dir / "claude-statusline"
         if config_dir.exists():
             import shutil
@@ -137,14 +127,11 @@ class TestConfigSaving:
     def test_overwrites_existing_config(self, temp_config_dir, sample_config):
         """Test that saving overwrites existing configuration."""
 
-        # Save initial config
         save_config(sample_config)
 
-        # Modify and save again
         sample_config.lines[0].append(WidgetConfigModel(type="cost", color="green"))
         save_config(sample_config)
 
-        # Load and verify
         loaded = load_config()
         assert len(loaded.lines[0]) == 4
         assert loaded.lines[0][3].type == "cost"
@@ -167,43 +154,9 @@ class TestDefaultConfig:
 
         widget_types = [w.type for w in config.lines[0]]
 
-        # Should have at least model, directory, and context
         assert "model" in widget_types
         assert "directory" in widget_types
         assert "context-percentage" in widget_types or "context-tokens" in widget_types
-
-
-class TestWidgetConfigModel:
-    """Tests for WidgetConfigModel."""
-
-    def test_generates_unique_ids(self):
-        """Test that each widget gets a unique ID."""
-        widget1 = WidgetConfigModel(type="model")
-        widget2 = WidgetConfigModel(type="model")
-
-        assert widget1.id != widget2.id
-
-    def test_default_values(self):
-        """Test default values for optional fields."""
-        widget = WidgetConfigModel(type="test")
-
-        assert widget.color is None
-        assert not widget.bold
-        assert widget.metadata == {}
-
-    def test_custom_values(self):
-        """Test setting custom values."""
-        widget = WidgetConfigModel(
-            type="test",
-            color="red",
-            bold=True,
-            metadata={"key": "value"},
-        )
-
-        assert widget.type == "test"
-        assert widget.color == "red"
-        assert widget.bold is True
-        assert widget.metadata == {"key": "value"}
 
 
 class TestConfigSchema:

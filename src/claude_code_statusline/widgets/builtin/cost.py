@@ -29,7 +29,6 @@ class CostWidget(Widget):
         if total_cost is None:
             return None
 
-        # Apply cost-based color only to the dollar amount
         cost_color = get_cost_color(total_cost)
         colored_amount = colorize(f"${total_cost:.2f} USD", cost_color)
 
@@ -100,7 +99,6 @@ class LinesChangedWidget(Widget):
         if lines_added == 0 and lines_removed == 0:
             return None
 
-        # Build the output with separate coloring
         parts = []
         if lines_added > 0:
             parts.append(colorize(f"+{lines_added} (added)", "green"))

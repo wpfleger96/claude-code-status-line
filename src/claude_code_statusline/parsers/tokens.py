@@ -9,20 +9,22 @@ from typing import Optional
 from ..types import SessionMetrics, TokenMetrics
 
 
-def get_token_metrics(transcript_path: str) -> TokenMetrics:
-    """Extract real token counts from JSONL message.usage fields.
+def parse_transcript(
+    transcript_path: str,
+) -> tuple[TokenMetrics, Optional[SessionMetrics]]:
+    """Extract token metrics and session duration in single file read.
 
-    Reads actual token usage from Claude API responses instead of estimating.
-    Skips sidechain messages and API error messages.
+    Combines the logic of get_token_metrics() and get_session_duration()
+    to avoid reading the transcript file twice.
 
     Args:
         transcript_path: Path to the JSONL transcript file
 
     Returns:
-        TokenMetrics with accurate token counts from API
+        Tuple of (TokenMetrics, SessionMetrics) from single file pass
     """
     if not transcript_path or not os.path.isfile(transcript_path):
-        return TokenMetrics()
+        return TokenMetrics(), None
 
     input_tokens = 0
     output_tokens = 0
@@ -31,6 +33,9 @@ def get_token_metrics(transcript_path: str) -> TokenMetrics:
 
     most_recent_time: Optional[datetime] = None
     most_recent_usage: Optional[dict] = None
+
+    first_timestamp: Optional[datetime] = None
+    last_timestamp: Optional[datetime] = None
 
     try:
         with open(transcript_path, encoding="utf-8") as f:
@@ -41,6 +46,21 @@ def get_token_metrics(transcript_path: str) -> TokenMetrics:
 
                 try:
                     data = json.loads(line)
+
+                    # Extract timestamp for session duration
+                    timestamp_str = data.get("timestamp")
+                    if timestamp_str:
+                        try:
+                            timestamp = datetime.fromisoformat(
+                                timestamp_str.replace("Z", "+00:00")
+                            )
+                            if first_timestamp is None:
+                                first_timestamp = timestamp
+                            last_timestamp = timestamp
+                        except ValueError:
+                            pass
+
+                    # Extract token usage
                     usage = data.get("message", {}).get("usage")
                     if not usage:
                         continue
@@ -54,7 +74,6 @@ def get_token_metrics(transcript_path: str) -> TokenMetrics:
                     # Track most recent main chain entry for context_length
                     is_sidechain = data.get("isSidechain", False)
                     is_api_error = data.get("isApiErrorMessage", False)
-                    timestamp_str = data.get("timestamp")
                     stop_reason = data.get("message", {}).get("stop_reason")
 
                     # Only use completed messages (skip streaming partials with stop_reason: null)
@@ -82,7 +101,7 @@ def get_token_metrics(transcript_path: str) -> TokenMetrics:
                     continue
 
     except OSError:
-        return TokenMetrics()
+        return TokenMetrics(), None
 
     # Calculate context_length from most recent main chain message
     if most_recent_usage:
@@ -94,7 +113,7 @@ def get_token_metrics(transcript_path: str) -> TokenMetrics:
 
     total_tokens = input_tokens + output_tokens + cached_tokens
 
-    return TokenMetrics(
+    token_metrics = TokenMetrics(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         cached_tokens=cached_tokens,
@@ -102,73 +121,17 @@ def get_token_metrics(transcript_path: str) -> TokenMetrics:
         context_length=context_length,
     )
 
+    # Build session metrics
+    session_metrics = None
+    if first_timestamp and last_timestamp:
+        duration_seconds = int((last_timestamp - first_timestamp).total_seconds())
+        session_metrics = SessionMetrics(
+            start_time=first_timestamp,
+            last_activity=last_timestamp,
+            duration_seconds=duration_seconds,
+        )
 
-def get_session_duration(transcript_path: str) -> Optional[SessionMetrics]:
-    """Calculate session duration from first to last timestamp.
-
-    Args:
-        transcript_path: Path to the JSONL transcript file
-
-    Returns:
-        SessionMetrics with start time, last activity, and duration
-    """
-    if not transcript_path or not os.path.isfile(transcript_path):
-        return None
-
-    first_timestamp: Optional[datetime] = None
-    last_timestamp: Optional[datetime] = None
-
-    try:
-        with open(transcript_path, encoding="utf-8") as f:
-            lines = f.readlines()
-
-        # Find first valid timestamp
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            try:
-                data = json.loads(line)
-                timestamp_str = data.get("timestamp")
-                if timestamp_str:
-                    first_timestamp = datetime.fromisoformat(
-                        timestamp_str.replace("Z", "+00:00")
-                    )
-                    break
-            except (json.JSONDecodeError, ValueError):
-                continue
-
-        # Find last valid timestamp (iterate backwards)
-        for line in reversed(lines):
-            line = line.strip()
-            if not line:
-                continue
-
-            try:
-                data = json.loads(line)
-                timestamp_str = data.get("timestamp")
-                if timestamp_str:
-                    last_timestamp = datetime.fromisoformat(
-                        timestamp_str.replace("Z", "+00:00")
-                    )
-                    break
-            except (json.JSONDecodeError, ValueError):
-                continue
-
-    except OSError:
-        return None
-
-    if not first_timestamp or not last_timestamp:
-        return None
-
-    duration_seconds = int((last_timestamp - first_timestamp).total_seconds())
-
-    return SessionMetrics(
-        start_time=first_timestamp,
-        last_activity=last_timestamp,
-        duration_seconds=duration_seconds,
-    )
+    return token_metrics, session_metrics
 
 
 def format_duration(duration_seconds: int) -> str:

@@ -2,10 +2,16 @@
 
 import re
 import subprocess
+import time
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 from ..types import GitStatus
+
+# Module-level cache for git status
+_git_cache: Optional[tuple[float, Optional[str], GitStatus]] = None
+GIT_CACHE_TTL = 2.0  # seconds
 
 
 def _run_git(args: list[str], cwd: Optional[str] = None) -> Optional[str]:
@@ -32,7 +38,7 @@ def _run_git(args: list[str], cwd: Optional[str] = None) -> Optional[str]:
 
 
 def get_git_status(cwd: Optional[str] = None) -> GitStatus:
-    """Get comprehensive git repository status.
+    """Get comprehensive git repository status with 2-second TTL cache.
 
     Args:
         cwd: Working directory to check git status in
@@ -40,50 +46,66 @@ def get_git_status(cwd: Optional[str] = None) -> GitStatus:
     Returns:
         GitStatus with branch, changes, and worktree info
     """
-    # Check if in a git repo
+    global _git_cache
+
+    now = time.monotonic()
+
+    if _git_cache is not None:
+        cache_time, cache_cwd, cached_status = _git_cache
+        if cache_cwd == cwd and (now - cache_time) < GIT_CACHE_TTL:
+            return cached_status
+
     git_dir = _run_git(["rev-parse", "--git-dir"], cwd=cwd)
     if git_dir is None:
-        return GitStatus(is_git_repo=False)
+        status = GitStatus(is_git_repo=False)
+        _git_cache = (now, cwd, status)
+        return status
 
-    # Get branch name
-    branch = _run_git(["branch", "--show-current"], cwd=cwd)
+    # Run remaining commands in parallel for faster execution
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        branch_future = executor.submit(_run_git, ["branch", "--show-current"], cwd)
+        unstaged_future = executor.submit(_run_git, ["diff", "--shortstat"], cwd)
+        staged_future = executor.submit(
+            _run_git, ["diff", "--cached", "--shortstat"], cwd
+        )
+        worktree_future = executor.submit(_run_git, ["worktree", "list"], cwd)
 
-    # Get changes (insertions and deletions)
+        branch = branch_future.result()
+        unstaged = unstaged_future.result()
+        staged = staged_future.result()
+        worktree_list = worktree_future.result()
+
     insertions = 0
     deletions = 0
 
-    # Unstaged changes
-    unstaged = _run_git(["diff", "--shortstat"], cwd=cwd)
     if unstaged:
         insertions += _parse_insertions(unstaged)
         deletions += _parse_deletions(unstaged)
 
-    # Staged changes
-    staged = _run_git(["diff", "--cached", "--shortstat"], cwd=cwd)
     if staged:
         insertions += _parse_insertions(staged)
         deletions += _parse_deletions(staged)
 
-    # Get worktree name if in a worktree
     worktree = None
-    worktree_list = _run_git(["worktree", "list"], cwd=cwd)
     if worktree_list and cwd:
         for line in worktree_list.split("\n"):
             if cwd in line:
-                # Extract worktree name from path
                 parts = line.split()
                 if len(parts) >= 3:
                     worktree_path = parts[0]
                     worktree = worktree_path.rstrip("/").split("/")[-1]
                 break
 
-    return GitStatus(
+    status = GitStatus(
         branch=branch,
         insertions=insertions,
         deletions=deletions,
         worktree=worktree,
         is_git_repo=True,
     )
+
+    _git_cache = (now, cwd, status)
+    return status
 
 
 def _parse_insertions(stat_output: str) -> int:

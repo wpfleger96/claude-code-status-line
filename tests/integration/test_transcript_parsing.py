@@ -20,7 +20,6 @@ class TestRealSessionParsing:
 
         assert result.boundaries_found > 0
         assert result.is_jsonl is True
-        # After compact boundary, context_chars should be less than total file
         assert result.context_chars < result.total_file_chars
 
     def test_image_not_inflating_token_count(self, image_session_file):

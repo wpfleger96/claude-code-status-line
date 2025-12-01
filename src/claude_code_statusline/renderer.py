@@ -23,7 +23,6 @@ def _resolve_auto_color(widget_type: str, context: RenderContext) -> str:
     Returns:
         Resolved color name
     """
-    # Context percentage: based on usage
     if widget_type == "context-percentage" or widget_type == "context-tokens":
         if context.token_metrics:
             context_limit = get_context_limit_for_render(context)
@@ -34,7 +33,6 @@ def _resolve_auto_color(widget_type: str, context: RenderContext) -> str:
                 ) / context_limit
                 return get_usage_color(percentage)
 
-    # Cost: based on USD amount
     if widget_type == "cost":
         cost = context.data.get("cost", {})
         total_cost = cost.get("total_cost_usd", 0)
@@ -59,17 +57,14 @@ def render_widget(
     if not widget:
         return None
 
-    # Render widget content
     content = widget.render(widget_config, context)
 
-    # Apply fallback if content is None
     if content is None:
         if widget.fallback_text is not None:
             content = widget.fallback_text
         else:
             return None
 
-    # Determine color
     color = widget_config.color
     if color == "auto":
         color = _resolve_auto_color(widget_config.type, context)
@@ -82,7 +77,6 @@ def render_widget(
     if color == "none":
         return content
 
-    # Apply colors
     return colorize(content, color, widget_config.bold)
 
 
@@ -102,7 +96,6 @@ def _remove_orphaned_separators(
     Returns:
         List of rendered strings with orphaned separators removed
     """
-    # Filter to only rendered widgets (non-None)
     rendered = [(cfg, s) for cfg, s in pairs if s is not None]
 
     result = []
@@ -112,8 +105,6 @@ def _remove_orphaned_separators(
         is_separator = cfg.type == "separator"
 
         if is_separator:
-            # Skip if previous was also separator (collapse consecutive)
-            # Skip if we're at the start (leading separator)
             if not prev_was_separator:
                 result.append((cfg, content))
             prev_was_separator = True
@@ -121,7 +112,6 @@ def _remove_orphaned_separators(
             result.append((cfg, content))
             prev_was_separator = False
 
-    # Remove trailing separator if present
     if result and result[-1][0].type == "separator":
         result.pop()
 
@@ -141,22 +131,18 @@ def render_status_line(config: StatusLineConfig, context: RenderContext) -> str:
     if not config.lines:
         return ""
 
-    # Render first line only for now (can be extended to multiple lines)
     first_line = config.lines[0]
 
-    # Build list of (widget_config, rendered_string) tuples
     rendered_pairs = []
     for widget_config in first_line:
         widget_str = render_widget(widget_config, context)
         rendered_pairs.append((widget_config, widget_str))
 
-    # Filter out orphaned separators
     final_widgets = _remove_orphaned_separators(rendered_pairs)
 
     if not final_widgets:
         return ""
 
-    # Join widgets
     return "".join(final_widgets)
 
 

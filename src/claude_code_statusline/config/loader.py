@@ -3,6 +3,7 @@
 import os
 
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
@@ -10,6 +11,10 @@ from pydantic import ValidationError
 
 from .defaults import get_default_config
 from .schema import StatusLineConfig
+
+# Module-level cache for config
+_cached_config: Optional[StatusLineConfig] = None
+_cached_mtime: float = 0.0
 
 
 def get_config_dir() -> Path:
@@ -27,12 +32,10 @@ def get_missing_widgets(config: StatusLineConfig) -> list[str]:
     """Return widget types in defaults but missing from user config."""
     default_config = get_default_config()
 
-    # Extract non-separator widget types from defaults
     default_types = {
         w.type for line in default_config.lines for w in line if w.type != "separator"
     }
 
-    # Extract non-separator widget types from user config
     user_types = {
         w.type for line in config.lines for w in line if w.type != "separator"
     }
@@ -42,20 +45,33 @@ def get_missing_widgets(config: StatusLineConfig) -> list[str]:
 
 def load_config() -> StatusLineConfig:
     """
-    Load configuration from YAML file.
+    Load configuration from YAML file with mtime-based caching.
 
     If config file doesn't exist, creates it with defaults.
     If config is invalid, falls back to defaults and logs error.
     """
+    global _cached_config, _cached_mtime
+
     config_path = get_config_path()
 
-    # If config doesn't exist, create it with defaults
+    if _cached_config is not None:
+        try:
+            current_mtime = config_path.stat().st_mtime
+            if current_mtime == _cached_mtime:
+                return _cached_config
+        except OSError:
+            pass
+
     if not config_path.exists():
         config = get_default_config()
         save_config(config)
+        _cached_config = config
+        try:
+            _cached_mtime = config_path.stat().st_mtime
+        except OSError:
+            _cached_mtime = 0.0
         return config
 
-    # Load existing config
     try:
         with open(config_path, encoding="utf-8") as f:
             config_data = yaml.safe_load(f)
@@ -65,7 +81,6 @@ def load_config() -> StatusLineConfig:
 
         config = StatusLineConfig(**config_data)
 
-        # Check for missing widgets and warn user
         missing = get_missing_widgets(config)
         if missing:
             import sys
@@ -76,10 +91,15 @@ def load_config() -> StatusLineConfig:
                 file=sys.stderr,
             )
 
+        _cached_config = config
+        try:
+            _cached_mtime = config_path.stat().st_mtime
+        except OSError:
+            _cached_mtime = 0.0
+
         return config
 
     except (yaml.YAMLError, ValidationError, OSError) as e:
-        # Log error and fall back to defaults
         import sys
 
         print(
@@ -95,10 +115,8 @@ def save_config(config: StatusLineConfig) -> None:
     config_path = get_config_path()
     config_dir = config_path.parent
 
-    # Create config directory if it doesn't exist
     config_dir.mkdir(parents=True, exist_ok=True)
 
-    # Convert config to dict and save as YAML
     config_dict = config.model_dump(mode="python")
 
     with open(config_path, "w", encoding="utf-8") as f:

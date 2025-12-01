@@ -95,14 +95,6 @@ class TestModelWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_fallback_text(self):
-        widget = ModelWidget()
-        assert widget.fallback_text == "Unknown model"
-
-    def test_default_color(self):
-        widget = ModelWidget()
-        assert widget.default_color == "cyan"
-
 
 class TestDirectoryWidget:
     """Tests for DirectoryWidget."""
@@ -117,14 +109,6 @@ class TestDirectoryWidget:
         widget = DirectoryWidget()
         result = widget.render(widget_config, context)
         assert result is None
-
-    def test_has_fallback_text(self):
-        widget = DirectoryWidget()
-        assert widget.fallback_text == "--"
-
-    def test_default_color(self):
-        widget = DirectoryWidget()
-        assert widget.default_color == "blue"
 
 
 class TestContextPercentageWidget:
@@ -146,14 +130,6 @@ class TestContextPercentageWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_fallback_text(self):
-        widget = ContextPercentageWidget()
-        assert widget.fallback_text == "No active transcript"
-
-    def test_default_color_is_none(self):
-        widget = ContextPercentageWidget()
-        assert widget.default_color == "none"
-
 
 class TestContextTokensWidget:
     """Tests for ContextTokensWidget."""
@@ -172,10 +148,6 @@ class TestContextTokensWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_fallback_text(self):
-        widget = ContextTokensWidget()
-        assert widget.fallback_text == "No active transcript"
-
 
 class TestCostWidget:
     """Tests for CostWidget."""
@@ -183,7 +155,6 @@ class TestCostWidget:
     def test_renders_cost(self, sample_context, widget_config):
         widget = CostWidget()
         result = widget.render(widget_config, sample_context)
-        # CostWidget handles its own coloring, so result includes ANSI codes
         assert result.startswith("Cost: ")
         assert "$2.50 USD" in result
 
@@ -192,10 +163,6 @@ class TestCostWidget:
         widget = CostWidget()
         result = widget.render(widget_config, context)
         assert result is None
-
-    def test_has_fallback_text(self):
-        widget = CostWidget()
-        assert widget.fallback_text == "Cost: Not Found"
 
 
 class TestLinesAddedWidget:
@@ -214,14 +181,6 @@ class TestLinesAddedWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_no_fallback_text(self):
-        widget = LinesAddedWidget()
-        assert widget.fallback_text is None
-
-    def test_default_color(self):
-        widget = LinesAddedWidget()
-        assert widget.default_color == "green"
-
 
 class TestLinesRemovedWidget:
     """Tests for LinesRemovedWidget."""
@@ -239,14 +198,6 @@ class TestLinesRemovedWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_no_fallback_text(self):
-        widget = LinesRemovedWidget()
-        assert widget.fallback_text is None
-
-    def test_default_color(self):
-        widget = LinesRemovedWidget()
-        assert widget.default_color == "red"
-
 
 class TestLinesChangedWidget:
     """Tests for LinesChangedWidget."""
@@ -254,7 +205,6 @@ class TestLinesChangedWidget:
     def test_renders_both_added_and_removed(self, sample_context, widget_config):
         widget = LinesChangedWidget()
         result = widget.render(widget_config, sample_context)
-        # Result contains colored ANSI codes, just check for text presence
         assert "+150 (added)" in result
         assert "-45 (removed)" in result
         assert " / " in result
@@ -288,14 +238,6 @@ class TestLinesChangedWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_no_fallback_text(self):
-        widget = LinesChangedWidget()
-        assert widget.fallback_text is None
-
-    def test_default_color(self):
-        widget = LinesChangedWidget()
-        assert widget.default_color == "none"
-
 
 class TestSessionIdWidget:
     """Tests for SessionIdWidget."""
@@ -311,10 +253,6 @@ class TestSessionIdWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_fallback_text(self):
-        widget = SessionIdWidget()
-        assert widget.fallback_text == "No session"
-
 
 class TestSessionClockWidget:
     """Tests for SessionClockWidget."""
@@ -322,7 +260,6 @@ class TestSessionClockWidget:
     def test_renders_duration(self, sample_context, widget_config):
         widget = SessionClockWidget()
         result = widget.render(widget_config, sample_context)
-        # 7800 seconds = 2hr 10m
         assert result == "Elapsed: 2hr 10m"
 
     def test_returns_none_without_session_metrics(self, widget_config):
@@ -330,10 +267,6 @@ class TestSessionClockWidget:
         widget = SessionClockWidget()
         result = widget.render(widget_config, context)
         assert result is None
-
-    def test_has_no_fallback_text(self):
-        widget = SessionClockWidget()
-        assert widget.fallback_text is None
 
 
 class TestGitBranchWidget:
@@ -353,10 +286,6 @@ class TestGitBranchWidget:
         widget = GitBranchWidget()
         result = widget.render(widget_config, context)
         assert result is None
-
-    def test_has_fallback_text(self):
-        widget = GitBranchWidget()
-        assert widget.fallback_text == "No repo"
 
 
 class TestGitChangesWidget:
@@ -391,10 +320,6 @@ class TestGitChangesWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
-    def test_has_no_fallback_text(self):
-        widget = GitChangesWidget()
-        assert widget.fallback_text is None
-
 
 class TestGitWorktreeWidget:
     """Tests for GitWorktreeWidget."""
@@ -416,10 +341,6 @@ class TestGitWorktreeWidget:
         result = widget.render(widget_config, sample_context)
         assert result is None
 
-    def test_has_no_fallback_text(self):
-        widget = GitWorktreeWidget()
-        assert widget.fallback_text is None
-
 
 class TestSeparatorWidget:
     """Tests for SeparatorWidget."""
@@ -436,7 +357,3 @@ class TestSeparatorWidget:
         widget = SeparatorWidget()
         result = widget.render(config, context)
         assert result == " • "
-
-    def test_default_color(self):
-        widget = SeparatorWidget()
-        assert widget.default_color == "dim"

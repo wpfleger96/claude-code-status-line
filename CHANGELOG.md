@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v0.6.0 (2025-12-01)
+
+### Chores
+
+- Add pytest coverage
+  ([`5eff626`](https://github.com/wpfleger96/claude-code-status-line/commit/5eff626fc86c1a737bb42eca40309e0b7d6a528d))
+
+### Features
+
+- Add customizable widget system with improved integrations and available widgets
+  ([`060cf71`](https://github.com/wpfleger96/claude-code-status-line/commit/060cf718c911a2334e65d6b59f858ca7a6dd6099))
+
+- Count tokens using real values in transcript files instead of our current estimated approach -
+  Implement configurable widget system so that status line components and location are customizable
+  - Add git integration to show working git status in status line - Add session clock metrics
+
+
 ## v0.5.0 (2025-11-26)
 
 

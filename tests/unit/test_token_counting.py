@@ -1,7 +1,6 @@
 import pytest
 
-from claude_code_statusline.calibrate import _find_compact_boundary_line
-from claude_code_statusline.common import (
+from claude_code_statusline.parsers.jsonl import (
     ParsedTranscript,
     calculate_total_tokens,
     extract_message_content_chars,
@@ -26,17 +25,6 @@ class TestCompactBoundaryDetection:
         """Ensure we don't falsely detect boundaries without proper metadata."""
         data = {"type": "system", "subtype": "compact_boundary"}
         assert is_real_compact_boundary(data) is False
-
-    def test_finds_last_boundary_when_multiple(self):
-        """Critical: with multiple compactions, only count after the LAST one."""
-        lines = [
-            '{"type":"user","message":{"content":"Very old"}}',
-            '{"type":"system","subtype":"compact_boundary","compactMetadata":{"trigger":"auto"}}',
-            '{"type":"user","message":{"content":"Old"}}',
-            '{"type":"system","subtype":"compact_boundary","compactMetadata":{"trigger":"manual"}}',
-            '{"type":"user","message":{"content":"Current"}}',
-        ]
-        assert _find_compact_boundary_line(lines) == 4
 
 
 @pytest.mark.unit

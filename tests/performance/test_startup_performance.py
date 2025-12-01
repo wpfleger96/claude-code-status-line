@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from claude_code_statusline.common import get_context_limit, parse_transcript
+from claude_code_statusline.parsers.jsonl import parse_transcript
+from claude_code_statusline.utils.models import get_context_limit
 
 
 def generate_large_transcript(num_lines: int, output_path: Path) -> None:

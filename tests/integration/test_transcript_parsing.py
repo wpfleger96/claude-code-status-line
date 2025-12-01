@@ -1,7 +1,6 @@
 import pytest
 
-from claude_code_statusline.calibrate import analyze_session_file
-from claude_code_statusline.common import parse_transcript
+from claude_code_statusline.parsers.jsonl import parse_transcript
 
 
 @pytest.mark.integration
@@ -21,12 +20,8 @@ class TestRealSessionParsing:
 
         assert result.boundaries_found > 0
         assert result.is_jsonl is True
-
-        with open(compact_session_file) as f:
-            total_lines = sum(1 for line in f if line.strip())
-
-        analysis = analyze_session_file(str(compact_session_file))
-        assert analysis.included_lines < total_lines
+        # After compact boundary, context_chars should be less than total file
+        assert result.context_chars < result.total_file_chars
 
     def test_image_not_inflating_token_count(self, image_session_file):
         """Critical: verify base64 images don't inflate character count."""

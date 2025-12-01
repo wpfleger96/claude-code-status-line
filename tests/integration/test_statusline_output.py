@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from claude_code_statusline.common import parse_transcript
+from claude_code_statusline.parsers.jsonl import parse_transcript
 from claude_code_statusline.statusline import parse_input_data
 
 
@@ -14,33 +14,27 @@ class TestPayloadParsing:
         """Critical: session_id must be extracted for forked session support."""
         mock_stdin(json.dumps(sample_input_payload))
 
-        cwd, transcript_path, model_id, model_name, cost_data, version, session_id = (
-            parse_input_data()
-        )
+        data = parse_input_data()
 
-        assert session_id == "abc123-def456"
+        assert data.get("session_id") == "abc123-def456"
 
     def test_handles_missing_session_id(self, mock_stdin):
         """Backwards compatibility: old payloads without session_id."""
         payload = {"workspace": {"current_dir": "/test"}, "model": {"id": "test"}}
         mock_stdin(json.dumps(payload))
 
-        cwd, transcript_path, model_id, model_name, cost_data, version, session_id = (
-            parse_input_data()
-        )
+        data = parse_input_data()
 
-        assert session_id == ""
+        assert data.get("session_id", "") == ""
 
     def test_handles_invalid_json(self, mock_stdin):
         """Graceful degradation on malformed input."""
         mock_stdin("not valid json")
 
-        cwd, transcript_path, model_id, model_name, cost_data, version, session_id = (
-            parse_input_data()
-        )
+        data = parse_input_data()
 
-        assert cwd == ""
-        assert session_id == ""
+        assert data.get("workspace", {}).get("current_dir", "") == ""
+        assert data.get("session_id", "") == ""
 
 
 @pytest.mark.integration
@@ -57,11 +51,9 @@ class TestSessionIdFallback:
         }
         mock_stdin(json.dumps(payload))
 
-        cwd, transcript_path, model_id, model_name, cost_data, version, session_id = (
-            parse_input_data()
-        )
+        data = parse_input_data()
 
-        assert session_id == "payload-session-id"
+        assert data.get("session_id") == "payload-session-id"
 
     def test_falls_back_to_jsonl_session_id(self, forked_session_file):
         """When payload lacks session_id, fall back to JSONL parsing."""

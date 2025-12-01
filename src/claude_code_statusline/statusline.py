@@ -6,221 +6,133 @@ import sys
 
 from concurrent.futures import ThreadPoolExecutor
 
-from claude_code_statusline.common import (
-    CHARS_PER_TOKEN,
-    ParsedTranscript,
-    calculate_total_tokens,
-    debug_log,
-    get_context_limit,
-    get_model_display_name,
-    get_system_overhead_tokens,
-    parse_transcript,
-    prefetch_model_data,
-)
-
-PROGRESS_BAR_SEGMENTS = 10
-PERCENT_PER_SEGMENT = 10
-
-COLOR_GREEN = "\033[32m"
-COLOR_YELLOW = "\033[33m"
-COLOR_RED = "\033[31m"
-COLOR_BLUE = "\033[36m"
-COLOR_DIM = "\033[2m"
-COLOR_RESET = "\033[0m"
+from .parsers.tokens import get_session_duration, get_token_metrics
+from .renderer import render_status_line_with_config
+from .types import RenderContext
+from .utils.debug import debug_log
+from .utils.models import prefetch_model_data
 
 
-def get_usage_color(usage_percent: int) -> str:
-    """Get color based on usage percentage."""
-    if usage_percent < 50:
-        return COLOR_GREEN
-    elif usage_percent < 80:
-        return COLOR_YELLOW
-    return COLOR_RED
+def parse_input_data() -> dict:
+    """Parse JSON input from stdin and return as dict.
+
+    Returns:
+        Dictionary with Claude Code JSON payload
+    """
+    try:
+        input_data = sys.stdin.read()
+        return json.loads(input_data)
+    except (json.JSONDecodeError, ValueError):
+        return {}
 
 
-def format_number(number: int) -> str:
-    """Format large numbers with K or M suffix."""
-    if number >= 10000 and number < 1000000:
-        thousands = number / 1000
-        if thousands == int(thousands):
-            return f"{int(thousands)}K"
-        return f"{thousands:.2f}".rstrip("0").rstrip(".") + "K"
-    elif number >= 1000000:
-        millions = number / 1000000
-        if millions == int(millions):
-            return f"{int(millions)}M"
-        return f"{millions:.2f}".rstrip("0").rstrip(".") + "M"
-    return str(number)
+def find_transcript_path(data: dict) -> str:
+    """Find transcript path, with fallback to construct from session_id.
+
+    Args:
+        data: JSON input data
+
+    Returns:
+        Path to transcript file, or empty string if not found
+    """
+    # Try provided path first
+    transcript_path = data.get("transcript_path", "")
+    if transcript_path and os.path.isfile(transcript_path):
+        return transcript_path
+
+    # Fallback: construct from session_id and workspace
+    session_id = data.get("session_id", "")
+    workspace = data.get("workspace", {}).get("current_dir", "")
+
+    if session_id and workspace:
+        # Claude Code stores transcripts in ~/.claude/projects/{encoded_path}/{session_id}.jsonl
+        encoded_path = workspace.replace("/", "-")
+        if encoded_path.startswith("-"):
+            encoded_path = encoded_path[1:]  # Remove leading dash
+        potential_path = os.path.expanduser(
+            f"~/.claude/projects/-{encoded_path}/{session_id}.jsonl"
+        )
+        if os.path.isfile(potential_path):
+            return potential_path
+
+    return transcript_path  # Return original (may be empty)
 
 
-def render_progress_bar(usage_percent: int) -> str:
-    """Create visual progress bar."""
-    filled = min(usage_percent // PERCENT_PER_SEGMENT, PROGRESS_BAR_SEGMENTS)
-    empty = PROGRESS_BAR_SEGMENTS - filled
-    color = get_usage_color(usage_percent)
-    return f"{color}{'●' * filled}{'○' * empty}{COLOR_RESET}"
+def extract_session_id(data: dict, transcript_path: str) -> str:
+    """Extract session ID from data or transcript filename.
 
+    Args:
+        data: JSON input data
+        transcript_path: Path to transcript file
 
-def format_context_info(
-    transcript: ParsedTranscript,
-    model_id: str,
-    model_name: str = "",
-    session_id: str = "",
-) -> str:
-    """Format context usage information for display."""
+    Returns:
+        Session ID or empty string
+    """
+    # Try JSON input first
+    session_id = data.get("session_id", "")
+    if session_id:
+        return session_id
 
-    if transcript.context_chars == 0:
-        return f" Context: {COLOR_DIM}No active transcript{COLOR_RESET}"
-
-    total_tokens = calculate_total_tokens(transcript)
-    context_limit = get_context_limit(model_id, model_name)
-
-    if context_limit > 0:
-        usage_percent = (total_tokens * 100) // context_limit
-        progress_bar = render_progress_bar(usage_percent)
-        formatted_tokens = format_number(total_tokens)
-        formatted_limit = format_number(context_limit)
-
-        if os.getenv("CLAUDE_CODE_STATUSLINE_DEBUG") and transcript.is_jsonl:
-            conversation_tokens = transcript.context_chars // CHARS_PER_TOKEN
-            system_overhead_tokens = get_system_overhead_tokens()
-            naive_tokens = transcript.total_file_chars // CHARS_PER_TOKEN
-            debug_log(
-                f"Token breakdown: Conversation={conversation_tokens}, System={system_overhead_tokens}, Total={total_tokens}",
-                session_id,
-            )
-            if transcript.boundaries_found > 0:
-                debug_log(
-                    f"Token reduction from compaction: {naive_tokens - conversation_tokens}",
-                    session_id,
-                )
-            else:
-                debug_log(f"File size tokens (naive): {naive_tokens}", session_id)
-
-        return f" Context: {progress_bar} {usage_percent}% ({formatted_tokens}/{formatted_limit} tokens)"
+    # Fallback: extract from transcript filename
+    if transcript_path:
+        filename = os.path.basename(transcript_path)
+        if filename.endswith(".jsonl"):
+            potential_id = filename[:-6]
+            # Validate UUID format (36 chars, 4 hyphens)
+            if len(potential_id) == 36 and potential_id.count("-") == 4:
+                return potential_id
 
     return ""
 
 
-def parse_input_data() -> tuple[str, str, str, str, dict, str, str]:
-    """Parse JSON input from stdin and extract relevant fields."""
-    try:
-        input_data = sys.stdin.read()
-        data = json.loads(input_data)
-    except (json.JSONDecodeError, ValueError):
-        data = {}
-
-    cwd = data.get("workspace", {}).get("current_dir", "")
-    transcript_path = data.get("transcript_path", "")
-    model_id = data.get("model", {}).get("id", "")
-    model_name = data.get("model", {}).get("display_name", "")
-    cost_data = data.get("cost", {})
-    claude_code_version = data.get("version", "unknown")
-    session_id = data.get("session_id", "")
-
-    return (
-        cwd,
-        transcript_path,
-        model_id,
-        model_name,
-        cost_data,
-        claude_code_version,
-        session_id,
-    )
-
-
-def get_dir_basename(cwd: str) -> str:
-    """Safely get basename of directory."""
-    try:
-        return os.path.basename(cwd) if cwd else ""
-    except (OSError, TypeError):
-        return ""
-
-
-def get_cost_color(cost_usd: float) -> str:
-    """Get color based on cost amount."""
-    if cost_usd == 0.0:
-        return COLOR_DIM
-    elif cost_usd < 5.0:
-        return COLOR_GREEN
-    elif cost_usd < 10.0:
-        return COLOR_YELLOW
-    return COLOR_RED
-
-
-def format_cost(cost_data: dict) -> str:
-    """Format cost information for display."""
-    cost_usd = cost_data.get("total_cost_usd", 0) if cost_data else 0
-    lines_added = cost_data.get("total_lines_added", 0) if cost_data else 0
-    lines_removed = cost_data.get("total_lines_removed", 0) if cost_data else 0
-
-    parts = []
-
-    cost_color = get_cost_color(cost_usd)
-    parts.append(f"Cost: {cost_color}${cost_usd:.2f}{COLOR_RESET} USD")
-
-    added_color = COLOR_DIM if lines_added == 0 else COLOR_GREEN
-    parts.append(f"{added_color}+{lines_added} lines added{COLOR_RESET}")
-
-    removed_color = COLOR_DIM if lines_removed == 0 else COLOR_RED
-    parts.append(f"{removed_color}-{lines_removed} lines removed{COLOR_RESET}")
-
-    return " | " + " | ".join(parts)
-
-
-def format_session_id(session_id: str) -> str:
-    """Format session ID for display in status line."""
-    if not session_id:
-        return ""
-
-    return f" | Session ID: {COLOR_DIM}{session_id}{COLOR_RESET}"
-
-
 def main():
-    """Main entry point with parallel I/O for faster startup."""
-    (
-        cwd,
-        transcript_path,
-        model_id,
-        model_name,
-        cost_data,
-        claude_code_version,
+    """Main entry point with widget-based rendering and parallel I/O."""
+    data = parse_input_data()
+
+    # Find transcript path with fallback for forked sessions
+    transcript_path = find_transcript_path(data)
+
+    # Extract/infer session ID
+    session_id = extract_session_id(data, transcript_path)
+
+    # Add session_id to data for widgets to use
+    if session_id:
+        data["session_id"] = session_id
+
+    debug_log("=== SESSION START ===", session_id)
+    debug_log(
+        f"Working Directory: {data.get('workspace', {}).get('current_dir', '')}",
         session_id,
-    ) = parse_input_data()
+    )
+    debug_log(f"Model ID: {data.get('model', {}).get('id', '')}", session_id)
+    debug_log(f"Transcript Path: {transcript_path}", session_id)
 
-    # Run I/O operations in parallel
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    # Parallel I/O for fast startup
+    with ThreadPoolExecutor(max_workers=3) as executor:
         # Submit I/O tasks
-        transcript_future = executor.submit(parse_transcript, transcript_path)
-        executor.submit(prefetch_model_data)  # Fire and forget, populates cache
+        token_future = executor.submit(get_token_metrics, transcript_path)
+        session_future = executor.submit(get_session_duration, transcript_path)
+        executor.submit(prefetch_model_data)  # Fire and forget
 
-        # Compute non-blocking parts while I/O runs
-        dir_basename = get_dir_basename(cwd)
-        cost_info = format_cost(cost_data)
-        display_name = get_model_display_name(model_id, model_name)
+        # Wait for results
+        token_metrics = token_future.result()
+        session_metrics = session_future.result()
 
-        # Wait for transcript parsing to complete
-        transcript = transcript_future.result()
-
-    effective_session_id = session_id if session_id else transcript.session_id
-    session_info = format_session_id(effective_session_id)
-
-    debug_log("=== SESSION METADATA ===", effective_session_id)
-    debug_log(f"Working Directory: {cwd}", effective_session_id)
-    debug_log(f"Model ID: {model_id}", effective_session_id)
-    debug_log(f"Model Name: {model_name}", effective_session_id)
-    debug_log(f"Claude Code Version: {claude_code_version}", effective_session_id)
-    debug_log("=" * 25, effective_session_id)
-
-    # Context info uses prefetched model data (should be fast now)
-    context_info = format_context_info(
-        transcript, model_id, model_name, effective_session_id
+    # Build render context
+    context = RenderContext(
+        data=data,
+        token_metrics=token_metrics,
+        session_metrics=session_metrics,
+        git_status=None,  # Lazy-loaded by git widgets
     )
 
-    print(
-        f"{COLOR_BLUE}{display_name}{COLOR_RESET} | {COLOR_DIM}{dir_basename}{COLOR_RESET} |{context_info}{cost_info}{session_info}",
-        end="",
-    )
+    debug_log(f"Token metrics: {token_metrics}", session_id)
+    debug_log(f"Session metrics: {session_metrics}", session_id)
+    debug_log("=" * 25, session_id)
+
+    # Render using widget system
+    output = render_status_line_with_config(context)
+    print(output, end="")
 
 
 if __name__ == "__main__":

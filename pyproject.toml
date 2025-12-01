@@ -11,7 +11,8 @@ license = "MIT"
 authors = [{name = "Will Pfleger", email = "pfleger.will@gmail.com"}]
 requires-python = ">=3.9"
 dependencies = [
-    "pytest-cov>=7.0.0",
+    "pyyaml>=6.0",
+    "pydantic>=2.0",
 ]
 
 [project.urls]
@@ -23,7 +24,6 @@ Changelog = "https://github.com/wpfleger96/claude-code-status-line/blob/main/CHA
 
 [project.scripts]
 claude-statusline = "claude_code_statusline.statusline:main"
-claude-calibrate = "claude_code_statusline.calibrate:main"
 
 [dependency-groups]
 dev = [

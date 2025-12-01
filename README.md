@@ -15,12 +15,21 @@ claude-code-status-line/
 │       ├── __init__.py          # Package initialization
 │       ├── __version__.py       # Version tracking
 │       ├── statusline.py        # Main statusline command
-│       ├── calibrate.py         # Token counting calibration tool
-│       └── common.py            # Shared utilities
+│       ├── config/              # Configuration system
+│       │   ├── defaults.py      # Default widget configuration
+│       │   ├── loader.py        # Config file loading
+│       │   └── schema.py        # Pydantic schemas
+│       ├── widgets/             # Widget system
+│       │   ├── base.py          # Base widget class
+│       │   ├── registry.py      # Widget registration
+│       │   └── builtin/         # Built-in widgets
+│       ├── parsers/             # Transcript parsing
+│       │   ├── jsonl.py         # JSONL parser
+│       │   └── tokens.py        # Real token counting
+│       └── utils/               # Shared utilities
 ├── .github/workflows/
 │   └── release.yml              # Automated semantic versioning
 ├── pyproject.toml               # Package configuration
-├── uv.lock                      # Dependency lock file
 └── README.md
 ```
 
@@ -63,10 +72,84 @@ Add a `statusLine` section to your `~/.claude/settings.json` file:
 
 Replace `/path/to/claude-code-status-line` with the absolute path to where you cloned this repository (e.g., `~/Development/Personal/claude-code-status-line`).
 
+## Configuration
+
+### Widget Customization
+
+Customize your status line by creating `~/.config/claude-statusline/config.yaml`:
+
+```yaml
+version: 1
+lines:
+  - - type: model
+      color: cyan
+    - type: separator
+    - type: directory
+      color: blue
+    - type: separator
+    - type: git-branch
+      color: magenta
+    - type: separator
+    - type: context-percentage
+      color: auto  # auto-colors based on usage
+    - type: separator
+    - type: cost
+      color: auto  # auto-colors based on amount
+    - type: separator
+    - type: session-clock
+      color: white
+```
+
+**Widget Options:**
+- `type` (required): Widget identifier (see Available Widgets list below)
+- `color` (optional): Color name or "auto" for dynamic coloring
+- `bold` (optional): Make text bold (default: false)
+- `metadata` (optional): Widget-specific configuration
+
+**Color Options:** `white`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `dim`, `auto`, `none`
+
+**Auto-Generated Config:**
+If no config file exists, one is automatically created with all widgets enabled. Delete `~/.config/claude-statusline/config.yaml` to regenerate defaults.
+
+**Stale Config Warning:**
+When new widgets are added, the script warns you:
+```
+Warning: Config is missing widgets from defaults: session-clock.
+Delete ~/.config/claude-statusline/config.yaml to regenerate with new defaults.
+```
+
 ## Features
 
+### Customizable Widget System
+- **Configurable Layout**: Customize which widgets appear and in what order via `~/.config/claude-statusline/config.yaml`
+- **Built-in Widgets**: 14 widgets including model, directory, git status, context, cost, session info
+- **Flexible Styling**: Per-widget color customization and bold formatting
+- **Automatic Fallback**: Missing config uses sensible defaults with all widgets enabled
+- **Stale Config Detection**: Warns when config is missing newly-added widgets
+
+**Available Widgets:**
+- `model` - Claude model name (e.g., "Sonnet 4.5")
+- `directory` - Current working directory
+- `git-branch` - Active git branch name
+- `git-changes` - Staged/unstaged changes count
+- `git-worktree` - Git worktree name (if applicable)
+- `context-percentage` - Context usage with progress bar
+- `context-tokens` - Token count (current/limit)
+- `cost` - Session cost in USD
+- `lines-added` - Lines added in session
+- `lines-removed` - Lines removed in session
+- `lines-changed` - Combined added/removed
+- `session-id` - Claude Code session UUID
+- `session-clock` - Elapsed session time
+- `separator` - Visual separator (default: "|")
+
+### Real Token Counting
+- **Actual Token Values**: Reads real token counts from Claude Code transcript files instead of estimating
+- **Message-Level Accuracy**: Extracts exact `input_tokens` and `output_tokens` from message usage data
+- **Compact-Aware**: Correctly handles `/compact` boundaries, counting only active context
+- **System Overhead**: Automatically accounts for Claude Code's system prompt and tool definitions (21400 tokens default)
+
 ### Smart Context Tracking
-- **Compact-Aware Token Counting**: Accurately counts only active context after Claude Code's `/compact` command, ignoring compacted history
 - **JSONL Transcript Parsing**: Analyzes Claude Code's session files to find compact boundaries and count only relevant tokens
 - **Fallback Compatibility**: Falls back to simple file size calculation for non-JSONL transcript formats
 - **Calibration Tool**: Includes `calibrate_token_counting.py` to validate and improve accuracy
@@ -74,7 +157,8 @@ Replace `/path/to/claude-code-status-line` with the absolute path to where you c
 ### Token Calculation
 
 #### How It Works
-- Estimates tokens by dividing character count by 3.31 (empirically derived from Claude's actual token counts)
+- Reads actual token counts from transcript `message.usage` fields (input_tokens + output_tokens)
+- Falls back to estimation (character count ÷ 3.31) only when usage data is unavailable
 - Adds system overhead tokens (21400 by default) for Claude Code's system prompt, tools, and memory
 - Retrieves model-specific context limits from cached API data, live fetches, or hardcoded fallbacks
 
@@ -120,31 +204,39 @@ Cache benefits: Faster rendering, reduced network dependency, automatic refresh.
 | Lines Added | 0 lines | Green (>0) |
 | Lines Removed | 0 lines | Red (>0) |
 
-**Session ID**:
-- Displays the complete Claude Code session ID
-- Shown in dimmed text at the end of the status line
-- Enables quick visual matching of session files in `~/.claude/projects/<folder>` without needing to run `/status` and copy/paste the session ID
+**Git Integration**:
+- `git-branch`: Shows current branch with fallback text when not in a repo
+- `git-changes`: Displays staged/unstaged changes (e.g., "+5 ~3 -2")
+- `git-worktree`: Shows worktree name if working in a linked worktree
 
-Always displays: total session cost (USD), lines added/removed, and session ID, appears after context usage.
+**Session Tracking**:
+- `session-id`: Complete Claude Code session UUID for file matching
+- `session-clock`: Elapsed session time (e.g., "Elapsed: 2hr 15m")
+
+Widget rendering is intelligent - widgets with no data hide automatically, and orphaned separators are removed.
 
 ---
 
 ## Example Outputs
 
+**Default configuration with git integration:**
 ```
-Opus 4.1 | wpfleger-ai-tools | Context: ●●●●●●○○○○ 60% (120K/200K tokens) | Cost: $2.50 USD | +150 lines added | -25 lines removed | Session: 852d18cc-8599-47c3-840b-1e36c142f47f
-```
-
-```
-Opus 4.1 | wpfleger-ai-tools | Context: ●●●●●●●●●○ 90% (180K/200K tokens) | Cost: $8.75 USD | +500 lines added | -100 lines removed | Session: a3f7b2cd-4e1a-42d9-9f3c-8b7e5d2a1c0f
+Sonnet 4.5 | claude-code-status-line | main | ●●●●●●○○○○ 60% (120K/200K tokens) | Cost: $2.50 USD | +150 ~25 -10 | Session: 852d18cc | Elapsed: 2hr 15m
 ```
 
+**High context usage:**
 ```
-Opus 4.1 | wpfleger-ai-tools | Context: ○○○○○○○○○○ 0% (783/200K tokens) | Cost: $0.00 USD | +0 lines added | -0 lines removed | Session: d6994160-5c39-4ecf-8922-65a36b984ec5
+Sonnet 4.5 | my-project | feature/auth | ●●●●●●●●●○ 90% (180K/200K tokens) | Cost: $8.75 USD | +500 ~50 -100 | Session: a3f7b2cd | Elapsed: 45m
 ```
 
+**Low usage (widgets hide when zero):**
 ```
-Opus 4.1 | wpfleger-ai-tools | Context: No active transcript | Cost: $0.00 USD | +0 lines added | -0 lines removed | Session: 7b89c123-6a2f-4d8e-9c5b-3f4e7a1d2b8c
+Sonnet 4.5 | my-project | main | ○○○○○○○○○○ 0% (783/200K tokens) | Cost: $0.00 USD | Session: d6994160 | Elapsed: 5m
+```
+
+**No active transcript:**
+```
+Sonnet 4.5 | my-project | develop | No active transcript | Cost: $0.00 USD | Session: 7b89c123 | Elapsed: 1m
 ```
 
 ---

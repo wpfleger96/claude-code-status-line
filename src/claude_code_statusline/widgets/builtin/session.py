@@ -5,6 +5,7 @@ from typing import Optional
 from ...config.schema import WidgetConfigModel
 from ...parsers.tokens import format_duration
 from ...types import RenderContext
+from ...utils.colors import colorize
 from ..base import Widget
 from ..registry import register_widget
 
@@ -12,7 +13,7 @@ from ..registry import register_widget
 @register_widget(
     "session-id",
     display_name="Session ID",
-    default_color="dim",
+    default_color="none",
     description="Claude Code session identifier",
     fallback_text="No session",
 )
@@ -28,7 +29,8 @@ class SessionIdWidget(Widget):
         if not session_id:
             return None
 
-        return f"Session: {session_id}"
+        colored_id = colorize(session_id, "grey")
+        return f"Session: {colored_id}"
 
 
 @register_widget(

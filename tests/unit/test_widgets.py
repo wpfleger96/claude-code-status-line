@@ -245,7 +245,8 @@ class TestSessionIdWidget:
     def test_renders_session_id(self, sample_context, widget_config):
         widget = SessionIdWidget()
         result = widget.render(widget_config, sample_context)
-        assert result == "Session: abc123-def456-789"
+        assert result.startswith("Session: ")
+        assert "abc123-def456-789" in result
 
     def test_returns_none_when_no_session_id(self, widget_config):
         context = RenderContext(data={}, token_metrics=None)

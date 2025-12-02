@@ -261,7 +261,8 @@ class TestSessionClockWidget:
     def test_renders_duration(self, sample_context, widget_config):
         widget = SessionClockWidget()
         result = widget.render(widget_config, sample_context)
-        assert result == "Elapsed: 2hr 10m"
+        assert result.startswith("Elapsed: ")
+        assert "2hr 10m" in result
 
     def test_returns_none_without_session_metrics(self, widget_config):
         context = RenderContext(data={}, token_metrics=None, session_metrics=None)

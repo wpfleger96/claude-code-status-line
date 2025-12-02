@@ -36,7 +36,7 @@ class SessionIdWidget(Widget):
 @register_widget(
     "session-clock",
     display_name="Session Clock",
-    default_color="white",
+    default_color="none",
     description="Elapsed session time (e.g., 2hr 15m)",
 )
 class SessionClockWidget(Widget):
@@ -49,4 +49,6 @@ class SessionClockWidget(Widget):
         if not context.session_metrics:
             return None
 
-        return f"Elapsed: {format_duration(context.session_metrics.duration_seconds)}"
+        duration = format_duration(context.session_metrics.duration_seconds)
+        colored_duration = colorize(duration, "cyan")
+        return f"Elapsed: {colored_duration}"

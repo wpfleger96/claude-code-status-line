@@ -34,7 +34,7 @@ class ContextPercentageWidget(Widget):
         if context_limit == 0:
             return None
 
-        percentage = (context_length * 100) / context_limit
+        percentage = round((context_length * 100) / context_limit, 1)
         progress_bar = render_progress_bar(percentage)
 
         # Format token counts

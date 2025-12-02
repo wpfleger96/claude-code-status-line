@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.6.2 (2025-12-02)
+
+### Bug Fixes
+
+- Ansi colors
+  ([`9903f4f`](https://github.com/wpfleger96/claude-code-status-line/commit/9903f4f46b1417d41dbb74d1e44e30cfc5ddcbd8))
+
+
 ## v0.6.1 (2025-12-02)
 
 ### Bug Fixes

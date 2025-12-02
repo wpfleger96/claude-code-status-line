@@ -25,7 +25,7 @@ class ContextPercentageWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render context percentage with progress bar and token count."""
-        if not context.token_metrics or context.token_metrics.context_length == 0:
+        if not context.token_metrics or not context.token_metrics.transcript_exists:
             return None
 
         context_limit = get_context_limit_for_render(context)
@@ -62,7 +62,7 @@ class ContextTokensWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render token count display."""
-        if not context.token_metrics:
+        if not context.token_metrics or not context.token_metrics.transcript_exists:
             return None
 
         context_limit = get_context_limit_for_render(context)

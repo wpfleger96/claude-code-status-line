@@ -56,6 +56,7 @@ def sample_context():
             cached_tokens=5000,
             total_tokens=105000,
             context_length=120000,
+            transcript_exists=True,
         ),
         session_metrics=SessionMetrics(
             start_time=None, last_activity=None, duration_seconds=7800

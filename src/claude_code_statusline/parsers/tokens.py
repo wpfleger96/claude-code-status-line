@@ -24,7 +24,7 @@ def parse_transcript(
         Tuple of (TokenMetrics, SessionMetrics) from single file pass
     """
     if not transcript_path or not os.path.isfile(transcript_path):
-        return TokenMetrics(), None
+        return TokenMetrics(transcript_exists=False), None
 
     input_tokens = 0
     output_tokens = 0
@@ -101,7 +101,7 @@ def parse_transcript(
                     continue
 
     except OSError:
-        return TokenMetrics(), None
+        return TokenMetrics(transcript_exists=False), None
 
     # Calculate context_length from most recent main chain message
     if most_recent_usage:
@@ -119,6 +119,7 @@ def parse_transcript(
         cached_tokens=cached_tokens,
         total_tokens=total_tokens,
         context_length=context_length,
+        transcript_exists=True,
     )
 
     # Build session metrics

@@ -14,6 +14,7 @@ class TokenMetrics:
     cached_tokens: int = 0
     total_tokens: int = 0
     context_length: int = 0  # Current context size from most recent message
+    transcript_exists: bool = False  # Whether transcript file was found and readable
 
 
 @dataclass

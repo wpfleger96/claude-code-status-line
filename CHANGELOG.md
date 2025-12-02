@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.6.1 (2025-12-02)
+
+### Bug Fixes
+
+- Don't render session prefix with ANSI code for contents
+  ([`12dc915`](https://github.com/wpfleger96/claude-code-status-line/commit/12dc915f1c183301e452c2461b07de8b47ed1970))
+
+### Chores
+
+- Performance improvements and cleanup
+  ([`43b2378`](https://github.com/wpfleger96/claude-code-status-line/commit/43b2378d0dad1e1c8d382fef780b073e3d686edb))
+
+
 ## v0.6.0 (2025-12-01)
 
 ### Chores

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.7.1 (2025-12-03)
+
+### Bug Fixes
+
+- Publish workflow dispatch not working
+  ([`eb9cdca`](https://github.com/wpfleger96/claude-code-status-line/commit/eb9cdca65a42f449330e030e3e594180c1791808))
+
+
 ## v0.7.0 (2025-12-03)
 
 ### Chores

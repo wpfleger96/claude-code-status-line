@@ -1,0 +1,74 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to publish (e.g., v0.6.3)'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.tag }}
+        fetch-depth: 0
+
+    - name: Fetch all tags from remote
+      run: |
+        git fetch --tags --force
+        echo "Recent tags:"
+        git tag -l | tail -10
+
+    - name: Check if release tag exists
+      id: check_tag
+      run: |
+        if TAG=$(git describe --exact-match HEAD 2>/dev/null); then
+          if echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "has_tag=true" >> $GITHUB_OUTPUT
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+          else
+            echo "has_tag=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "has_tag=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Set up Python
+      if: steps.check_tag.outputs.has_tag == 'true'
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+
+    - name: Install uv
+      if: steps.check_tag.outputs.has_tag == 'true'
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Install dependencies and build
+      if: steps.check_tag.outputs.has_tag == 'true'
+      run: |
+        uv sync --no-config
+        uv build
+
+    - name: Publish to PyPI
+      if: steps.check_tag.outputs.has_tag == 'true'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        verify-metadata: true
+
+    - name: Publish summary
+      if: always()
+      run: |
+        if [ "${{ steps.check_tag.outputs.has_tag }}" == "true" ]; then
+          echo "Published version ${{ steps.check_tag.outputs.tag }} to PyPI"
+        else
+          echo "Skipped - no release tag found"
+        fi

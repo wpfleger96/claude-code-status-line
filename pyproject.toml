@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claude-code-statusline"
-version = "v0.6.2"
+version = "0.6.2"
 description = "A Python script for Claude Code statusline with context usage tracking"
 readme = "README.md"
 license = "MIT"
@@ -47,8 +47,7 @@ markers = [
 addopts = "-m 'not performance' -v --cov=claude_code_statusline --cov-report=term-missing"
 
 [tool.semantic_release]
-version_toml = ["pyproject.toml:project.version:tf"]
-version_variables = ["src/claude_code_statusline/__version__.py:__version__"]
+version_toml = ["pyproject.toml:project.version"]
 tag_format = "v{version}"
 branch = "main"
 commit_parser = "conventional"

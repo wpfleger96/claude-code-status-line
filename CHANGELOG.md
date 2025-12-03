@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v0.7.0 (2025-12-03)
+
+### Chores
+
+- Fix tracking for new sessions without any user messages yet
+  ([`474e2e4`](https://github.com/wpfleger96/claude-code-status-line/commit/474e2e4c3ae9ad7be64980ac5e9db8f9153aeacf))
+
+- Make sure we round consistently
+  ([`018f76e`](https://github.com/wpfleger96/claude-code-status-line/commit/018f76e22612182f8e678dac42732b9f753babd6))
+
+### Continuous Integration
+
+- Add CI and publish workflows
+  ([`3f0b403`](https://github.com/wpfleger96/claude-code-status-line/commit/3f0b403af6000ba2c2dd82d4431617acfbe2f7dd))
+
+### Features
+
+- Release on pypi
+  ([`a7121b8`](https://github.com/wpfleger96/claude-code-status-line/commit/a7121b899d08792d8d5dd633f592e751b77109c0))
+
+
 ## v0.6.2 (2025-12-02)
 
 ### Bug Fixes

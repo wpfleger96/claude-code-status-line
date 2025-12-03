@@ -1,5 +1,13 @@
 # Claude Code Statusline Script
 
+[![PyPI Downloads](https://img.shields.io/pypi/dm/claude-code-statusline.svg)](https://pypi.org/project/claude-code-statusline/)
+[![PyPI version](https://img.shields.io/pypi/v/claude-code-statusline.svg)](https://pypi.org/project/claude-code-statusline/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/claude-code-statusline.svg)](https://pypi.org/project/claude-code-statusline/)
+[![CI](https://github.com/wpfleger96/claude-code-status-line/actions/workflows/ci.yml/badge.svg)](https://github.com/wpfleger96/claude-code-status-line/actions/workflows/ci.yml)
+[![GitHub Contributors](https://img.shields.io/github/contributors/wpfleger96/claude-code-status-line.svg)](https://github.com/wpfleger96/claude-code-status-line/graphs/contributors)
+[![Lines of Code](https://aschey.tech/tokei/github/wpfleger96/claude-code-status-line?category=code)](https://github.com/wpfleger96/claude-code-status-line)
+[![License](https://img.shields.io/github/license/wpfleger96/claude-code-status-line.svg)](https://github.com/wpfleger96/claude-code-status-line/blob/main/LICENSE)
+
 ## Overview
 
 A Python script that generates a formatted [status line](https://docs.anthropic.com/en/docs/claude-code/statusline) for Claude Code, displaying the current model, working directory, and context usage information. The script provides real-time feedback on token consumption relative to the model's context window limit.

@@ -1,0 +1,44 @@
+# Settings
+set dotenv-load := false
+
+# Default recipe: quick quality check without tests
+default: sync type-check lint-check format-check
+
+# Setup & Dependencies
+sync:
+    uv sync
+
+# Code Quality - Check variants
+type-check:
+    uv run mypy .
+
+lint-check:
+    uvx ruff check .
+
+format-check:
+    uvx ruff format . --check
+
+# Code Quality - Fix variants
+lint:
+    uvx ruff check . --fix
+
+format:
+    uvx ruff format .
+
+# Composite quality checks
+check: sync type-check lint-check format-check
+    @echo "Quick quality checks passed"
+
+check-all: check test
+    @echo "All quality checks and tests passed"
+
+pre-commit: sync type-check lint format test
+    @echo "Pre-commit checks passed"
+
+# Testing
+test:
+    uv run pytest
+
+# CI workflow (matches CI steps)
+ci: sync type-check lint-check format-check test
+    @echo "CI checks passed"

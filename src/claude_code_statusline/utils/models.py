@@ -9,7 +9,9 @@ import urllib.error
 import urllib.request
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional, cast
+
+from ..types import RenderContext
 
 
 @dataclass
@@ -51,20 +53,20 @@ MODEL_INFO: dict[str, ModelInfo] = {
 }
 
 
-def extract_token_limit(model_info: dict) -> Optional[int]:
+def extract_token_limit(model_info: dict[str, Any]) -> Optional[int]:
     """Extract token limit from model info dictionary."""
     limit = model_info.get("max_input_tokens") or model_info.get("max_tokens")
     return int(limit) if limit else None
 
 
-def get_cached_or_fetch_data() -> Optional[dict]:
+def get_cached_or_fetch_data() -> Optional[dict[str, Any]]:
     """Get model data from cache or fetch from API if cache is expired or does not exist."""
     try:
         if os.path.exists(CACHE_FILE):
             cache_age = time.time() - os.path.getmtime(CACHE_FILE)
             if cache_age <= CACHE_TTL_SECONDS:
                 with open(CACHE_FILE) as f:
-                    return json.load(f)
+                    return cast(dict[str, Any], json.load(f))
     except (OSError, json.JSONDecodeError):
         pass
 
@@ -77,7 +79,7 @@ def get_cached_or_fetch_data() -> Optional[dict]:
                     json.dump(data, f)
             except OSError:
                 pass
-            return data
+            return cast(dict[str, Any], data)
     except (
         urllib.error.URLError,
         urllib.error.HTTPError,
@@ -179,7 +181,7 @@ def get_context_limit(model_id: str, model_name: str = "") -> int:
     return MODEL_INFO["default"].context_limit
 
 
-def get_context_limit_for_render(context) -> int:
+def get_context_limit_for_render(context: RenderContext) -> int:
     """Get context limit from render context's model data.
 
     Args:

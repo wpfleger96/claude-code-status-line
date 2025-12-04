@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if git diff --name-only ORIG_HEAD HEAD -- pyproject.toml 2>/dev/null | grep -q .; then
+    echo "pyproject.toml changed - running uv sync..."
+    uv sync
+    echo "Dependencies synced."
+fi

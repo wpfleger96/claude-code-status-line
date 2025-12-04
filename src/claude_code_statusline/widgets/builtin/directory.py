@@ -25,9 +25,9 @@ class DirectoryWidget(Widget):
     ) -> Optional[str]:
         """Render directory basename."""
         workspace = context.data.get("workspace", {})
-        current_dir = workspace.get("current_dir")
+        current_dir: str | None = workspace.get("current_dir")
 
         if not current_dir:
             return None
 
-        return os.path.basename(current_dir)
+        return str(os.path.basename(current_dir))

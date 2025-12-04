@@ -5,6 +5,7 @@ import os
 import sys
 
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, cast
 
 from .parsers.tokens import parse_transcript
 from .renderer import render_status_line_with_config
@@ -13,7 +14,7 @@ from .utils.debug import debug_log
 from .utils.models import prefetch_model_data
 
 
-def parse_input_data() -> dict:
+def parse_input_data() -> dict[str, Any]:
     """Parse JSON input from stdin and return as dict.
 
     Returns:
@@ -21,12 +22,12 @@ def parse_input_data() -> dict:
     """
     try:
         input_data = sys.stdin.read()
-        return json.loads(input_data)
+        return cast(dict[str, Any], json.loads(input_data))
     except (json.JSONDecodeError, ValueError):
         return {}
 
 
-def find_transcript_path(data: dict) -> str:
+def find_transcript_path(data: dict[str, Any]) -> str:
     """Find transcript path, with fallback to construct from session_id.
 
     Args:
@@ -35,7 +36,7 @@ def find_transcript_path(data: dict) -> str:
     Returns:
         Path to transcript file, or empty string if not found
     """
-    transcript_path = data.get("transcript_path", "")
+    transcript_path: str = data.get("transcript_path", "")
     if transcript_path and os.path.isfile(transcript_path):
         return transcript_path
 
@@ -56,7 +57,7 @@ def find_transcript_path(data: dict) -> str:
     return transcript_path  # Return original (may be empty)
 
 
-def extract_session_id(data: dict, transcript_path: str) -> str:
+def extract_session_id(data: dict[str, Any], transcript_path: str) -> str:
     """Extract session ID from data or transcript filename.
 
     Args:
@@ -66,7 +67,7 @@ def extract_session_id(data: dict, transcript_path: str) -> str:
     Returns:
         Session ID or empty string
     """
-    session_id = data.get("session_id", "")
+    session_id: str = data.get("session_id", "")
     if session_id:
         return session_id
 
@@ -81,7 +82,7 @@ def extract_session_id(data: dict, transcript_path: str) -> str:
     return ""
 
 
-def main():
+def main() -> None:
     """Main entry point with widget-based rendering and parallel I/O."""
     data = parse_input_data()
 

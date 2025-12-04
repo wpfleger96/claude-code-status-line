@@ -31,6 +31,7 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
     "pytest-benchmark>=4.0.0",
+    "mypy>=1.0.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -82,6 +83,22 @@ select = ["I", "F", "UP", "B"]  # isort, pyflakes, pyupgrade, bugbear
 
 [tool.ruff.lint.isort]
 lines-between-types = 1
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["yaml.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
 [[tool.uv.index]]
 name = "pypi"

@@ -156,6 +156,7 @@ class TestCostWidget:
     def test_renders_cost(self, sample_context, widget_config):
         widget = CostWidget()
         result = widget.render(widget_config, sample_context)
+        assert result is not None
         assert result.startswith("Cost: ")
         assert "$2.50 USD" in result
 
@@ -206,6 +207,7 @@ class TestLinesChangedWidget:
     def test_renders_both_added_and_removed(self, sample_context, widget_config):
         widget = LinesChangedWidget()
         result = widget.render(widget_config, sample_context)
+        assert result is not None
         assert "+150 (added)" in result
         assert "-45 (removed)" in result
         assert " / " in result
@@ -217,6 +219,7 @@ class TestLinesChangedWidget:
         )
         widget = LinesChangedWidget()
         result = widget.render(widget_config, context)
+        assert result is not None
         assert "+100 (added)" in result
         assert "removed" not in result
 
@@ -227,6 +230,7 @@ class TestLinesChangedWidget:
         )
         widget = LinesChangedWidget()
         result = widget.render(widget_config, context)
+        assert result is not None
         assert "-50 (removed)" in result
         assert "added" not in result
 
@@ -246,6 +250,7 @@ class TestSessionIdWidget:
     def test_renders_session_id(self, sample_context, widget_config):
         widget = SessionIdWidget()
         result = widget.render(widget_config, sample_context)
+        assert result is not None
         assert result.startswith("Session: ")
         assert "abc123-def456-789" in result
 
@@ -262,6 +267,7 @@ class TestSessionClockWidget:
     def test_renders_duration(self, sample_context, widget_config):
         widget = SessionClockWidget()
         result = widget.render(widget_config, sample_context)
+        assert result is not None
         assert result.startswith("Elapsed: ")
         assert "2hr 10m" in result
 

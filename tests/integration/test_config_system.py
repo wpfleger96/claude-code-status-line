@@ -175,5 +175,5 @@ class TestConfigSchema:
             StatusLineConfig(
                 version=1,
                 lines=[[]],
-                extra_field="not allowed",  # Should be rejected
+                extra_field="not allowed",  # type: ignore[call-arg]
             )

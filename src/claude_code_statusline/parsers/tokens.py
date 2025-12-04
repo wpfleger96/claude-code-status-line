@@ -32,7 +32,7 @@ def parse_transcript(
     context_length = 0
 
     most_recent_time: Optional[datetime] = None
-    most_recent_usage: Optional[dict] = None
+    most_recent_usage: Optional[dict[str, int]] = None
 
     first_timestamp: Optional[datetime] = None
     last_timestamp: Optional[datetime] = None

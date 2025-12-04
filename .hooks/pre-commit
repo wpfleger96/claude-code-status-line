@@ -2,6 +2,21 @@
 
 set -euo pipefail
 
-export RUN_TESTS=1
+UNSTAGED_BEFORE=$(git diff --name-only 2>/dev/null || true)
 
-./script/code_quality.sh
+just sync
+just type-check
+just lint
+just format
+just test
+
+while IFS= read -r file; do
+    if [ -n "$file" ] && [ -f "$file" ]; then
+        if echo "$UNSTAGED_BEFORE" | grep -qxF "$file" 2>/dev/null; then
+            echo "Skipping re-stage (has prior unstaged changes): $file"
+        else
+            echo "Re-staging formatted/linted file: $file"
+            git add "$file"
+        fi
+    fi
+done < <(git diff --name-only 2>/dev/null)

@@ -4,6 +4,7 @@ import json
 import os
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from ..utils.debug import debug_log
 
@@ -77,7 +78,7 @@ def safe_get_file_size(file_path: str) -> int:
         return 0
 
 
-def is_real_compact_boundary(data: dict) -> bool:
+def is_real_compact_boundary(data: dict[str, Any]) -> bool:
     """Check if this is a real compact boundary set by Claude Code.
 
     Args:
@@ -96,7 +97,7 @@ def is_real_compact_boundary(data: dict) -> bool:
 
 
 def should_exclude_line(
-    data: dict, rules: ExclusionRules = EXCLUSION_RULES
+    data: dict[str, Any], rules: ExclusionRules = EXCLUSION_RULES
 ) -> tuple[bool, str]:
     """Check if a line should be excluded from token counting.
 
@@ -123,7 +124,7 @@ def should_exclude_line(
 
 
 def extract_message_content_chars(
-    data: dict, session_id: str = "", detailed_debug: bool = False
+    data: dict[str, Any], session_id: str = "", detailed_debug: bool = False
 ) -> int:
     """Extract content that contributes to context.
 
@@ -223,9 +224,9 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
     chars_before_latest_boundary = 0
     chars_after_latest_boundary = 0
 
-    message_type_counts = {}
-    message_type_chars = {}
-    excluded_line_counts = {}
+    message_type_counts: dict[str, int] = {}
+    message_type_chars: dict[str, int] = {}
+    excluded_line_counts: dict[str, int] = {}
     total_excluded_lines = 0
 
     for _line_num, line in enumerate(lines):

@@ -27,14 +27,20 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Install dependencies
-        run: uv sync --no-config
+        run: just sync
 
-      - name: Run linter
-        run: uvx ruff check .
+      - name: Type check
+        run: just type-check
 
-      - name: Run formatter
-        run: uvx ruff format . --check
+      - name: Lint
+        run: just lint-check
 
-      - name: Run tests
-        run: uv run pytest -v
+      - name: Format check
+        run: just format-check
+
+      - name: Test
+        run: just test

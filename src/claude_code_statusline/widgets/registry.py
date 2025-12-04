@@ -1,6 +1,6 @@
 """Widget registry for managing available widgets."""
 
-from typing import Optional
+from typing import Callable, Optional
 
 from .base import Widget
 
@@ -14,7 +14,7 @@ def register_widget(
     default_color: str = "white",
     description: str = "",
     fallback_text: Optional[str] = None,
-):
+) -> Callable[[type[Widget]], type[Widget]]:
     """Decorator to register widget classes with metadata.
 
     Usage:
@@ -32,7 +32,7 @@ def register_widget(
         fallback_text: Text to display when widget renders None (defaults to None - hide widget)
     """
 
-    def decorator(cls: type[Widget]):
+    def decorator(cls: type[Widget]) -> type[Widget]:
         cls.display_name = display_name or widget_type.replace("-", " ").title()
         cls.default_color = default_color
         cls.description = description

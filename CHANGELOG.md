@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.1 (2025-12-07)
+
+### Bug Fixes
+
+- Widgets without separators
+  ([`93a0739`](https://github.com/wpfleger96/claude-code-status-line/commit/93a073941c82c4541583b579fad93c7f1e2f794d))
+
+
 ## v0.8.0 (2025-12-07)
 
 ### Chores

@@ -1,12 +1,30 @@
 # CHANGELOG
 
 
+## v0.8.0 (2025-12-07)
+
+### Chores
+
+- Standardize dev workflows
+  ([`1cd2bfc`](https://github.com/wpfleger96/claude-code-status-line/commit/1cd2bfca8f04ea5ab8e9661a8f3e5f576114e737))
+
+### Features
+
+- Add widget showing subscription vs API usage
+  ([`ad6bde0`](https://github.com/wpfleger96/claude-code-status-line/commit/ad6bde018e484910f746fb22a31392cd307174ac))
+
+
 ## v0.7.1 (2025-12-03)
 
 ### Bug Fixes
 
 - Publish workflow dispatch not working
   ([`eb9cdca`](https://github.com/wpfleger96/claude-code-status-line/commit/eb9cdca65a42f449330e030e3e594180c1791808))
+
+### Documentation
+
+- Readme badges
+  ([`c4544c9`](https://github.com/wpfleger96/claude-code-status-line/commit/c4544c9d72db09438c49dda2c87021c1c1a37a25))
 
 
 ## v0.7.0 (2025-12-03)

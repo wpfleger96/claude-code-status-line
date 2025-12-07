@@ -278,9 +278,7 @@ class TestMergeMissingWidgets:
 
         assert merged.lines[0][model_idx + 1].type == "separator"
         assert merged.lines[0][subscription_idx - 1].type == "separator"
-        # Verify separator AFTER subscription (before directory)
-        assert merged.lines[0][subscription_idx + 1].type == "separator"
-        assert subscription_idx + 1 < directory_idx
+        assert subscription_idx > directory_idx
 
     def test_auto_merge_on_load(self, temp_config_dir):
         """Test that load_config automatically merges and saves new widgets."""
@@ -314,7 +312,6 @@ class TestMergeMissingWidgets:
         """Test that missing separators between content widgets are repaired."""
         from claude_code_statusline.config.loader import repair_missing_separators
 
-        # Config with missing separator between subscription and directory
         user_config = StatusLineConfig(
             version=1,
             lines=[
@@ -322,13 +319,12 @@ class TestMergeMissingWidgets:
                     WidgetConfigModel(type="model"),
                     WidgetConfigModel(type="separator"),
                     WidgetConfigModel(type="subscription"),
-                    WidgetConfigModel(type="directory"),  # Missing separator before!
+                    WidgetConfigModel(type="directory"),
                 ]
             ],
         )
 
         repaired = repair_missing_separators(user_config)
 
-        # Should now have separator between subscription and directory
         types = [w.type for w in repaired.lines[0]]
         assert types == ["model", "separator", "subscription", "separator", "directory"]

@@ -11,8 +11,6 @@ def get_default_config() -> StatusLineConfig:
             [
                 WidgetConfigModel(type="model", color="cyan"),
                 WidgetConfigModel(type="separator"),
-                WidgetConfigModel(type="subscription", color="cyan"),
-                WidgetConfigModel(type="separator"),
                 WidgetConfigModel(type="directory", color="blue"),
                 WidgetConfigModel(type="separator"),
                 WidgetConfigModel(type="git-branch", color="magenta"),
@@ -26,6 +24,8 @@ def get_default_config() -> StatusLineConfig:
                 WidgetConfigModel(type="session-id"),
                 WidgetConfigModel(type="separator"),
                 WidgetConfigModel(type="session-clock"),
+                WidgetConfigModel(type="separator"),
+                WidgetConfigModel(type="subscription", color="cyan"),
             ]
         ],
     )

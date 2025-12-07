@@ -27,6 +27,29 @@ def get_config_path() -> Path:
     return get_config_dir() / "config.yaml"
 
 
+def repair_missing_separators(config: StatusLineConfig) -> StatusLineConfig:
+    """Ensure separators exist between all content widgets.
+
+    Repairs configs that may have missing separators between adjacent content widgets.
+    """
+    from .schema import WidgetConfigModel
+
+    for line in config.lines:
+        i = 0
+        while i < len(line) - 1:
+            current = line[i]
+            next_widget = line[i + 1]
+
+            # If two content widgets are adjacent (neither is separator)
+            if current.type != "separator" and next_widget.type != "separator":
+                line.insert(i + 1, WidgetConfigModel(type="separator"))
+                i += 1  # Skip the separator we just inserted
+
+            i += 1
+
+    return config
+
+
 def merge_missing_widgets(config: StatusLineConfig) -> StatusLineConfig:
     """Merge new widgets from defaults into user config at matching positions.
 
@@ -124,6 +147,7 @@ def load_config() -> StatusLineConfig:
 
         config = StatusLineConfig(**config_data)
 
+        config = repair_missing_separators(config)
         config = merge_missing_widgets(config)
         save_config(config)
 

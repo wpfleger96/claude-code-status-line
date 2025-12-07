@@ -25,6 +25,7 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: creds_file,
         )
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
         result = read_subscription_info()
         assert result.is_subscription is True
@@ -46,6 +47,7 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: creds_file,
         )
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
         result = read_subscription_info()
         assert result.is_subscription is True
@@ -61,6 +63,7 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: creds_file,
         )
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
         result = read_subscription_info()
         assert result.is_subscription is False
@@ -71,6 +74,7 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: tmp_path / "nonexistent.json",
         )
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
         result = read_subscription_info()
         assert result.is_subscription is False
@@ -83,6 +87,7 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: creds_file,
         )
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
         result = read_subscription_info()
         assert result.is_subscription is False
@@ -97,6 +102,56 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: creds_file,
         )
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
         result = read_subscription_info()
         assert result.is_subscription is False
+
+    def test_returns_api_usage_when_console_api_key_set(self, tmp_path, monkeypatch):
+        """Test that console API key (sk-ant-api) returns API usage."""
+        # Create credentials file with subscription data
+        credentials = {
+            "claudeAiOauth": {
+                "subscriptionType": "pro",
+                "rateLimitTier": "default_claude_ai",
+            }
+        }
+        creds_file = tmp_path / ".claude" / ".credentials.json"
+        creds_file.parent.mkdir(parents=True)
+        creds_file.write_text(json.dumps(credentials))
+
+        monkeypatch.setattr(
+            "claude_code_statusline.utils.credentials.get_credentials_path",
+            lambda: creds_file,
+        )
+        # Set console API key in environment
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-api03-abcdef123456")
+
+        result = read_subscription_info()
+        # Should return API usage despite credentials file having OAuth data
+        assert result.is_subscription is False
+        assert result.subscription_type is None
+
+    def test_falls_through_when_oauth_token_set(self, tmp_path, monkeypatch):
+        """Test that OAuth token (sk-ant-oat) falls through to credentials check."""
+        credentials = {
+            "claudeAiOauth": {
+                "subscriptionType": "max",
+                "rateLimitTier": "default_claude_ai",
+            }
+        }
+        creds_file = tmp_path / ".claude" / ".credentials.json"
+        creds_file.parent.mkdir(parents=True)
+        creds_file.write_text(json.dumps(credentials))
+
+        monkeypatch.setattr(
+            "claude_code_statusline.utils.credentials.get_credentials_path",
+            lambda: creds_file,
+        )
+        # Set OAuth access token in environment
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-oat01-xyz789")
+
+        result = read_subscription_info()
+        # Should read from credentials file
+        assert result.is_subscription is True
+        assert result.subscription_type == "max"

@@ -1,6 +1,7 @@
 """Utilities for reading Claude credentials and subscription info."""
 
 import json
+import os
 
 from pathlib import Path
 
@@ -20,6 +21,12 @@ def read_subscription_info() -> SubscriptionInfo:
     Returns:
         SubscriptionInfo with subscription details, or defaults if unavailable
     """
+    # Check ANTHROPIC_API_KEY for console API key (not OAuth token)
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if api_key.startswith("sk-ant-api"):
+        return SubscriptionInfo(is_subscription=False)
+
+    # OAuth tokens (sk-ant-oat) or no env var: check credentials file
     credentials_path = get_credentials_path()
 
     if not credentials_path.exists():

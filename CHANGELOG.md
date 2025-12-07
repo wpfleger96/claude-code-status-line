@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.2 (2025-12-07)
+
+### Bug Fixes
+
+- Widget separators and beter API key type detection
+  ([`49b131a`](https://github.com/wpfleger96/claude-code-status-line/commit/49b131a9058a7a2981016781a3fdb924715eff66))
+
+
 ## v0.8.1 (2025-12-07)
 
 ### Bug Fixes

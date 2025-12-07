@@ -12,7 +12,6 @@ from pydantic import ValidationError
 from .defaults import get_default_config
 from .schema import StatusLineConfig
 
-# Module-level cache for config
 _cached_config: Optional[StatusLineConfig] = None
 _cached_mtime: float = 0.0
 
@@ -76,6 +75,12 @@ def merge_missing_widgets(config: StatusLineConfig) -> StatusLineConfig:
                 insert_pos += 1
 
             user_line.insert(insert_pos, widget)
+
+            # Add separator after the widget if next item is a content widget (not separator)
+            next_pos = insert_pos + 1
+            if next_pos < len(user_line) and user_line[next_pos].type != "separator":
+                user_line.insert(next_pos, WidgetConfigModel(type="separator"))
+
             user_types.add(widget.type)
 
     return config

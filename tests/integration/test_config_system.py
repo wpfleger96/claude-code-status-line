@@ -272,9 +272,15 @@ class TestMergeMissingWidgets:
         subscription_idx = next(
             i for i, w in enumerate(merged.lines[0]) if w.type == "subscription"
         )
+        directory_idx = next(
+            i for i, w in enumerate(merged.lines[0]) if w.type == "directory"
+        )
 
         assert merged.lines[0][model_idx + 1].type == "separator"
         assert merged.lines[0][subscription_idx - 1].type == "separator"
+        # Verify separator AFTER subscription (before directory)
+        assert merged.lines[0][subscription_idx + 1].type == "separator"
+        assert subscription_idx + 1 < directory_idx
 
     def test_auto_merge_on_load(self, temp_config_dir):
         """Test that load_config automatically merges and saves new widgets."""

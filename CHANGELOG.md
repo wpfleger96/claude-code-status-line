@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.4 (2025-12-07)
+
+### Bug Fixes
+
+- Simplify config system
+  ([`75f15f0`](https://github.com/wpfleger96/claude-code-status-line/commit/75f15f0484f611d807dfecc67b4d3cc11e8f812e))
+
+
 ## v0.8.3 (2025-12-07)
 
 ### Bug Fixes

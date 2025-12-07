@@ -2,13 +2,11 @@
 
 from typing import Optional
 
-from .config.loader import load_config
-from .config.schema import StatusLineConfig, WidgetConfigModel
+from .config.loader import get_effective_widgets
+from .config.schema import WidgetConfigModel
 from .types import RenderContext
 from .utils.colors import colorize, get_cost_color, get_usage_color
 from .utils.models import get_context_limit_for_render
-
-# Import builtin widgets to register them
 from .widgets import builtin  # noqa: F401
 from .widgets.registry import get_widget
 
@@ -118,23 +116,21 @@ def _remove_orphaned_separators(
     return [content for _, content in result]
 
 
-def render_status_line(config: StatusLineConfig, context: RenderContext) -> str:
-    """Render complete status line from widget config.
+def render_status_line(widgets: list[WidgetConfigModel], context: RenderContext) -> str:
+    """Render complete status line from widget list.
 
     Args:
-        config: Status line configuration
+        widgets: List of widget configurations (with separators)
         context: Render context with data and metrics
 
     Returns:
         Formatted status line string with ANSI colors
     """
-    if not config.lines:
+    if not widgets:
         return ""
 
-    first_line = config.lines[0]
-
     rendered_pairs = []
-    for widget_config in first_line:
+    for widget_config in widgets:
         widget_str = render_widget(widget_config, context)
         rendered_pairs.append((widget_config, widget_str))
 
@@ -155,5 +151,5 @@ def render_status_line_with_config(context: RenderContext) -> str:
     Returns:
         Formatted status line string
     """
-    config = load_config()
-    return render_status_line(config, context)
+    widgets = get_effective_widgets()
+    return render_status_line(widgets, context)

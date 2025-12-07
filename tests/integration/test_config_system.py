@@ -3,17 +3,15 @@
 import pytest
 import yaml
 
-from pydantic import ValidationError
-
 from claude_code_statusline.config.defaults import get_default_config
 from claude_code_statusline.config.loader import (
-    load_config,
-    merge_missing_widgets,
+    get_effective_widgets,
+    load_config_file,
     save_config,
 )
 from claude_code_statusline.config.schema import (
-    StatusLineConfig,
-    WidgetConfigModel,
+    StatusLineConfigV2,
+    WidgetOverride,
 )
 
 
@@ -21,130 +19,134 @@ from claude_code_statusline.config.schema import (
 def temp_config_dir(monkeypatch, tmp_path):
     """Create a temporary config directory."""
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-
     return tmp_path
 
 
-@pytest.fixture
-def sample_config():
-    """Create a sample configuration."""
-    return StatusLineConfig(
-        version=1,
-        lines=[
-            [
-                WidgetConfigModel(type="model", color="cyan"),
-                WidgetConfigModel(type="separator"),
-                WidgetConfigModel(type="directory", color="blue"),
-            ]
-        ],
-    )
+class TestConfigV2Loading:
+    """Tests for v2 configuration loading."""
 
+    def test_returns_empty_config_when_missing(self, temp_config_dir):
+        """Test that empty config is returned when file doesn't exist."""
+        config = load_config_file()
 
-class TestConfigLoading:
-    """Tests for configuration loading."""
+        assert isinstance(config, StatusLineConfigV2)
+        assert config.version == 2
+        assert config.widgets == {}
+        assert config.order is None
 
-    def test_creates_default_config_when_missing(self, temp_config_dir):
-        """Test that default config is created when file doesn't exist."""
-        config = load_config()
-
-        assert isinstance(config, StatusLineConfig)
-        assert config.version == 1
-        assert len(config.lines) > 0
-        assert len(config.lines[0]) > 0
-
+    def test_loads_v2_config(self, temp_config_dir):
+        """Test loading a v2 configuration file."""
         config_file = temp_config_dir / "claude-statusline" / "config.yaml"
-        assert config_file.exists()
+        config_file.parent.mkdir(parents=True)
 
-    def test_loads_existing_config(self, temp_config_dir, sample_config):
-        """Test loading an existing configuration file."""
+        config_data = {
+            "version": 2,
+            "widgets": {
+                "model": {"color": "magenta"},
+                "directory": {"enabled": False},
+            },
+        }
+        config_file.write_text(yaml.dump(config_data))
 
-        save_config(sample_config)
+        config = load_config_file()
 
-        loaded_config = load_config()
+        assert config.version == 2
+        assert config.widgets["model"].color == "magenta"
+        assert config.widgets["directory"].enabled is False
 
-        assert loaded_config.version == sample_config.version
-        assert len(loaded_config.lines) == len(sample_config.lines)
-        assert loaded_config.lines[0][0].type == "model"
-        assert loaded_config.lines[0][0].color == "cyan"
-
-    def test_handles_invalid_yaml(self, temp_config_dir):
-        """Test that invalid YAML falls back to defaults."""
-
-        config_dir = temp_config_dir / "claude-statusline"
-        config_dir.mkdir(parents=True, exist_ok=True)
-        config_file = config_dir / "config.yaml"
-        config_file.write_text("invalid: yaml: content: [[[")
-
-        config = load_config()
-        assert isinstance(config, StatusLineConfig)
-        assert config.version == 1
-
-    def test_handles_invalid_schema(self, temp_config_dir):
-        """Test that invalid schema falls back to defaults."""
-
-        config_dir = temp_config_dir / "claude-statusline"
-        config_dir.mkdir(parents=True, exist_ok=True)
-        config_file = config_dir / "config.yaml"
-
-        invalid_config = {"version": "not-a-number", "lines": "not-a-list"}
-        with open(config_file, "w") as f:
-            yaml.dump(invalid_config, f)
-
-        config = load_config()
-        assert isinstance(config, StatusLineConfig)
-        assert isinstance(config.version, int)
-
-
-class TestConfigSaving:
-    """Tests for configuration saving."""
-
-    def test_saves_config_to_yaml(self, temp_config_dir, sample_config):
-        """Test saving configuration to YAML file."""
-
-        save_config(sample_config)
-
+    def test_deletes_v1_config(self, temp_config_dir):
+        """Test that v1 configs are deleted."""
         config_file = temp_config_dir / "claude-statusline" / "config.yaml"
-        assert config_file.exists()
+        config_file.parent.mkdir(parents=True)
 
-        with open(config_file) as f:
-            yaml_data = yaml.safe_load(f)
+        v1_config = {
+            "version": 1,
+            "lines": [[{"type": "model"}, {"type": "directory"}]],
+        }
+        config_file.write_text(yaml.dump(v1_config))
 
-        assert yaml_data["version"] == 1
-        assert len(yaml_data["lines"]) == 1
-        assert len(yaml_data["lines"][0]) == 3
-        assert yaml_data["lines"][0][0]["type"] == "model"
+        config = load_config_file()
 
-    def test_creates_config_directory(self, temp_config_dir, sample_config):
-        """Test that config directory is created if it doesn't exist."""
+        assert not config_file.exists()
+        assert config.version == 2
+        assert config.widgets == {}
 
-        config_dir = temp_config_dir / "claude-statusline"
-        if config_dir.exists():
-            import shutil
 
-            shutil.rmtree(config_dir)
+class TestEffectiveWidgets:
+    """Tests for get_effective_widgets()."""
 
-        save_config(sample_config)
+    def test_returns_defaults_when_no_config(self, temp_config_dir):
+        """Test that defaults are returned with no config."""
+        widgets = get_effective_widgets()
 
-        assert config_dir.exists()
-        assert (config_dir / "config.yaml").exists()
+        widget_types = [w.type for w in widgets if w.type != "separator"]
 
-    def test_overwrites_existing_config(self, temp_config_dir, sample_config):
-        """Test that saving overwrites existing configuration."""
+        assert "model" in widget_types
+        assert "directory" in widget_types
+        assert "subscription" in widget_types
 
-        save_config(sample_config)
+    def test_applies_color_override(self, temp_config_dir):
+        """Test that color overrides are applied."""
+        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file.parent.mkdir(parents=True)
 
-        sample_config.lines[0].append(WidgetConfigModel(type="cost", color="green"))
-        save_config(sample_config)
+        config_data = {
+            "version": 2,
+            "widgets": {"model": {"color": "red"}},
+        }
+        config_file.write_text(yaml.dump(config_data))
 
-        loaded = load_config()
+        widgets = get_effective_widgets()
 
-        cost_widget = next((w for w in loaded.lines[0] if w.type == "cost"), None)
-        assert cost_widget is not None
-        assert cost_widget.color == "green"
+        model_widget = next(w for w in widgets if w.type == "model")
+        assert model_widget.color == "red"
+
+    def test_hides_disabled_widgets(self, temp_config_dir):
+        """Test that disabled widgets are hidden."""
+        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file.parent.mkdir(parents=True)
+
+        config_data = {
+            "version": 2,
+            "widgets": {"subscription": {"enabled": False}},
+        }
+        config_file.write_text(yaml.dump(config_data))
+
+        widgets = get_effective_widgets()
+
+        widget_types = [w.type for w in widgets if w.type != "separator"]
+        assert "subscription" not in widget_types
+        assert "model" in widget_types
+
+    def test_custom_order(self, temp_config_dir):
+        """Test custom widget ordering."""
+        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file.parent.mkdir(parents=True)
+
+        config_data = {
+            "version": 2,
+            "order": ["directory", "model"],
+        }
+        config_file.write_text(yaml.dump(config_data))
+
+        widgets = get_effective_widgets()
+
+        widget_types = [w.type for w in widgets if w.type != "separator"]
+        assert widget_types == ["directory", "model"]
+
+    def test_interleaves_separators(self, temp_config_dir):
+        """Test that separators are properly interleaved."""
+        widgets = get_effective_widgets()
+
+        for i in range(len(widgets) - 1):
+            if i % 2 == 0:
+                assert widgets[i].type != "separator"
+            else:
+                assert widgets[i].type == "separator"
 
 
 class TestDefaultConfig:
-    """Tests for default configuration generation."""
+    """Tests for default configuration."""
 
     def test_default_config_structure(self):
         """Test that default config has expected structure."""
@@ -154,177 +156,29 @@ class TestDefaultConfig:
         assert len(config.lines) > 0
         assert len(config.lines[0]) > 0
 
-    def test_default_config_has_essential_widgets(self):
-        """Test that default config includes essential widgets."""
+    def test_subscription_at_end(self):
+        """Test that subscription widget is at the end."""
         config = get_default_config()
 
-        widget_types = [w.type for w in config.lines[0]]
+        widget_types = [w.type for w in config.lines[0] if w.type != "separator"]
 
-        assert "model" in widget_types
-        assert "directory" in widget_types
-        assert "context-percentage" in widget_types or "context-tokens" in widget_types
+        assert widget_types[-1] == "subscription"
 
 
-class TestConfigSchema:
-    """Tests for configuration schema validation."""
+class TestConfigSaving:
+    """Tests for configuration saving."""
 
-    def test_allows_empty_lines(self):
-        """Test that empty lines are allowed."""
-        config = StatusLineConfig(version=1, lines=[[]])
+    def test_saves_v2_config(self, temp_config_dir):
+        """Test saving v2 configuration."""
+        config = StatusLineConfigV2(widgets={"model": WidgetOverride(color="magenta")})
 
-        assert len(config.lines) == 1
-        assert len(config.lines[0]) == 0
-
-    def test_forbids_extra_fields(self):
-        """Test that extra fields are not allowed."""
-        with pytest.raises(ValidationError):
-            StatusLineConfig(
-                version=1,
-                lines=[[]],
-                extra_field="not allowed",  # type: ignore[call-arg]
-            )
-
-
-class TestMergeMissingWidgets:
-    """Tests for auto-merging new widgets from defaults."""
-
-    def test_adds_missing_widget_at_correct_position(self):
-        """Test that missing widgets are inserted at matching default positions."""
-        user_config = StatusLineConfig(
-            version=1,
-            lines=[
-                [
-                    WidgetConfigModel(type="model", color="cyan"),
-                    WidgetConfigModel(type="separator"),
-                    WidgetConfigModel(type="directory", color="blue"),
-                ]
-            ],
-        )
-
-        merged = merge_missing_widgets(user_config)
-
-        widget_types = [w.type for w in merged.lines[0] if w.type != "separator"]
-        assert "subscription" in widget_types
-        model_idx = next(i for i, w in enumerate(merged.lines[0]) if w.type == "model")
-        subscription_idx = next(
-            i for i, w in enumerate(merged.lines[0]) if w.type == "subscription"
-        )
-        assert subscription_idx > model_idx
-
-    def test_preserves_existing_widgets(self):
-        """Test that existing widgets and their customizations are preserved."""
-        user_config = StatusLineConfig(
-            version=1,
-            lines=[
-                [
-                    WidgetConfigModel(type="model", color="magenta", bold=True),
-                    WidgetConfigModel(type="separator"),
-                    WidgetConfigModel(type="directory", color="yellow"),
-                ]
-            ],
-        )
-
-        merged = merge_missing_widgets(user_config)
-
-        model_widget = next(w for w in merged.lines[0] if w.type == "model")
-        assert model_widget.color == "magenta"
-        assert model_widget.bold is True
-
-        dir_widget = next(w for w in merged.lines[0] if w.type == "directory")
-        assert dir_widget.color == "yellow"
-
-    def test_does_not_duplicate_existing_widgets(self):
-        """Test that widgets already in config are not duplicated."""
-        user_config = StatusLineConfig(
-            version=1,
-            lines=[
-                [
-                    WidgetConfigModel(type="model", color="cyan"),
-                    WidgetConfigModel(type="separator"),
-                    WidgetConfigModel(type="subscription", color="green"),
-                    WidgetConfigModel(type="separator"),
-                    WidgetConfigModel(type="directory", color="blue"),
-                ]
-            ],
-        )
-
-        merged = merge_missing_widgets(user_config)
-
-        subscription_count = sum(1 for w in merged.lines[0] if w.type == "subscription")
-        assert subscription_count == 1
-
-    def test_adds_separator_with_new_widget(self):
-        """Test that separators are added along with new widgets."""
-        user_config = StatusLineConfig(
-            version=1,
-            lines=[
-                [
-                    WidgetConfigModel(type="model", color="cyan"),
-                    WidgetConfigModel(type="separator"),
-                    WidgetConfigModel(type="directory", color="blue"),
-                ]
-            ],
-        )
-
-        merged = merge_missing_widgets(user_config)
-
-        model_idx = next(i for i, w in enumerate(merged.lines[0]) if w.type == "model")
-        subscription_idx = next(
-            i for i, w in enumerate(merged.lines[0]) if w.type == "subscription"
-        )
-        directory_idx = next(
-            i for i, w in enumerate(merged.lines[0]) if w.type == "directory"
-        )
-
-        assert merged.lines[0][model_idx + 1].type == "separator"
-        assert merged.lines[0][subscription_idx - 1].type == "separator"
-        assert subscription_idx > directory_idx
-
-    def test_auto_merge_on_load(self, temp_config_dir):
-        """Test that load_config automatically merges and saves new widgets."""
-        old_config = StatusLineConfig(
-            version=1,
-            lines=[
-                [
-                    WidgetConfigModel(type="model", color="cyan"),
-                    WidgetConfigModel(type="separator"),
-                    WidgetConfigModel(type="directory", color="blue"),
-                ]
-            ],
-        )
-        save_config(old_config)
-
-        loaded = load_config()
-
-        widget_types = [w.type for w in loaded.lines[0] if w.type != "separator"]
-        assert "subscription" in widget_types
+        save_config(config)
 
         config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        assert config_file.exists()
+
         with open(config_file) as f:
             saved_data = yaml.safe_load(f)
 
-        saved_types = [
-            w["type"] for w in saved_data["lines"][0] if w["type"] != "separator"
-        ]
-        assert "subscription" in saved_types
-
-    def test_repairs_missing_separators_between_widgets(self):
-        """Test that missing separators between content widgets are repaired."""
-        from claude_code_statusline.config.loader import repair_missing_separators
-
-        user_config = StatusLineConfig(
-            version=1,
-            lines=[
-                [
-                    WidgetConfigModel(type="model"),
-                    WidgetConfigModel(type="separator"),
-                    WidgetConfigModel(type="subscription"),
-                    WidgetConfigModel(type="directory"),
-                ]
-            ],
-        )
-
-        repaired = repair_missing_separators(user_config)
-
-        types = [w.type for w in repaired.lines[0]]
-        assert types == ["model", "separator", "subscription", "separator", "directory"]
+        assert saved_data["version"] == 2
+        assert saved_data["widgets"]["model"]["color"] == "magenta"

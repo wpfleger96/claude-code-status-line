@@ -10,9 +10,9 @@ import yaml
 from pydantic import ValidationError
 
 from .defaults import get_default_config
-from .schema import StatusLineConfig
+from .schema import StatusLineConfigV2, WidgetConfigModel, WidgetOverride
 
-_cached_config: Optional[StatusLineConfig] = None
+_cached_config: Optional[StatusLineConfigV2] = None
 _cached_mtime: float = 0.0
 
 
@@ -27,94 +27,11 @@ def get_config_path() -> Path:
     return get_config_dir() / "config.yaml"
 
 
-def repair_missing_separators(config: StatusLineConfig) -> StatusLineConfig:
-    """Ensure separators exist between all content widgets.
+def load_config_file() -> StatusLineConfigV2:
+    """Load config file, deleting v1 configs.
 
-    Repairs configs that may have missing separators between adjacent content widgets.
-    """
-    from .schema import WidgetConfigModel
-
-    for line in config.lines:
-        i = 0
-        while i < len(line) - 1:
-            current = line[i]
-            next_widget = line[i + 1]
-
-            # If two content widgets are adjacent (neither is separator)
-            if current.type != "separator" and next_widget.type != "separator":
-                line.insert(i + 1, WidgetConfigModel(type="separator"))
-                i += 1  # Skip the separator we just inserted
-
-            i += 1
-
-    return config
-
-
-def merge_missing_widgets(config: StatusLineConfig) -> StatusLineConfig:
-    """Merge new widgets from defaults into user config at matching positions.
-
-    For each missing widget, find its position in defaults relative to
-    neighboring widgets, then insert at the same relative position in user config.
-    """
-    from .schema import WidgetConfigModel
-
-    default_config = get_default_config()
-
-    user_types = {
-        w.type for line in config.lines for w in line if w.type != "separator"
-    }
-
-    for line_idx, default_line in enumerate(default_config.lines):
-        if line_idx >= len(config.lines):
-            continue
-
-        user_line = config.lines[line_idx]
-
-        for widget_idx, widget in enumerate(default_line):
-            if widget.type == "separator" or widget.type in user_types:
-                continue
-
-            prev_widget_type = None
-            for i in range(widget_idx - 1, -1, -1):
-                if default_line[i].type != "separator":
-                    prev_widget_type = default_line[i].type
-                    break
-
-            insert_pos = 0
-            if prev_widget_type:
-                for i, w in enumerate(user_line):
-                    if w.type == prev_widget_type:
-                        insert_pos = i + 1
-                        if (
-                            insert_pos < len(user_line)
-                            and user_line[insert_pos].type == "separator"
-                        ):
-                            insert_pos += 1
-                        break
-
-            # Only insert separator if there isn't one already at insert_pos - 1
-            if insert_pos > 0 and user_line[insert_pos - 1].type != "separator":
-                user_line.insert(insert_pos, WidgetConfigModel(type="separator"))
-                insert_pos += 1
-
-            user_line.insert(insert_pos, widget)
-
-            # Add separator after the widget if next item is a content widget (not separator)
-            next_pos = insert_pos + 1
-            if next_pos < len(user_line) and user_line[next_pos].type != "separator":
-                user_line.insert(next_pos, WidgetConfigModel(type="separator"))
-
-            user_types.add(widget.type)
-
-    return config
-
-
-def load_config() -> StatusLineConfig:
-    """
-    Load configuration from YAML file with mtime-based caching.
-
-    If config file doesn't exist, creates it with defaults.
-    If config is invalid, falls back to defaults and logs error.
+    Returns:
+        StatusLineConfigV2 with user overrides, or empty config if none exists
     """
     global _cached_config, _cached_mtime
 
@@ -129,28 +46,26 @@ def load_config() -> StatusLineConfig:
             pass
 
     if not config_path.exists():
-        config = get_default_config()
-        save_config(config)
+        config = StatusLineConfigV2()
         _cached_config = config
-        try:
-            _cached_mtime = config_path.stat().st_mtime
-        except OSError:
-            _cached_mtime = 0.0
+        _cached_mtime = 0.0
         return config
 
     try:
         with open(config_path, encoding="utf-8") as f:
-            config_data = yaml.safe_load(f)
+            data = yaml.safe_load(f)
 
-        if config_data is None:
-            config_data = {}
+        if data is None:
+            data = {}
 
-        config = StatusLineConfig(**config_data)
+        if data.get("version", 1) == 1:
+            config_path.unlink()
+            config = StatusLineConfigV2()
+            _cached_config = config
+            _cached_mtime = 0.0
+            return config
 
-        config = repair_missing_separators(config)
-        config = merge_missing_widgets(config)
-        save_config(config)
-
+        config = StatusLineConfigV2(**data)
         _cached_config = config
         try:
             _cached_mtime = config_path.stat().st_mtime
@@ -167,10 +82,48 @@ def load_config() -> StatusLineConfig:
             file=sys.stderr,
         )
         print("Using default configuration.", file=sys.stderr)
-        return get_default_config()
+        return StatusLineConfigV2()
 
 
-def save_config(config: StatusLineConfig) -> None:
+def get_effective_widgets() -> list[WidgetConfigModel]:
+    """Get final widget list with overrides applied.
+
+    Returns:
+        List of widgets with separators interleaved, ready for rendering
+    """
+    config = load_config_file()
+    defaults = get_default_config()
+
+    if config.order:
+        widget_types = config.order
+    else:
+        widget_types = [w.type for w in defaults.lines[0] if w.type != "separator"]
+
+    widgets = []
+    for wtype in widget_types:
+        override = config.widgets.get(wtype, WidgetOverride())
+        if not override.enabled:
+            continue
+
+        default = next((w for w in defaults.lines[0] if w.type == wtype), None)
+        if default:
+            widget = default.model_copy()
+            if override.color:
+                widget.color = override.color
+            if override.bold is not None:
+                widget.bold = override.bold
+            widgets.append(widget)
+
+    result = []
+    for i, w in enumerate(widgets):
+        if i > 0:
+            result.append(WidgetConfigModel(type="separator"))
+        result.append(w)
+
+    return result
+
+
+def save_config(config: StatusLineConfigV2) -> None:
     """Save configuration to YAML file."""
     config_path = get_config_path()
     config_dir = config_path.parent

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.3 (2025-12-07)
+
+### Bug Fixes
+
+- Move widget to the end
+  ([`48d9271`](https://github.com/wpfleger96/claude-code-status-line/commit/48d9271964faf2e43480985d3179d85223684d07))
+
+
 ## v0.8.2 (2025-12-07)
 
 ### Bug Fixes

@@ -28,19 +28,57 @@ def get_config_path() -> Path:
     return get_config_dir() / "config.yaml"
 
 
-def get_missing_widgets(config: StatusLineConfig) -> list[str]:
-    """Return widget types in defaults but missing from user config."""
-    default_config = get_default_config()
+def merge_missing_widgets(config: StatusLineConfig) -> StatusLineConfig:
+    """Merge new widgets from defaults into user config at matching positions.
 
-    default_types = {
-        w.type for line in default_config.lines for w in line if w.type != "separator"
-    }
+    For each missing widget, find its position in defaults relative to
+    neighboring widgets, then insert at the same relative position in user config.
+    """
+    from .schema import WidgetConfigModel
+
+    default_config = get_default_config()
 
     user_types = {
         w.type for line in config.lines for w in line if w.type != "separator"
     }
 
-    return sorted(default_types - user_types)
+    for line_idx, default_line in enumerate(default_config.lines):
+        if line_idx >= len(config.lines):
+            continue
+
+        user_line = config.lines[line_idx]
+
+        for widget_idx, widget in enumerate(default_line):
+            if widget.type == "separator" or widget.type in user_types:
+                continue
+
+            prev_widget_type = None
+            for i in range(widget_idx - 1, -1, -1):
+                if default_line[i].type != "separator":
+                    prev_widget_type = default_line[i].type
+                    break
+
+            insert_pos = 0
+            if prev_widget_type:
+                for i, w in enumerate(user_line):
+                    if w.type == prev_widget_type:
+                        insert_pos = i + 1
+                        if (
+                            insert_pos < len(user_line)
+                            and user_line[insert_pos].type == "separator"
+                        ):
+                            insert_pos += 1
+                        break
+
+            # Only insert separator if there isn't one already at insert_pos - 1
+            if insert_pos > 0 and user_line[insert_pos - 1].type != "separator":
+                user_line.insert(insert_pos, WidgetConfigModel(type="separator"))
+                insert_pos += 1
+
+            user_line.insert(insert_pos, widget)
+            user_types.add(widget.type)
+
+    return config
 
 
 def load_config() -> StatusLineConfig:
@@ -81,15 +119,8 @@ def load_config() -> StatusLineConfig:
 
         config = StatusLineConfig(**config_data)
 
-        missing = get_missing_widgets(config)
-        if missing:
-            import sys
-
-            print(
-                f"Warning: Config is missing widgets from defaults: {', '.join(missing)}. "
-                f"Delete {config_path} to regenerate with new defaults.",
-                file=sys.stderr,
-            )
+        config = merge_missing_widgets(config)
+        save_config(config)
 
         _cached_config = config
         try:

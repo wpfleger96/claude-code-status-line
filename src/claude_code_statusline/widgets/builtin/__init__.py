@@ -10,6 +10,7 @@ from .git import GitBranchWidget, GitChangesWidget, GitWorktreeWidget
 from .model import ModelWidget
 from .separator import SeparatorWidget
 from .session import SessionClockWidget, SessionIdWidget
+from .subscription import SubscriptionWidget
 
 __all__ = [
     "SeparatorWidget",
@@ -26,4 +27,5 @@ __all__ = [
     "GitBranchWidget",
     "GitChangesWidget",
     "GitWorktreeWidget",
+    "SubscriptionWidget",
 ]

@@ -6,6 +6,15 @@ from typing import Any, Optional
 
 
 @dataclass
+class SubscriptionInfo:
+    """Subscription information from Claude credentials."""
+
+    is_subscription: bool = False
+    subscription_type: Optional[str] = None
+    rate_limit_tier: Optional[str] = None
+
+
+@dataclass
 class TokenMetrics:
     """Token usage extracted from JSONL message.usage fields."""
 
@@ -45,5 +54,6 @@ class RenderContext:
     token_metrics: Optional[TokenMetrics] = None
     git_status: Optional[GitStatus] = None
     session_metrics: Optional[SessionMetrics] = None
+    subscription_info: Optional[SubscriptionInfo] = None
     terminal_width: Optional[int] = None
     is_preview: bool = False

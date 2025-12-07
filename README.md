@@ -137,6 +137,7 @@ Delete ~/.config/claude-statusline/config.yaml to regenerate with new defaults.
 
 **Available Widgets:**
 - `model` - Claude model name (e.g., "Sonnet 4.5")
+- `subscription` - Subscription type (Pro/Max) or API usage indicator
 - `directory` - Current working directory
 - `git-branch` - Active git branch name
 - `git-changes` - Staged/unstaged changes count

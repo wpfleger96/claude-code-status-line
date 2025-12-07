@@ -6,7 +6,11 @@ import yaml
 from pydantic import ValidationError
 
 from claude_code_statusline.config.defaults import get_default_config
-from claude_code_statusline.config.loader import load_config, save_config
+from claude_code_statusline.config.loader import (
+    load_config,
+    merge_missing_widgets,
+    save_config,
+)
 from claude_code_statusline.config.schema import (
     StatusLineConfig,
     WidgetConfigModel,
@@ -133,8 +137,10 @@ class TestConfigSaving:
         save_config(sample_config)
 
         loaded = load_config()
-        assert len(loaded.lines[0]) == 4
-        assert loaded.lines[0][3].type == "cost"
+
+        cost_widget = next((w for w in loaded.lines[0] if w.type == "cost"), None)
+        assert cost_widget is not None
+        assert cost_widget.color == "green"
 
 
 class TestDefaultConfig:
@@ -177,3 +183,123 @@ class TestConfigSchema:
                 lines=[[]],
                 extra_field="not allowed",  # type: ignore[call-arg]
             )
+
+
+class TestMergeMissingWidgets:
+    """Tests for auto-merging new widgets from defaults."""
+
+    def test_adds_missing_widget_at_correct_position(self):
+        """Test that missing widgets are inserted at matching default positions."""
+        user_config = StatusLineConfig(
+            version=1,
+            lines=[
+                [
+                    WidgetConfigModel(type="model", color="cyan"),
+                    WidgetConfigModel(type="separator"),
+                    WidgetConfigModel(type="directory", color="blue"),
+                ]
+            ],
+        )
+
+        merged = merge_missing_widgets(user_config)
+
+        widget_types = [w.type for w in merged.lines[0] if w.type != "separator"]
+        assert "subscription" in widget_types
+        model_idx = next(i for i, w in enumerate(merged.lines[0]) if w.type == "model")
+        subscription_idx = next(
+            i for i, w in enumerate(merged.lines[0]) if w.type == "subscription"
+        )
+        assert subscription_idx > model_idx
+
+    def test_preserves_existing_widgets(self):
+        """Test that existing widgets and their customizations are preserved."""
+        user_config = StatusLineConfig(
+            version=1,
+            lines=[
+                [
+                    WidgetConfigModel(type="model", color="magenta", bold=True),
+                    WidgetConfigModel(type="separator"),
+                    WidgetConfigModel(type="directory", color="yellow"),
+                ]
+            ],
+        )
+
+        merged = merge_missing_widgets(user_config)
+
+        model_widget = next(w for w in merged.lines[0] if w.type == "model")
+        assert model_widget.color == "magenta"
+        assert model_widget.bold is True
+
+        dir_widget = next(w for w in merged.lines[0] if w.type == "directory")
+        assert dir_widget.color == "yellow"
+
+    def test_does_not_duplicate_existing_widgets(self):
+        """Test that widgets already in config are not duplicated."""
+        user_config = StatusLineConfig(
+            version=1,
+            lines=[
+                [
+                    WidgetConfigModel(type="model", color="cyan"),
+                    WidgetConfigModel(type="separator"),
+                    WidgetConfigModel(type="subscription", color="green"),
+                    WidgetConfigModel(type="separator"),
+                    WidgetConfigModel(type="directory", color="blue"),
+                ]
+            ],
+        )
+
+        merged = merge_missing_widgets(user_config)
+
+        subscription_count = sum(1 for w in merged.lines[0] if w.type == "subscription")
+        assert subscription_count == 1
+
+    def test_adds_separator_with_new_widget(self):
+        """Test that separators are added along with new widgets."""
+        user_config = StatusLineConfig(
+            version=1,
+            lines=[
+                [
+                    WidgetConfigModel(type="model", color="cyan"),
+                    WidgetConfigModel(type="separator"),
+                    WidgetConfigModel(type="directory", color="blue"),
+                ]
+            ],
+        )
+
+        merged = merge_missing_widgets(user_config)
+
+        model_idx = next(i for i, w in enumerate(merged.lines[0]) if w.type == "model")
+        subscription_idx = next(
+            i for i, w in enumerate(merged.lines[0]) if w.type == "subscription"
+        )
+
+        assert merged.lines[0][model_idx + 1].type == "separator"
+        assert merged.lines[0][subscription_idx - 1].type == "separator"
+
+    def test_auto_merge_on_load(self, temp_config_dir):
+        """Test that load_config automatically merges and saves new widgets."""
+        old_config = StatusLineConfig(
+            version=1,
+            lines=[
+                [
+                    WidgetConfigModel(type="model", color="cyan"),
+                    WidgetConfigModel(type="separator"),
+                    WidgetConfigModel(type="directory", color="blue"),
+                ]
+            ],
+        )
+        save_config(old_config)
+
+        loaded = load_config()
+
+        widget_types = [w.type for w in loaded.lines[0] if w.type != "separator"]
+        assert "subscription" in widget_types
+
+        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        with open(config_file) as f:
+            saved_data = yaml.safe_load(f)
+
+        saved_types = [
+            w["type"] for w in saved_data["lines"][0] if w["type"] != "separator"
+        ]
+        assert "subscription" in saved_types

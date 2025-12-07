@@ -11,6 +11,8 @@ def get_default_config() -> StatusLineConfig:
             [
                 WidgetConfigModel(type="model", color="cyan"),
                 WidgetConfigModel(type="separator"),
+                WidgetConfigModel(type="subscription", color="cyan"),
+                WidgetConfigModel(type="separator"),
                 WidgetConfigModel(type="directory", color="blue"),
                 WidgetConfigModel(type="separator"),
                 WidgetConfigModel(type="git-branch", color="magenta"),

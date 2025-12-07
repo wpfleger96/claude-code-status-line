@@ -10,6 +10,7 @@ from typing import Any, cast
 from .parsers.tokens import parse_transcript
 from .renderer import render_status_line_with_config
 from .types import RenderContext
+from .utils.credentials import read_subscription_info
 from .utils.debug import debug_log
 from .utils.models import prefetch_model_data
 
@@ -102,16 +103,19 @@ def main() -> None:
     debug_log(f"Transcript Path: {transcript_path}", session_id)
 
     # Parallel I/O for fast startup
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         transcript_future = executor.submit(parse_transcript, transcript_path)
+        subscription_future = executor.submit(read_subscription_info)
         executor.submit(prefetch_model_data)  # Fire and forget
 
         token_metrics, session_metrics = transcript_future.result()
+        subscription_info = subscription_future.result()
 
     context = RenderContext(
         data=data,
         token_metrics=token_metrics,
         session_metrics=session_metrics,
+        subscription_info=subscription_info,
         git_status=None,  # Lazy-loaded by git widgets
     )
 

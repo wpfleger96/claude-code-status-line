@@ -76,7 +76,6 @@ def extract_session_id(data: dict[str, Any], transcript_path: str) -> str:
         filename = os.path.basename(transcript_path)
         if filename.endswith(".jsonl"):
             potential_id = filename[:-6]
-            # Validate UUID format (36 chars, 4 hyphens)
             if len(potential_id) == 36 and potential_id.count("-") == 4:
                 return potential_id
 
@@ -102,14 +101,18 @@ def main() -> None:
     debug_log(f"Model ID: {data.get('model', {}).get('id', '')}", session_id)
     debug_log(f"Transcript Path: {transcript_path}", session_id)
 
-    # Parallel I/O for fast startup
     with ThreadPoolExecutor(max_workers=3) as executor:
         transcript_future = executor.submit(parse_transcript, transcript_path)
         subscription_future = executor.submit(read_subscription_info)
-        executor.submit(prefetch_model_data)  # Fire and forget
+        executor.submit(prefetch_model_data)
 
         token_metrics, session_metrics = transcript_future.result()
         subscription_info = subscription_future.result()
+
+    # Prefer transcript's session_id if compaction was detected
+    # This fixes stale session_id display after /compact
+    if token_metrics.had_compact_boundary and token_metrics.session_id:
+        data["session_id"] = token_metrics.session_id
 
     context = RenderContext(
         data=data,

@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Optional
 
 from ..types import SessionMetrics, TokenMetrics
+from .jsonl import is_real_compact_boundary
 
 
 def parse_transcript(
@@ -37,6 +38,9 @@ def parse_transcript(
     first_timestamp: Optional[datetime] = None
     last_timestamp: Optional[datetime] = None
 
+    session_id = ""
+    had_compact_boundary = False
+
     try:
         with open(transcript_path, encoding="utf-8") as f:
             for line in f:
@@ -47,7 +51,19 @@ def parse_transcript(
                 try:
                     data = json.loads(line)
 
-                    # Extract timestamp for session duration
+                    if data.get("sessionId"):
+                        session_id = data["sessionId"]
+
+                    if is_real_compact_boundary(data):
+                        had_compact_boundary = True
+                        input_tokens = 0
+                        output_tokens = 0
+                        cached_tokens = 0
+                        most_recent_time = None
+                        most_recent_usage = None
+                        first_timestamp = None
+                        continue
+
                     timestamp_str = data.get("timestamp")
                     if timestamp_str:
                         try:
@@ -60,23 +76,19 @@ def parse_transcript(
                         except ValueError:
                             pass
 
-                    # Extract token usage
                     usage = data.get("message", {}).get("usage")
                     if not usage:
                         continue
 
-                    # Sum totals across all messages
                     input_tokens += usage.get("input_tokens", 0)
                     output_tokens += usage.get("output_tokens", 0)
                     cached_tokens += usage.get("cache_read_input_tokens", 0)
                     cached_tokens += usage.get("cache_creation_input_tokens", 0)
 
-                    # Track most recent main chain entry for context_length
                     is_sidechain = data.get("isSidechain", False)
                     is_api_error = data.get("isApiErrorMessage", False)
                     stop_reason = data.get("message", {}).get("stop_reason")
 
-                    # Only use completed messages (skip streaming partials with stop_reason: null)
                     if (
                         not is_sidechain
                         and not is_api_error
@@ -94,7 +106,6 @@ def parse_transcript(
                                 most_recent_time = entry_time
                                 most_recent_usage = usage
                         except ValueError:
-                            # Skip invalid timestamps
                             continue
 
                 except (json.JSONDecodeError, ValueError):
@@ -103,7 +114,6 @@ def parse_transcript(
     except OSError:
         return TokenMetrics(transcript_exists=False), None
 
-    # Calculate context_length from most recent main chain message
     if most_recent_usage:
         context_length = (
             most_recent_usage.get("input_tokens", 0)
@@ -120,9 +130,10 @@ def parse_transcript(
         total_tokens=total_tokens,
         context_length=context_length,
         transcript_exists=True,
+        session_id=session_id,
+        had_compact_boundary=had_compact_boundary,
     )
 
-    # Build session metrics
     session_metrics = None
     if first_timestamp and last_timestamp:
         duration_seconds = int((last_timestamp - first_timestamp).total_seconds())

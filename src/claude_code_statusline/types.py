@@ -24,6 +24,10 @@ class TokenMetrics:
     total_tokens: int = 0
     context_length: int = 0  # Current context size from most recent message
     transcript_exists: bool = False  # Whether transcript file was found and readable
+    session_id: str = (
+        ""  # Last sessionId from transcript (current session after compaction)
+    )
+    had_compact_boundary: bool = False  # Whether compact boundary was detected
 
 
 @dataclass

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.5 (2025-12-08)
+
+### Bug Fixes
+
+- Stale token count and session ID after /compact
+  ([`f68db99`](https://github.com/wpfleger96/claude-code-status-line/commit/f68db99ef802fb95e7d4c4fd5f55c06bae248ed8))
+
+
 ## v0.8.4 (2025-12-07)
 
 ### Bug Fixes

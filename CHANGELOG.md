@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v0.8.6 (2025-12-08)
+
+### Bug Fixes
+
+- Token count discrepancy bc claude code doesnt consistently log final streaming chunks with
+  stop_reason set
+  ([`5e87320`](https://github.com/wpfleger96/claude-code-status-line/commit/5e87320563a6b18f89e64a892dc65cf7c66982c9))
+
+### Chores
+
+- Add AGENTS.md
+  ([`f5d8eac`](https://github.com/wpfleger96/claude-code-status-line/commit/f5d8eacd75ff50d2fc14aa79deda6d29856669a5))
+
+
 ## v0.8.5 (2025-12-08)
 
 ### Bug Fixes

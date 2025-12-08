@@ -87,14 +87,8 @@ def parse_transcript(
 
                     is_sidechain = data.get("isSidechain", False)
                     is_api_error = data.get("isApiErrorMessage", False)
-                    stop_reason = data.get("message", {}).get("stop_reason")
 
-                    if (
-                        not is_sidechain
-                        and not is_api_error
-                        and timestamp_str
-                        and stop_reason is not None
-                    ):
+                    if not is_sidechain and not is_api_error and timestamp_str:
                         try:
                             entry_time = datetime.fromisoformat(
                                 timestamp_str.replace("Z", "+00:00")

@@ -194,7 +194,7 @@ class TestTokenParserCompactBoundary:
                                 "output_tokens": 50,
                                 "cache_read_input_tokens": 20,
                             },
-                            "stop_reason": "end_turn",
+                            "stop_reason": None,
                         },
                         "timestamp": "2025-01-01T12:00:00Z",
                     }
@@ -212,6 +212,9 @@ class TestTokenParserCompactBoundary:
             assert token_metrics.output_tokens == 50
             assert token_metrics.cached_tokens == 20
             assert token_metrics.total_tokens == 170
+
+            # Should calculate context_length from most recent message
+            assert token_metrics.context_length == 120  # 100 + 20
 
             # Should detect compact boundary
             assert token_metrics.had_compact_boundary is True
@@ -232,7 +235,7 @@ class TestTokenParserCompactBoundary:
                         "sessionId": "session-123",
                         "message": {
                             "usage": {"input_tokens": 100, "output_tokens": 50},
-                            "stop_reason": "end_turn",
+                            "stop_reason": None,
                         },
                         "timestamp": "2025-01-01T10:00:00Z",
                     }
@@ -246,7 +249,7 @@ class TestTokenParserCompactBoundary:
                         "sessionId": "session-123",
                         "message": {
                             "usage": {"input_tokens": 200, "output_tokens": 100},
-                            "stop_reason": "end_turn",
+                            "stop_reason": None,
                         },
                         "timestamp": "2025-01-01T11:00:00Z",
                     }
@@ -264,11 +267,59 @@ class TestTokenParserCompactBoundary:
             assert token_metrics.output_tokens == 150
             assert token_metrics.total_tokens == 450
 
+            # Should calculate context_length from most recent message
+            assert (
+                token_metrics.context_length == 200
+            )  # Only input_tokens from last message
+
             # Should not detect compact boundary
             assert token_metrics.had_compact_boundary is False
 
             # Should track session ID
             assert token_metrics.session_id == "session-123"
+        finally:
+            import os
+
+            os.unlink(transcript_path)
+
+    def test_context_length_with_completed_message(self):
+        """Context length works when stop_reason is set (edge case - tool_use/end_turn)."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
+            # Message with stop_reason: "end_turn" (less common but valid)
+            f.write(
+                json.dumps(
+                    {
+                        "sessionId": "session-789",
+                        "message": {
+                            "usage": {
+                                "input_tokens": 150,
+                                "output_tokens": 75,
+                                "cache_read_input_tokens": 30,
+                                "cache_creation_input_tokens": 10,
+                            },
+                            "stop_reason": "end_turn",
+                        },
+                        "timestamp": "2025-01-01T13:00:00Z",
+                    }
+                )
+                + "\n"
+            )
+
+            transcript_path = f.name
+
+        try:
+            token_metrics, _ = parse_transcript(transcript_path)
+
+            # Should count tokens
+            assert token_metrics.input_tokens == 150
+            assert token_metrics.output_tokens == 75
+            assert token_metrics.cached_tokens == 40  # 30 + 10
+
+            # Should calculate context_length correctly even with stop_reason set
+            assert token_metrics.context_length == 190  # 150 + 30 + 10
+
+            # Should track session ID
+            assert token_metrics.session_id == "session-789"
         finally:
             import os
 

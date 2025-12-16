@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.9.0 (2025-12-16)
+
+### Features
+
+- Leverage new context_window field in CC 2.0.70+ statusline payload
+  ([`c9b7bee`](https://github.com/wpfleger96/claude-code-status-line/commit/c9b7beeccc563b2454db28c40326cc6d91014b8b))
+
+
 ## v0.8.6 (2025-12-08)
 
 ### Bug Fixes

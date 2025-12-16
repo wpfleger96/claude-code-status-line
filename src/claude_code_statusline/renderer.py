@@ -6,7 +6,7 @@ from .config.loader import get_effective_widgets
 from .config.schema import WidgetConfigModel
 from .types import RenderContext
 from .utils.colors import colorize, get_cost_color, get_usage_color
-from .utils.models import get_context_limit_for_render
+from .utils.models import get_context_limit_for_render, get_current_context_length
 from .widgets import builtin  # noqa: F401
 from .widgets.registry import get_widget
 
@@ -21,15 +21,13 @@ def _resolve_auto_color(widget_type: str, context: RenderContext) -> str:
     Returns:
         Resolved color name
     """
-    if widget_type == "context-percentage" or widget_type == "context-tokens":
-        if context.token_metrics:
-            context_limit = get_context_limit_for_render(context)
+    if widget_type in ("context-percentage", "context-tokens"):
+        context_limit = get_context_limit_for_render(context)
+        context_length = get_current_context_length(context)
 
-            if context.token_metrics.context_length > 0:
-                percentage = (
-                    context.token_metrics.context_length * 100
-                ) / context_limit
-                return get_usage_color(percentage)
+        if context_length > 0 and context_limit > 0:
+            percentage = (context_length * 100) / context_limit
+            return get_usage_color(percentage)
 
     if widget_type == "cost":
         cost = context.data.get("cost", {})

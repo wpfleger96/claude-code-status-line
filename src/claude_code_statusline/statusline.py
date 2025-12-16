@@ -5,11 +5,11 @@ import os
 import sys
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from .parsers.tokens import parse_transcript
 from .renderer import render_status_line_with_config
-from .types import RenderContext
+from .types import ContextWindow, RenderContext
 from .utils.credentials import read_subscription_info
 from .utils.debug import debug_log
 from .utils.models import prefetch_model_data
@@ -55,7 +55,7 @@ def find_transcript_path(data: dict[str, Any]) -> str:
         if os.path.isfile(potential_path):
             return potential_path
 
-    return transcript_path  # Return original (may be empty)
+    return transcript_path
 
 
 def extract_session_id(data: dict[str, Any], transcript_path: str) -> str:
@@ -82,6 +82,35 @@ def extract_session_id(data: dict[str, Any], transcript_path: str) -> str:
     return ""
 
 
+def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
+    """Extract context_window data from Claude Code payload.
+
+    Args:
+        data: JSON input data from Claude Code
+
+    Returns:
+        ContextWindow if data is present and valid, None otherwise
+    """
+    cw = data.get("context_window")
+    if not cw or not isinstance(cw, dict):
+        return None
+
+    if "context_window_size" not in cw:
+        return None
+
+    current_usage = cw.get("current_usage") or {}
+
+    return ContextWindow(
+        total_input_tokens=cw.get("total_input_tokens", 0),
+        total_output_tokens=cw.get("total_output_tokens", 0),
+        context_window_size=cw.get("context_window_size", 0),
+        current_input_tokens=current_usage.get("input_tokens"),
+        current_output_tokens=current_usage.get("output_tokens"),
+        cache_creation_input_tokens=current_usage.get("cache_creation_input_tokens"),
+        cache_read_input_tokens=current_usage.get("cache_read_input_tokens"),
+    )
+
+
 def main() -> None:
     """Main entry point with widget-based rendering and parallel I/O."""
     data = parse_input_data()
@@ -93,6 +122,8 @@ def main() -> None:
     if session_id:
         data["session_id"] = session_id
 
+    context_window = extract_context_window(data)
+
     debug_log("=== SESSION START ===", session_id)
     debug_log(
         f"Working Directory: {data.get('workspace', {}).get('current_dir', '')}",
@@ -100,11 +131,13 @@ def main() -> None:
     )
     debug_log(f"Model ID: {data.get('model', {}).get('id', '')}", session_id)
     debug_log(f"Transcript Path: {transcript_path}", session_id)
+    debug_log(f"Context window from payload: {context_window is not None}", session_id)
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         transcript_future = executor.submit(parse_transcript, transcript_path)
         subscription_future = executor.submit(read_subscription_info)
-        executor.submit(prefetch_model_data)
+        if not context_window or context_window.context_window_size == 0:
+            executor.submit(prefetch_model_data)
 
         token_metrics, session_metrics = transcript_future.result()
         subscription_info = subscription_future.result()
@@ -120,6 +153,7 @@ def main() -> None:
         session_metrics=session_metrics,
         subscription_info=subscription_info,
         git_status=None,  # Lazy-loaded by git widgets
+        context_window=context_window,
     )
 
     debug_log(f"Token metrics: {token_metrics}", session_id)

@@ -58,7 +58,7 @@ tests/
 
 **Widget System**: All widgets extend `Widget` base class with `render(context: RenderContext) -> Optional[str]`. Register with `@register_widget(display_name, default_color, description, fallback_text)`.
 
-**RenderContext**: Dataclass passed to all widgets containing `data`, `token_metrics`, `git_status`, `session_metrics`, `subscription_info`.
+**RenderContext**: Dataclass passed to all widgets containing `data`, `token_metrics`, `git_status`, `session_metrics`, `subscription_info`, `context_window`.
 
 **Parallel I/O**: `statusline.py` uses `ThreadPoolExecutor(max_workers=3)` for transcript parsing, subscription loading, and model prefetch.
 
@@ -79,12 +79,13 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
 
 ## Common Gotchas
 
-1. **Compact boundary resets tokens**: Token counting resets when `/compact` boundary detected - tests mark this as "Critical"
-2. **Base64 images must be filtered**: Images excluded from token counting - tests mark this as "Critical"
-3. **Session ID priority**: After `/compact`, session_id from transcript takes priority over payload session_id
-4. **V1 config auto-deleted**: V1 configs automatically deleted and replaced with V2 format
-5. **Performance tests opt-in**: Excluded by default, run with `uv run pytest -m performance`
-6. **Hooks in `.hooks/`**: Custom hooks in `.hooks/` directory (not `.git/hooks/`) - install manually
+1. **Context window priority**: `context_window` from payload takes priority over transcript parsing for token counts - fallback to transcript if `context_window` missing/null
+2. **Compact boundary resets tokens**: Token counting resets when `/compact` boundary detected - tests mark this as "Critical"
+3. **Base64 images must be filtered**: Images excluded from token counting - tests mark this as "Critical"
+4. **Session ID priority**: After `/compact`, session_id from transcript takes priority over payload session_id
+5. **V1 config auto-deleted**: V1 configs automatically deleted and replaced with V2 format
+6. **Performance tests opt-in**: Excluded by default, run with `uv run pytest -m performance`
+7. **Hooks in `.hooks/`**: Custom hooks in `.hooks/` directory (not `.git/hooks/`) - install manually
 
 ## Key Files by Task
 
@@ -92,6 +93,7 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
 |------|-------|
 | Add new widget | `widgets/builtin/`, `widgets/registry.py` |
 | Modify token counting | `parsers/tokens.py`, `tests/unit/test_token_counting.py` |
+| Modify context window handling | `types.py`, `statusline.py`, `utils/models.py`, `tests/unit/test_context_window.py` |
 | Change status line rendering | `renderer.py`, `config/defaults.py` |
 | Update config schema | `config/schema.py`, `config/loader.py` |
 | Add CLI option | `statusline.py` |

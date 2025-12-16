@@ -153,33 +153,44 @@ Delete ~/.config/claude-statusline/config.yaml to regenerate with new defaults.
 - `separator` - Visual separator (default: "|")
 
 ### Real Token Counting
-- **Actual Token Values**: Reads real token counts from Claude Code transcript files instead of estimating
-- **Message-Level Accuracy**: Extracts exact `input_tokens` and `output_tokens` from message usage data
+- **Primary Source**: Uses Claude Code's `context_window` field from status payload for authoritative token counts
+- **Fallback Support**: Falls back to transcript parsing for older Claude Code versions or when `context_window` is unavailable
+- **Actual Token Values**: Reads real token counts instead of estimating (from `context_window.current_usage` or transcript `message.usage` fields)
 - **Compact-Aware**: Correctly handles `/compact` boundaries, counting only active context
-- **System Overhead**: Automatically accounts for Claude Code's system prompt and tool definitions (21400 tokens default)
+- **Accurate Context Limit**: Uses `context_window.context_window_size` directly from Claude Code instead of model lookups
 
 ### Smart Context Tracking
-- **JSONL Transcript Parsing**: Analyzes Claude Code's session files to find compact boundaries and count only relevant tokens
-- **Fallback Compatibility**: Falls back to simple file size calculation for non-JSONL transcript formats
+- **Priority-Based Sources**: Prefers `context_window` payload data → transcript parsing → model lookups
+- **Session Metrics**: Continues parsing transcripts for session duration and compact boundary detection
+- **Backwards Compatible**: Gracefully handles missing or null `context_window` data from older Claude Code versions
 - **Calibration Tool**: Includes `calibrate_token_counting.py` to validate and improve accuracy
 
 ### Token Calculation
 
 #### How It Works
+
+**Primary Method (Claude Code 2.0.70+):**
+- Uses `context_window.current_usage` from Claude Code's status payload
+- Calculates current context: `input_tokens + cache_creation_input_tokens + cache_read_input_tokens`
+- Uses `context_window.context_window_size` for accurate model limit
+- No estimation or overhead calculation needed - values are authoritative from Claude Code
+
+**Fallback Method (Older Versions):**
 - Reads actual token counts from transcript `message.usage` fields (input_tokens + output_tokens)
 - Falls back to estimation (character count ÷ 3.31) only when usage data is unavailable
-- Adds system overhead tokens (21400 by default) for Claude Code's system prompt, tools, and memory
 - Retrieves model-specific context limits from cached API data, live fetches, or hardcoded fallbacks
 
 #### Configuration
-Customize token calculations via environment variables:
 
-```bash
-# System overhead (default: 21400 tokens)
-export CLAUDE_CODE_SYSTEM_OVERHEAD=20000
-```
+Token counting now uses Claude Code's authoritative `context_window` data when available. For older Claude Code versions using the fallback method, system overhead is automatically managed.
 
 #### API Cache System
+
+**With `context_window` (Claude Code 2.0.70+):**
+- Context limits come directly from `context_window.context_window_size`
+- No cache or API lookups needed - authoritative value from Claude Code
+
+**Without `context_window` (Older Versions):**
 Context limits are retrieved from:
 1. **Local Cache**: `/tmp/claude_code_model_data_cache.json` (1-week TTL)
 2. **Live API**: [LiteLLM Model Database](https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json)

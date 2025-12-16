@@ -6,7 +6,7 @@ from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ...utils.colors import colorize, get_usage_color
 from ...utils.formatting import format_number, format_percentage, render_progress_bar
-from ...utils.models import get_context_limit_for_render
+from ...utils.models import get_context_limit_for_render, get_current_context_length
 from ..base import Widget
 from ..registry import register_widget
 
@@ -25,11 +25,20 @@ class ContextPercentageWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render context percentage with progress bar and token count."""
-        if not context.token_metrics or not context.token_metrics.transcript_exists:
+        has_context_window = (
+            context.context_window is not None
+            and context.context_window.has_current_usage
+        )
+        has_transcript = (
+            context.token_metrics is not None
+            and context.token_metrics.transcript_exists
+        )
+
+        if not has_context_window and not has_transcript:
             return None
 
         context_limit = get_context_limit_for_render(context)
-        context_length = context.token_metrics.context_length
+        context_length = get_current_context_length(context)
 
         if context_limit == 0:
             return None
@@ -37,11 +46,9 @@ class ContextPercentageWidget(Widget):
         percentage = round((context_length * 100) / context_limit, 1)
         progress_bar = render_progress_bar(percentage)
 
-        # Format token counts
         current = format_number(context_length)
         limit = format_number(context_limit)
 
-        # Apply usage-based color ONLY to the progress bar
         usage_color = get_usage_color(percentage)
         colored_bar = colorize(progress_bar, usage_color)
 
@@ -62,11 +69,20 @@ class ContextTokensWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render token count display."""
-        if not context.token_metrics or not context.token_metrics.transcript_exists:
+        has_context_window = (
+            context.context_window is not None
+            and context.context_window.has_current_usage
+        )
+        has_transcript = (
+            context.token_metrics is not None
+            and context.token_metrics.transcript_exists
+        )
+
+        if not has_context_window and not has_transcript:
             return None
 
         context_limit = get_context_limit_for_render(context)
-        context_length = context.token_metrics.context_length
+        context_length = get_current_context_length(context)
 
         current = format_number(context_length)
         limit = format_number(context_limit)

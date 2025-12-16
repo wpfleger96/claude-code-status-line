@@ -103,12 +103,10 @@ def _is_cache_stale() -> bool:
 def _maybe_refresh_cache_background() -> None:
     """Refresh model cache in background if stale (non-blocking)."""
     if _is_cache_stale():
-        # Fire and forget - don't wait for result
         thread = threading.Thread(target=get_cached_or_fetch_data, daemon=True)
         thread.start()
 
 
-# Module-level cache for prefetched model data
 _prefetched_model_data = None
 _prefetch_done = False
 
@@ -133,27 +131,23 @@ def get_context_limit(model_id: str, model_name: str = "") -> int:
     if not model_id:
         return MODEL_INFO["default"].context_limit
 
-    # Fast path: check for 1M context markers
     if "[1m]" in model_id.lower():
         return 1000000
 
     if model_name and "1m" in model_name.lower():
         return 1000000
 
-    # Fast path: check hardcoded MODEL_INFO first (instant for known models)
     model_lower = model_id.lower()
 
     if model_lower in MODEL_INFO:
-        _maybe_refresh_cache_background()  # Non-blocking cache refresh
+        _maybe_refresh_cache_background()
         return MODEL_INFO[model_lower].context_limit
 
     for key in sorted(MODEL_INFO.keys(), key=len, reverse=True):
         if key != "default" and (model_lower in key or key in model_lower):
-            _maybe_refresh_cache_background()  # Non-blocking cache refresh
+            _maybe_refresh_cache_background()
             return MODEL_INFO[key].context_limit
 
-    # Unknown model - check API data
-    # Use prefetched data if available, otherwise fetch (may block)
     global _prefetched_model_data, _prefetch_done
     if _prefetch_done:
         api_data = _prefetched_model_data
@@ -181,8 +175,34 @@ def get_context_limit(model_id: str, model_name: str = "") -> int:
     return MODEL_INFO["default"].context_limit
 
 
+def get_current_context_length(context: RenderContext) -> int:
+    """Get current context length, preferring context_window.
+
+    Priority:
+    1. context_window.current_context_tokens (authoritative)
+    2. token_metrics.context_length (fallback)
+
+    Args:
+        context: RenderContext
+
+    Returns:
+        Current context length in tokens
+    """
+    if context.context_window and context.context_window.has_current_usage:
+        return context.context_window.current_context_tokens
+
+    if context.token_metrics:
+        return context.token_metrics.context_length
+
+    return 0
+
+
 def get_context_limit_for_render(context: RenderContext) -> int:
-    """Get context limit from render context's model data.
+    """Get context limit from render context, preferring context_window.
+
+    Priority:
+    1. context_window.context_window_size (authoritative, from Claude Code)
+    2. Model lookup (hardcoded or API)
 
     Args:
         context: RenderContext with data containing model information
@@ -190,6 +210,9 @@ def get_context_limit_for_render(context: RenderContext) -> int:
     Returns:
         Context limit for the model in the render context
     """
+    if context.context_window and context.context_window.context_window_size > 0:
+        return context.context_window.context_window_size
+
     model = context.data.get("model", {})
     model_id = model.get("id", "")
     model_name = model.get("display_name", "")

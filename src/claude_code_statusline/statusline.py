@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import os
 import sys
@@ -111,8 +112,33 @@ def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
     )
 
 
+def create_argument_parser() -> argparse.ArgumentParser:
+    """Create the CLI argument parser.
+
+    Returns:
+        Configured argument parser
+    """
+    from . import __version__
+
+    parser = argparse.ArgumentParser(
+        prog="claude-statusline",
+        description="Claude Code statusline - context usage tracking for Claude Code",
+        epilog="When no arguments are provided, reads JSON from stdin and outputs the statusline.",
+    )
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+    return parser
+
+
 def main() -> None:
     """Main entry point with widget-based rendering and parallel I/O."""
+    parser = create_argument_parser()
+    parser.parse_args()
+
     data = parse_input_data()
 
     transcript_path = find_transcript_path(data)

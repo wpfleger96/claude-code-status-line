@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.9.1 (2025-12-17)
+
+### Bug Fixes
+
+- Support version/help CLI flags for debugging
+  ([`e649db6`](https://github.com/wpfleger96/claude-code-status-line/commit/e649db666fa0b9b03727a9f38f22f98af2841fad))
+
+
 ## v0.9.0 (2025-12-16)
 
 ### Features

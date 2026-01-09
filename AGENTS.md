@@ -5,6 +5,7 @@ CLI tool that generates a formatted status line for Claude Code, displaying mode
 ## Quick Commands
 
 ```bash
+# Development workflow
 just                  # Quick quality check (sync, type-check, lint-check, format-check)
 just sync             # Install dependencies (uv sync)
 just test             # Run tests (uv run pytest)
@@ -14,9 +15,13 @@ just pre-commit       # Pre-commit with auto-fix (type-check, lint, format, test
 just lint             # Fix linting issues (ruff check --fix)
 just format           # Format code (ruff format)
 
+# Testing
 uv run pytest tests/unit/test_file.py           # Single file
 uv run pytest tests/unit/test_file.py::test_fn  # Single test
 uv run pytest -m performance                    # Performance tests (excluded by default)
+
+# CLI (local development - use `uv run`)
+echo '{"transcript_path": "..."}' | uv run claude-statusline  # Test status line locally
 ```
 
 ## Project Structure
@@ -86,6 +91,11 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
 5. **V1 config auto-deleted**: V1 configs automatically deleted and replaced with V2 format
 6. **Performance tests opt-in**: Excluded by default, run with `uv run pytest -m performance`
 7. **Hooks in `.hooks/`**: Custom hooks in `.hooks/` directory (not `.git/hooks/`) - install manually
+8. **Local development vs installed tool** - **CRITICAL**: Always use `uv run claude-statusline` when developing locally:
+   - **Local dev (from repo)**: `uv run claude-statusline <args>` → runs YOUR local code changes directly
+   - **Installed tool (any directory)**: `claude-statusline <args>` → runs installed version from `~/.local/share/uv/tools/`
+   - Running `claude-statusline` without `uv run` will NOT reflect your local changes
+   - **NEVER use editable install** (`uv pip install -e .`) - risks conflicts with installed version, unnecessary complexity
 
 ## Key Files by Task
 

@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.9.2 (2026-01-12)
+
+### Bug Fixes
+
+- Show git repo name instead of folder name in git worktrees
+  ([`9020607`](https://github.com/wpfleger96/claude-code-status-line/commit/9020607c01904d104704a5f14b6ea9a34a41d139))
+
+### Chores
+
+- Docs
+  ([`e5a2e09`](https://github.com/wpfleger96/claude-code-status-line/commit/e5a2e0914df1aa9767f75b7a27cb478e992f26d2))
+
+
 ## v0.9.1 (2025-12-17)
 
 ### Bug Fixes

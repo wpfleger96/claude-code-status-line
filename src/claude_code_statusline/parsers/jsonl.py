@@ -215,7 +215,6 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
         debug_log(f"Failed to read file: {e}", transcript_path=file_path)
         return ParsedTranscript(total_file_chars=total_file_chars)
 
-    # Single-pass parsing: track all state simultaneously
     session_id = ""
     boundary_count = 0
     is_jsonl = False
@@ -236,7 +235,7 @@ def parse_transcript(file_path: str) -> ParsedTranscript:
 
         try:
             data = json.loads(stripped)
-            is_jsonl = True  # At least one valid JSON line
+            is_jsonl = True
 
             if not session_id and data.get("sessionId"):
                 session_id = data["sessionId"]

@@ -69,7 +69,6 @@ def render_widget(
         if color == "auto":
             color = _resolve_auto_color(widget_config.type, context)
 
-    # "none" color means widget handles its own coloring
     if color == "none":
         return content
 
@@ -95,7 +94,7 @@ def _remove_orphaned_separators(
     rendered = [(cfg, s) for cfg, s in pairs if s is not None]
 
     result = []
-    prev_was_separator = True  # Treat start as separator to skip leading separators
+    prev_was_separator = True
 
     for cfg, content in rendered:
         is_separator = cfg.type == "separator"

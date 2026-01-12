@@ -4,7 +4,6 @@ from typing import Callable, Optional
 
 from .base import Widget
 
-# Global registry of widget type -> widget instance
 _WIDGET_REGISTRY: dict[str, Widget] = {}
 
 

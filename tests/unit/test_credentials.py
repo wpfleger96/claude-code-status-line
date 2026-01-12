@@ -109,7 +109,6 @@ class TestReadSubscriptionInfo:
 
     def test_returns_api_usage_when_console_api_key_set(self, tmp_path, monkeypatch):
         """Test that console API key (sk-ant-api) returns API usage."""
-        # Create credentials file with subscription data
         credentials = {
             "claudeAiOauth": {
                 "subscriptionType": "pro",
@@ -124,11 +123,9 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: creds_file,
         )
-        # Set console API key in environment
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-api03-abcdef123456")
 
         result = read_subscription_info()
-        # Should return API usage despite credentials file having OAuth data
         assert result.is_subscription is False
         assert result.subscription_type is None
 
@@ -148,10 +145,8 @@ class TestReadSubscriptionInfo:
             "claude_code_statusline.utils.credentials.get_credentials_path",
             lambda: creds_file,
         )
-        # Set OAuth access token in environment
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-oat01-xyz789")
 
         result = read_subscription_info()
-        # Should read from credentials file
         assert result.is_subscription is True
         assert result.subscription_type == "max"

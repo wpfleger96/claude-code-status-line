@@ -151,7 +151,6 @@ class TestTokenParserCompactBoundary:
     def test_resets_token_counts_on_compact_boundary(self):
         """Critical: tokens before compact boundary should not be counted."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
-            # Message with usage before compact boundary
             f.write(
                 json.dumps(
                     {
@@ -169,7 +168,6 @@ class TestTokenParserCompactBoundary:
                 + "\n"
             )
 
-            # Compact boundary
             f.write(
                 json.dumps(
                     {
@@ -183,7 +181,6 @@ class TestTokenParserCompactBoundary:
                 + "\n"
             )
 
-            # Message with usage after compact boundary (should be counted)
             f.write(
                 json.dumps(
                     {
@@ -207,19 +204,15 @@ class TestTokenParserCompactBoundary:
         try:
             token_metrics, _ = parse_transcript(transcript_path)
 
-            # Only tokens after boundary should be counted
             assert token_metrics.input_tokens == 100
             assert token_metrics.output_tokens == 50
             assert token_metrics.cached_tokens == 20
             assert token_metrics.total_tokens == 170
 
-            # Should calculate context_length from most recent message
-            assert token_metrics.context_length == 120  # 100 + 20
+            assert token_metrics.context_length == 120
 
-            # Should detect compact boundary
             assert token_metrics.had_compact_boundary is True
 
-            # Should track the new session ID
             assert token_metrics.session_id == "new-session-456"
         finally:
             import os
@@ -262,20 +255,14 @@ class TestTokenParserCompactBoundary:
         try:
             token_metrics, _ = parse_transcript(transcript_path)
 
-            # Should count all tokens
             assert token_metrics.input_tokens == 300
             assert token_metrics.output_tokens == 150
             assert token_metrics.total_tokens == 450
 
-            # Should calculate context_length from most recent message
-            assert (
-                token_metrics.context_length == 200
-            )  # Only input_tokens from last message
+            assert token_metrics.context_length == 200
 
-            # Should not detect compact boundary
             assert token_metrics.had_compact_boundary is False
 
-            # Should track session ID
             assert token_metrics.session_id == "session-123"
         finally:
             import os
@@ -285,7 +272,6 @@ class TestTokenParserCompactBoundary:
     def test_context_length_with_completed_message(self):
         """Context length works when stop_reason is set (edge case - tool_use/end_turn)."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
-            # Message with stop_reason: "end_turn" (less common but valid)
             f.write(
                 json.dumps(
                     {
@@ -310,15 +296,12 @@ class TestTokenParserCompactBoundary:
         try:
             token_metrics, _ = parse_transcript(transcript_path)
 
-            # Should count tokens
             assert token_metrics.input_tokens == 150
             assert token_metrics.output_tokens == 75
-            assert token_metrics.cached_tokens == 40  # 30 + 10
+            assert token_metrics.cached_tokens == 40
 
-            # Should calculate context_length correctly even with stop_reason set
-            assert token_metrics.context_length == 190  # 150 + 30 + 10
+            assert token_metrics.context_length == 190
 
-            # Should track session ID
             assert token_metrics.session_id == "session-789"
         finally:
             import os

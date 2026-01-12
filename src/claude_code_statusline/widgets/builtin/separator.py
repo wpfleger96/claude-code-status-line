@@ -21,6 +21,5 @@ class SeparatorWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render separator from config or default."""
-        # Get separator from metadata or use default
         separator = config.metadata.get("text", "|")
         return f" {separator} "

@@ -8,6 +8,7 @@ from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ..base import Widget
 from ..registry import register_widget
+from .git import _get_or_fetch_git_status
 
 
 @register_widget(
@@ -29,5 +30,14 @@ class DirectoryWidget(Widget):
 
         if not current_dir:
             return None
+
+        _get_or_fetch_git_status(context)
+
+        if (
+            context.git_status
+            and context.git_status.is_git_repo
+            and context.git_status.repo_name
+        ):
+            return context.git_status.repo_name
 
         return str(os.path.basename(current_dir))

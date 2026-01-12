@@ -32,7 +32,7 @@ class TestContextWindowExtraction:
 
         assert cw is not None
         assert cw.context_window_size == 200000
-        assert cw.current_context_tokens == 15500  # 8500 + 5000 + 2000
+        assert cw.current_context_tokens == 15500
         assert cw.has_current_usage is True
 
     def test_handles_null_current_usage(self):
@@ -76,9 +76,8 @@ class TestContextWindowPriority:
         length = get_current_context_length(context)
         limit = get_context_limit_for_render(context)
 
-        # Should use context_window, not token_metrics
-        assert length == 15500  # From context_window
-        assert limit == 1000000  # From context_window
+        assert length == 15500
+        assert limit == 1000000
 
     def test_falls_back_to_transcript_when_no_context_window(self):
         """Falls back to transcript parsing when context_window unavailable."""
@@ -91,7 +90,6 @@ class TestContextWindowPriority:
         length = get_current_context_length(context)
         limit = get_context_limit_for_render(context)
 
-        # Should fallback to token_metrics and model lookup
         assert length == 50000
         assert limit == 200000
 
@@ -102,13 +100,12 @@ class TestContextWindowPriority:
             token_metrics=TokenMetrics(context_length=50000, transcript_exists=True),
             context_window=ContextWindow(
                 context_window_size=200000,
-                current_input_tokens=None,  # No current_usage
+                current_input_tokens=None,
             ),
         )
 
         length = get_current_context_length(context)
         limit = get_context_limit_for_render(context)
 
-        # Should use context_window for limit, fallback to token_metrics for length
         assert length == 50000
         assert limit == 200000

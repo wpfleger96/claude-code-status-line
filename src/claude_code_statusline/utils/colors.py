@@ -2,7 +2,6 @@
 
 from typing import Optional
 
-# Basic ANSI 16 colors
 COLORS = {
     "black": "\033[30m",
     "red": "\033[31m",
@@ -25,7 +24,6 @@ COLORS = {
     "reset": "\033[0m",
 }
 
-# Color aliases
 COLORS["gray"] = COLORS["bright_black"]
 COLORS["grey"] = COLORS["bright_black"]
 
@@ -58,7 +56,6 @@ def colorize(text: str, color: Optional[str] = None, bold: bool = False) -> str:
     if not text:
         return text
 
-    # "none" color means skip colorization entirely
     if color == "none":
         return text
 

@@ -64,7 +64,12 @@ def sample_context():
             start_time=None, last_activity=None, duration_seconds=7800
         ),
         git_status=GitStatus(
-            branch="main", insertions=50, deletions=10, worktree=None, is_git_repo=True
+            branch="main",
+            insertions=50,
+            deletions=10,
+            worktree=None,
+            repo_name=None,
+            is_git_repo=True,
         ),
     )
 
@@ -113,6 +118,36 @@ class TestDirectoryWidget:
         result = widget.render(widget_config, context)
         assert result is None
 
+    def test_renders_repo_name_from_worktree(self, widget_config):
+        """When in a git repo with repo_name set, use repo_name instead of basename."""
+        context = RenderContext(
+            data={"workspace": {"current_dir": "/Users/test/worktrees/feature-123"}},
+            token_metrics=None,
+            git_status=GitStatus(
+                branch="feature",
+                repo_name="my-actual-repo",
+                is_git_repo=True,
+            ),
+        )
+        widget = DirectoryWidget()
+        result = widget.render(widget_config, context)
+        assert result == "my-actual-repo"
+
+    def test_falls_back_to_basename_when_no_repo_name(self, widget_config):
+        """When repo_name is None, fall back to directory basename."""
+        context = RenderContext(
+            data={"workspace": {"current_dir": "/Users/test/my-project"}},
+            token_metrics=None,
+            git_status=GitStatus(
+                branch="main",
+                repo_name=None,
+                is_git_repo=True,
+            ),
+        )
+        widget = DirectoryWidget()
+        result = widget.render(widget_config, context)
+        assert result == "my-project"
+
 
 class TestContextPercentageWidget:
     """Tests for ContextPercentageWidget."""
@@ -123,9 +158,9 @@ class TestContextPercentageWidget:
         assert result is not None
         assert "Context:" in result
         assert "%" in result
-        assert "●" in result or "○" in result  # Progress bar characters
-        assert "/" in result  # Token count separator
-        assert "K" in result  # K suffix for thousands
+        assert "●" in result or "○" in result
+        assert "/" in result
+        assert "K" in result
 
     def test_returns_none_without_token_metrics(self, widget_config):
         context = RenderContext(data={}, token_metrics=None)
@@ -143,7 +178,7 @@ class TestContextTokensWidget:
         assert result is not None
         assert "/" in result
         assert "tokens" in result
-        assert "K" in result  # Should have K suffix for thousands
+        assert "K" in result
 
     def test_returns_none_without_token_metrics(self, widget_config):
         context = RenderContext(data={}, token_metrics=None)

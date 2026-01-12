@@ -168,8 +168,6 @@ def main() -> None:
         token_metrics, session_metrics = transcript_future.result()
         subscription_info = subscription_future.result()
 
-    # Prefer transcript's session_id if compaction was detected
-    # This fixes stale session_id display after /compact
     if token_metrics.had_compact_boundary and token_metrics.session_id:
         data["session_id"] = token_metrics.session_id
 
@@ -178,7 +176,7 @@ def main() -> None:
         token_metrics=token_metrics,
         session_metrics=session_metrics,
         subscription_info=subscription_info,
-        git_status=None,  # Lazy-loaded by git widgets
+        git_status=None,
         context_window=context_window,
     )
 

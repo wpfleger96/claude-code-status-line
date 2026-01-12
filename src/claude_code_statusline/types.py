@@ -36,6 +36,7 @@ class GitStatus:
     insertions: int = 0
     deletions: int = 0
     worktree: Optional[str] = None
+    repo_name: Optional[str] = None
     is_git_repo: bool = False
 
 

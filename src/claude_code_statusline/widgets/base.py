@@ -14,7 +14,6 @@ class Widget(ABC):
     @register_widget decorator rather than requiring implementation of methods.
     """
 
-    # Class attributes set by @register_widget decorator
     display_name: str = ""
     description: str = ""
     default_color: str = "white"

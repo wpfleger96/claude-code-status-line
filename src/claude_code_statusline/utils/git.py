@@ -9,7 +9,6 @@ from typing import Optional
 
 from ..types import GitStatus
 
-# Module-level cache for git status
 _git_cache: Optional[tuple[float, Optional[str], GitStatus]] = None
 GIT_CACHE_TTL = 2.0  # seconds
 
@@ -61,7 +60,6 @@ def get_git_status(cwd: Optional[str] = None) -> GitStatus:
         _git_cache = (now, cwd, status)
         return status
 
-    # Run remaining commands in parallel for faster execution
     with ThreadPoolExecutor(max_workers=4) as executor:
         branch_future = executor.submit(_run_git, ["branch", "--show-current"], cwd)
         unstaged_future = executor.submit(_run_git, ["diff", "--shortstat"], cwd)
@@ -87,20 +85,31 @@ def get_git_status(cwd: Optional[str] = None) -> GitStatus:
         deletions += _parse_deletions(staged)
 
     worktree = None
-    if worktree_list and cwd:
-        for line in worktree_list.split("\n"):
-            if cwd in line:
+    repo_name = None
+    if worktree_list:
+        lines = worktree_list.split("\n")
+        if lines and lines[0].strip():
+            parts = lines[0].split()
+            if parts:
+                main_worktree_path = parts[0]
+                repo_name = main_worktree_path.rstrip("/").split("/")[-1]
+
+        if cwd:
+            normalized_cwd = cwd.rstrip("/")
+            for line in lines:
                 parts = line.split()
-                if len(parts) >= 3:
-                    worktree_path = parts[0]
-                    worktree = worktree_path.rstrip("/").split("/")[-1]
-                break
+                if parts:
+                    worktree_path = parts[0].rstrip("/")
+                    if worktree_path == normalized_cwd and len(parts) >= 3:
+                        worktree = worktree_path.split("/")[-1]
+                        break
 
     status = GitStatus(
         branch=branch,
         insertions=insertions,
         deletions=deletions,
         worktree=worktree,
+        repo_name=repo_name,
         is_git_repo=True,
     )
 

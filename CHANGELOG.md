@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.10.1 (2026-01-15)
+
+### Bug Fixes
+
+- Anthropic broke this and CC doesnt make subscription info available anymore
+  ([`8008dde`](https://github.com/wpfleger96/claude-code-status-line/commit/8008ddea69c6376c3c9865ea6ad6b434d848d571))
+
+
 ## v0.10.0 (2026-01-15)
 
 ### Features

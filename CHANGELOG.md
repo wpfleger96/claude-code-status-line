@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.10.0 (2026-01-15)
+
+### Features
+
+- Add automated script-based install
+  ([`c3db16d`](https://github.com/wpfleger96/claude-code-status-line/commit/c3db16dd1e723d5926be913e5f2e8e1e42a98705))
+
+
 ## v0.9.2 (2026-01-12)
 
 ### Bug Fixes

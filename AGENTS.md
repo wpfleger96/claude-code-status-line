@@ -5,23 +5,42 @@ CLI tool that generates a formatted status line for Claude Code, displaying mode
 ## Quick Commands
 
 ```bash
+# Setup (first time)
+just sync             # Install dependencies (uv sync)
+
 # Development workflow
 just                  # Quick quality check (sync, type-check, lint-check, format-check)
-just sync             # Install dependencies (uv sync)
-just test             # Run tests (uv run pytest)
 just check-all        # All quality checks + tests
-just ci               # Match CI locally
+just ci               # Match CI locally (exactly what runs in GitHub Actions)
 just pre-commit       # Pre-commit with auto-fix (type-check, lint, format, test)
-just lint             # Fix linting issues (ruff check --fix)
-just format           # Format code (ruff format)
+
+# Code quality (check only)
+just type-check       # mypy strict mode
+just lint-check       # ruff check (no fixes)
+just format-check     # ruff format --check
+
+# Code quality (auto-fix)
+just lint             # ruff check --fix
+just format           # ruff format
 
 # Testing
-uv run pytest tests/unit/test_file.py           # Single file
-uv run pytest tests/unit/test_file.py::test_fn  # Single test
-uv run pytest -m performance                    # Performance tests (excluded by default)
+just test                                       # Full suite (excludes performance)
+uv run pytest tests/unit/test_file.py          # Single file
+uv run pytest tests/unit/test_file.py::test_fn # Single test
+uv run pytest -m unit                           # Unit tests only
+uv run pytest -m integration                    # Integration tests only
+uv run pytest -m performance                    # Performance benchmarks (opt-in)
 
-# CLI (local development - use `uv run`)
-echo '{"transcript_path": "..."}' | uv run claude-statusline  # Test status line locally
+# CLI testing (local development)
+uv run claude-statusline                        # Test with stdin
+echo '{"transcript_path": "..."}' | uv run claude-statusline
+uv run claude-statusline install                # Install local version to Claude Code
+uv run claude-statusline doctor                 # Verify installation health
+uv run claude-statusline --version              # Show version
+
+# Installation scripts (for end users)
+curl -fsSL https://raw.githubusercontent.com/wpfleger96/claude-code-status-line/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/wpfleger96/claude-code-status-line/main/scripts/uninstall.sh | bash
 ```
 
 ## Project Structure
@@ -31,17 +50,23 @@ src/claude_code_statusline/
 ├── statusline.py          # Main CLI entry point
 ├── renderer.py            # Status line rendering
 ├── types.py               # Dataclasses (RenderContext, TokenMetrics, etc.)
+├── cli/
+│   └── commands.py        # install/uninstall/doctor commands
 ├── config/
+│   ├── defaults.py        # Default widget configuration
 │   ├── loader.py          # Config file loading with mtime caching
 │   └── schema.py          # Pydantic validation schemas
 ├── parsers/
 │   ├── jsonl.py           # JSONL transcript parser
 │   └── tokens.py          # Token counting with compact boundary detection
-├── utils/                 # Shared utilities (colors, git, formatting)
+├── utils/                 # Shared utilities (colors, git, formatting, settings)
 └── widgets/
     ├── base.py            # Abstract Widget base class
     ├── registry.py        # @register_widget() decorator
-    └── builtin/           # 14 built-in widgets
+    └── builtin/           # 14 built-in widgets (context, cost, directory, git, model, etc.)
+scripts/
+├── install.sh             # One-liner automated installation
+└── uninstall.sh           # Clean removal script
 tests/
 ├── unit/                  # Unit tests (no I/O)
 ├── integration/           # Integration tests (mocked I/O)
@@ -51,13 +76,15 @@ tests/
 
 ## Tech Stack
 
-- Python 3.13 (see `.python-version`)
-- Package manager: uv
+- Python 3.13 (requires >=3.9, see `.python-version`)
+- Package manager: uv (development), uv tool or pipx (end user installation)
 - Task runner: just
-- Dependencies: pyyaml, pydantic
-- Linting: ruff (isort, pyflakes, pyupgrade, bugbear)
-- Type checking: mypy (strict mode)
+- Build: setuptools (see pyproject.toml)
+- Dependencies: pyyaml>=6.0, pydantic>=2.0
+- Linting: ruff (isort, pyflakes, pyupgrade, bugbear via `uvx ruff`)
+- Type checking: mypy strict mode (Python 3.13 target)
 - Testing: pytest, pytest-cov, pytest-benchmark
+- Release: python-semantic-release (conventional commits, auto-versioning)
 
 ## Key Patterns
 
@@ -84,27 +111,38 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
 
 ## Common Gotchas
 
-1. **Context window priority**: `context_window` from payload takes priority over transcript parsing for token counts - fallback to transcript if `context_window` missing/null
-2. **Compact boundary resets tokens**: Token counting resets when `/compact` boundary detected - tests mark this as "Critical"
-3. **Base64 images must be filtered**: Images excluded from token counting - tests mark this as "Critical"
-4. **Session ID priority**: After `/compact`, session_id from transcript takes priority over payload session_id
-5. **V1 config auto-deleted**: V1 configs automatically deleted and replaced with V2 format
-6. **Performance tests opt-in**: Excluded by default, run with `uv run pytest -m performance`
-7. **Hooks in `.hooks/`**: Custom hooks in `.hooks/` directory (not `.git/hooks/`) - install manually
-8. **Local development vs installed tool** - **CRITICAL**: Always use `uv run claude-statusline` when developing locally:
-   - **Local dev (from repo)**: `uv run claude-statusline <args>` → runs YOUR local code changes directly
+1. **Local dev vs installed tool** - **CRITICAL**: Always use `uv run claude-statusline` when developing locally:
+   - **Local dev (from repo)**: `uv run claude-statusline <args>` → runs YOUR local code changes
    - **Installed tool (any directory)**: `claude-statusline <args>` → runs installed version from `~/.local/share/uv/tools/`
-   - Running `claude-statusline` without `uv run` will NOT reflect your local changes
-   - **NEVER use editable install** (`uv pip install -e .`) - risks conflicts with installed version, unnecessary complexity
+   - Running `claude-statusline` without `uv run` will NOT reflect local changes
+   - **NEVER use editable install** (`uv pip install -e .`) - risks conflicts, unnecessary complexity
+
+2. **Context window priority** (Claude Code 2.0.70+): `context_window` field from payload takes priority over transcript parsing for token counts. Falls back to transcript if `context_window` missing/null. This is the authoritative source.
+
+3. **Compact boundary resets tokens**: Token counting resets when `/compact` boundary detected in transcript. Tests mark this as "Critical".
+
+4. **Base64 images excluded**: Images must be filtered from token counting. Tests mark this as "Critical".
+
+5. **Session ID priority**: After `/compact`, session_id from transcript takes priority over payload session_id.
+
+6. **V1 config auto-deleted**: V1 configs automatically deleted and replaced with V2 format on load.
+
+7. **Performance tests opt-in**: Excluded by default. Run with `uv run pytest -m performance`.
+
+8. **Installation scripts handle both uv and pipx**: `scripts/install.sh` checks for uv first, falls back to pipx. Auto-configures Claude Code with `claude-statusline install --yes`.
+
+9. **Debug logging per-session**: Set `CLAUDE_CODE_STATUSLINE_DEBUG=1` → creates `logs/statusline_debug_<session_id>.log` with token breakdown, compact boundaries, parsing errors.
 
 ## Key Files by Task
 
 | Task | Files |
 |------|-------|
-| Add new widget | `widgets/builtin/`, `widgets/registry.py` |
+| Add new widget | `widgets/builtin/<name>.py`, `widgets/builtin/__init__.py`, `config/defaults.py` |
 | Modify token counting | `parsers/tokens.py`, `tests/unit/test_token_counting.py` |
-| Modify context window handling | `types.py`, `statusline.py`, `utils/models.py`, `tests/unit/test_context_window.py` |
-| Change status line rendering | `renderer.py`, `config/defaults.py` |
-| Update config schema | `config/schema.py`, `config/loader.py` |
-| Add CLI option | `statusline.py` |
-| Modify git status display | `utils/git.py`, `widgets/builtin/git.py` |
+| Context window handling | `types.py`, `statusline.py`, `utils/models.py`, `tests/unit/test_context_window.py` |
+| Status line rendering | `renderer.py`, `config/defaults.py` |
+| Config schema changes | `config/schema.py`, `config/loader.py`, `tests/integration/test_config.py` |
+| CLI commands (install/doctor) | `cli/commands.py`, `statusline.py` (argparse setup) |
+| Git status display | `utils/git.py`, `widgets/builtin/git.py` |
+| Installation automation | `scripts/install.sh`, `scripts/uninstall.sh` |
+| Release process | `.github/workflows/release.yml`, `pyproject.toml` (semantic-release config) |

@@ -21,7 +21,6 @@ claude-code-status-line/
 ├── src/
 │   └── claude_code_statusline/
 │       ├── __init__.py          # Package initialization
-│       ├── __version__.py       # Version tracking
 │       ├── statusline.py        # Main statusline command
 │       ├── config/              # Configuration system
 │       │   ├── defaults.py      # Default widget configuration
@@ -34,51 +33,96 @@ claude-code-status-line/
 │       ├── parsers/             # Transcript parsing
 │       │   ├── jsonl.py         # JSONL parser
 │       │   └── tokens.py        # Real token counting
+│       ├── cli/                 # CLI commands
+│       │   └── commands.py      # install/uninstall/doctor
 │       └── utils/               # Shared utilities
-├── .github/workflows/
-│   └── release.yml              # Automated semantic versioning
-├── pyproject.toml               # Package configuration
-└── README.md
+├── scripts/
+│   ├── install.sh               # One-liner installation
+│   └── uninstall.sh             # Clean removal
+└── tests/                       # Test suite
 ```
-
-## Requirements
-
-- Python 3.9 or higher
-- [uv](https://docs.astral.sh/uv/) for dependency management
-- No installation needed (uses `uv run`)
 
 ## Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/wpfleger96/claude-code-status-line.git
-   cd claude-code-status-line
-   ```
+### Quick Install (Recommended)
 
-2. **Install dependencies:**
-   ```bash
-   uv sync --no-config
-   ```
+Install with a single command:
 
-3. **Verify installation:**
-   ```bash
-   uv run --no-config claude-statusline --help
-   ```
-
-## Usage
-
-Add a `statusLine` section to your `~/.claude/settings.json` file:
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "sh -c 'cd /path/to/claude-code-status-line && uv run --no-config claude-statusline'",
-    "padding": 0
-  }
-}
+```bash
+curl -fsSL https://raw.githubusercontent.com/wpfleger96/claude-code-status-line/main/scripts/install.sh | bash
 ```
 
-Replace `/path/to/claude-code-status-line` with the absolute path to where you cloned this repository (e.g., `~/Development/Personal/claude-code-status-line`).
+This will:
+- Install `claude-code-statusline` using `uv` or `pipx`
+- Configure Claude Code automatically
+- Create a backup of existing configuration
+
+**Requirements:** Either `uv` or `pipx`
+
+### Manual Installation
+
+#### Option 1: Using uv tool
+
+```bash
+uv tool install claude-code-statusline
+claude-statusline install
+```
+
+#### Option 2: Using pipx
+
+```bash
+pipx install claude-code-statusline
+claude-statusline install
+```
+
+### Upgrading
+
+To upgrade to the latest version:
+
+```bash
+# If installed with uv
+uv tool upgrade claude-code-statusline
+
+# If installed with pipx
+pipx upgrade claude-code-statusline
+```
+
+### Uninstalling
+
+To uninstall:
+
+```bash
+# Quick uninstall
+curl -fsSL https://raw.githubusercontent.com/wpfleger96/claude-code-status-line/main/scripts/uninstall.sh | bash
+
+# Or manually
+claude-statusline uninstall
+uv tool uninstall claude-code-statusline  # or: pipx uninstall claude-code-statusline
+```
+
+## CLI Commands
+
+```bash
+claude-statusline              # Output statusline (reads JSON from stdin)
+claude-statusline install      # Configure Claude Code integration
+claude-statusline uninstall    # Remove Claude Code configuration
+claude-statusline doctor       # Verify installation health
+claude-statusline --version    # Show version
+```
+
+### Health Check
+
+Verify your installation is working correctly:
+
+```bash
+claude-statusline doctor
+```
+
+This checks:
+- settings.json configuration
+- Config file validity
+- Statusline execution
+- Claude Code directory
 
 ## Configuration
 
@@ -355,42 +399,32 @@ Average discrepancy: +15.9% | Suggested calibration factor: 1.231
 
 ## Development
 
-### Package Structure
+### Setup
 
-The project uses a modern `src/` layout following Python packaging best practices:
-
-- **`src/claude_code_statusline/`**: Main package directory
-  - Enables proper import resolution
-  - Makes the package PyPI-ready
-  - Prevents accidental imports from source during development
-
-### Local Development
-
-1. **Clone and setup:**
+1. **Clone and install dependencies:**
    ```bash
    git clone https://github.com/wpfleger96/claude-code-status-line.git
    cd claude-code-status-line
    uv sync --no-config
    ```
 
-2. **Make changes to source files:**
-   - Edit files in `src/claude_code_statusline/`
-   - Changes are automatically reflected when using `uv run`
-
-3. **Test your changes:**
+2. **Configure Claude Code to use local version:**
    ```bash
-   # Test statusline
-   echo '{"workspace": {"current_dir": "/test"}, "transcript_path": "", "model": {"id": "test", "display_name": "Test"}, "cost": {}, "version": "test"}' | uv run --no-config claude-statusline
-
-   # Test calibration
-   uv run --no-config claude-calibrate --help
+   uv run --no-config claude-statusline install
    ```
 
-4. **Debug mode:**
-   ```bash
-   export CLAUDE_CODE_STATUSLINE_DEBUG=1
-   # Debug logs will be written to logs/ directory
-   ```
+### Testing Changes
+
+```bash
+# Test statusline output
+echo '{"workspace": {"current_dir": "/test"}, "transcript_path": "", "model": {"id": "test", "display_name": "Test"}, "cost": {}, "version": "test"}' | uv run --no-config claude-statusline
+
+# Run test suite
+uv run pytest
+
+# Enable debug logging
+export CLAUDE_CODE_STATUSLINE_DEBUG=1
+```
 
 ### Releases
 

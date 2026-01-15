@@ -113,7 +113,7 @@ def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
-    """Create the CLI argument parser.
+    """Create the CLI argument parser with subcommands.
 
     Returns:
         Configured argument parser
@@ -123,7 +123,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="claude-statusline",
         description="Claude Code statusline - context usage tracking for Claude Code",
-        epilog="When no arguments are provided, reads JSON from stdin and outputs the statusline.",
+        epilog="When no subcommand is provided, reads JSON from stdin and outputs the statusline.",
     )
     parser.add_argument(
         "--version",
@@ -131,13 +131,50 @@ def create_argument_parser() -> argparse.ArgumentParser:
         action="version",
         version=f"%(prog)s {__version__}",
     )
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    install_parser = subparsers.add_parser(
+        "install",
+        help="Configure Claude Code to use claude-statusline",
+    )
+    install_parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="Skip confirmation prompt for existing config",
+    )
+
+    subparsers.add_parser(
+        "uninstall",
+        help="Remove claude-statusline from Claude Code configuration",
+    )
+
+    subparsers.add_parser(
+        "doctor",
+        help="Verify installation health",
+    )
+
     return parser
 
 
 def main() -> None:
     """Main entry point with widget-based rendering and parallel I/O."""
     parser = create_argument_parser()
-    parser.parse_args()
+    args = parser.parse_args()
+
+    if args.command == "install":
+        from .cli.commands import cmd_install
+
+        sys.exit(cmd_install(force=args.yes))
+    elif args.command == "uninstall":
+        from .cli.commands import cmd_uninstall
+
+        sys.exit(cmd_uninstall())
+    elif args.command == "doctor":
+        from .cli.commands import cmd_doctor
+
+        sys.exit(cmd_doctor())
 
     data = parse_input_data()
 

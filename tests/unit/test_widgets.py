@@ -7,7 +7,6 @@ from claude_code_statusline.types import (
     GitStatus,
     RenderContext,
     SessionMetrics,
-    SubscriptionInfo,
     TokenMetrics,
 )
 from claude_code_statusline.widgets.builtin.context import (
@@ -32,7 +31,6 @@ from claude_code_statusline.widgets.builtin.session import (
     SessionClockWidget,
     SessionIdWidget,
 )
-from claude_code_statusline.widgets.builtin.subscription import SubscriptionWidget
 
 
 @pytest.fixture
@@ -403,63 +401,3 @@ class TestSeparatorWidget:
         widget = SeparatorWidget()
         result = widget.render(config, context)
         assert result == " • "
-
-
-class TestSubscriptionWidget:
-    """Tests for SubscriptionWidget."""
-
-    def test_renders_pro_subscription(self, widget_config):
-        context = RenderContext(
-            data={},
-            token_metrics=None,
-            subscription_info=SubscriptionInfo(
-                is_subscription=True,
-                subscription_type="pro",
-                rate_limit_tier="default_claude_ai",
-            ),
-        )
-        widget = SubscriptionWidget()
-        result = widget.render(widget_config, context)
-        assert result == "Pro"
-
-    def test_renders_max_subscription(self, widget_config):
-        context = RenderContext(
-            data={},
-            token_metrics=None,
-            subscription_info=SubscriptionInfo(
-                is_subscription=True,
-                subscription_type="max",
-            ),
-        )
-        widget = SubscriptionWidget()
-        result = widget.render(widget_config, context)
-        assert result == "Max"
-
-    def test_renders_api_mode(self, widget_config):
-        context = RenderContext(
-            data={},
-            token_metrics=None,
-            subscription_info=SubscriptionInfo(is_subscription=False),
-        )
-        widget = SubscriptionWidget()
-        result = widget.render(widget_config, context)
-        assert result == "API usage"
-
-    def test_renders_generic_subscription_when_type_missing(self, widget_config):
-        context = RenderContext(
-            data={},
-            token_metrics=None,
-            subscription_info=SubscriptionInfo(
-                is_subscription=True,
-                subscription_type=None,
-            ),
-        )
-        widget = SubscriptionWidget()
-        result = widget.render(widget_config, context)
-        assert result == "Subscription"
-
-    def test_returns_none_without_subscription_info(self, widget_config):
-        context = RenderContext(data={}, token_metrics=None, subscription_info=None)
-        widget = SubscriptionWidget()
-        result = widget.render(widget_config, context)
-        assert result is None

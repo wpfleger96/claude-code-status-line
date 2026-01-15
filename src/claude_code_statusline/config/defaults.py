@@ -24,8 +24,6 @@ def get_default_config() -> StatusLineConfig:
                 WidgetConfigModel(type="session-id"),
                 WidgetConfigModel(type="separator"),
                 WidgetConfigModel(type="session-clock"),
-                WidgetConfigModel(type="separator"),
-                WidgetConfigModel(type="subscription", color="cyan"),
             ]
         ],
     )

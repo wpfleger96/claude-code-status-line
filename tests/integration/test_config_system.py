@@ -83,7 +83,6 @@ class TestEffectiveWidgets:
 
         assert "model" in widget_types
         assert "directory" in widget_types
-        assert "subscription" in widget_types
 
     def test_applies_color_override(self, temp_config_dir):
         """Test that color overrides are applied."""
@@ -155,14 +154,6 @@ class TestDefaultConfig:
         assert config.version == 1
         assert len(config.lines) > 0
         assert len(config.lines[0]) > 0
-
-    def test_subscription_at_end(self):
-        """Test that subscription widget is at the end."""
-        config = get_default_config()
-
-        widget_types = [w.type for w in config.lines[0] if w.type != "separator"]
-
-        assert widget_types[-1] == "subscription"
 
 
 class TestConfigSaving:

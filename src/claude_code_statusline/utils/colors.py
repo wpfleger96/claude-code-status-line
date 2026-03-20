@@ -1,6 +1,12 @@
 """ANSI color codes and utilities."""
 
+import re
+
 from typing import Optional
+
+# Matches SGR (Select Graphic Rendition) sequences only — the only ANSI
+# escape sequences this codebase emits (colors, bold, dim, reset).
+_ANSI_SGR_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 COLORS = {
     "black": "\033[30m",
@@ -26,6 +32,11 @@ COLORS = {
 
 COLORS["gray"] = COLORS["bright_black"]
 COLORS["grey"] = COLORS["bright_black"]
+
+
+def visible_len(text: str) -> int:
+    """Return the visible length of text, excluding ANSI escape sequences."""
+    return len(_ANSI_SGR_RE.sub("", text))
 
 
 def get_color_code(color_name: Optional[str]) -> str:

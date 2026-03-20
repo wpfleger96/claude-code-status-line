@@ -12,6 +12,7 @@ from ..registry import register_widget
     "model",
     display_name="Model",
     default_color="cyan",
+    default_priority=20,
     description="Claude model name (e.g., Sonnet 4.5)",
     fallback_text="Unknown model",
 )

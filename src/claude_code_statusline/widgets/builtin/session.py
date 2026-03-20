@@ -14,6 +14,7 @@ from ..registry import register_widget
     "session-id",
     display_name="Session ID",
     default_color="none",
+    default_priority=80,
     description="Claude Code session identifier",
     fallback_text="No session",
 )
@@ -37,6 +38,7 @@ class SessionIdWidget(Widget):
     "session-clock",
     display_name="Session Clock",
     default_color="none",
+    default_priority=60,
     description="Elapsed session time (e.g., 2hr 15m)",
 )
 class SessionClockWidget(Widget):
@@ -52,3 +54,13 @@ class SessionClockWidget(Widget):
         duration = format_duration(context.session_metrics.duration_seconds)
         colored_duration = colorize(duration, "cyan")
         return f"Elapsed: {colored_duration}"
+
+    def render_compact(
+        self, config: WidgetConfigModel, context: RenderContext
+    ) -> Optional[str]:
+        """Compact: duration with color, no label."""
+        if not context.session_metrics:
+            return None
+
+        duration = format_duration(context.session_metrics.duration_seconds)
+        return colorize(duration, "cyan")

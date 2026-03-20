@@ -15,6 +15,7 @@ from .git import _get_or_fetch_git_status
     "directory",
     display_name="Directory",
     default_color="blue",
+    default_priority=50,
     description="Current working directory name",
     fallback_text="--",
 )

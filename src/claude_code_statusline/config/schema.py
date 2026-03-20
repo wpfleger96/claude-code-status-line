@@ -13,6 +13,7 @@ class WidgetConfigModel(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     color: Optional[str] = None
     bold: bool = False
+    priority: Optional[int] = None
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
@@ -30,6 +31,7 @@ class WidgetOverride(BaseModel):
 
     color: Optional[str] = None
     bold: Optional[bool] = None
+    priority: Optional[int] = None
     enabled: bool = True
 
 

@@ -25,6 +25,7 @@ def _get_or_fetch_git_status(context: RenderContext) -> None:
     "git-branch",
     display_name="Git Branch",
     default_color="magenta",
+    default_priority=30,
     description="Current git branch name",
     fallback_text="No repo",
 )

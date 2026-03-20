@@ -17,6 +17,7 @@ class Widget(ABC):
     display_name: str = ""
     description: str = ""
     default_color: str = "white"
+    default_priority: int = 50
     fallback_text: Optional[str] = None
 
     @abstractmethod
@@ -33,3 +34,13 @@ class Widget(ABC):
             Rendered string or None to hide widget
         """
         pass
+
+    def render_compact(
+        self, config: WidgetConfigModel, context: RenderContext
+    ) -> Optional[str]:
+        """Render a shorter representation for narrow terminals.
+
+        Override in subclasses to provide a compact form (e.g. drop labels).
+        Defaults to the full render.
+        """
+        return self.render(config, context)

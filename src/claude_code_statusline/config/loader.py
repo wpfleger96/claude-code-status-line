@@ -112,6 +112,8 @@ def get_effective_widgets() -> list[WidgetConfigModel]:
                 widget.color = override.color
             if override.bold is not None:
                 widget.bold = override.bold
+            if override.priority is not None:
+                widget.priority = override.priority
             widgets.append(widget)
 
     result = []

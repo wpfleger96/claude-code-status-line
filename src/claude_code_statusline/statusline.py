@@ -13,6 +13,7 @@ from .renderer import render_status_line_with_config
 from .types import ContextWindow, RenderContext
 from .utils.debug import debug_log
 from .utils.models import prefetch_model_data
+from .utils.terminal import detect_terminal_width
 
 
 def parse_input_data() -> dict[str, Any]:
@@ -205,12 +206,15 @@ def main() -> None:
     if token_metrics.had_compact_boundary and token_metrics.session_id:
         data["session_id"] = token_metrics.session_id
 
+    terminal_width = detect_terminal_width()
+
     context = RenderContext(
         data=data,
         token_metrics=token_metrics,
         session_metrics=session_metrics,
         git_status=None,
         context_window=context_window,
+        terminal_width=terminal_width,
     )
 
     debug_log(f"Token metrics: {token_metrics}", session_id)

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.11.0 (2026-03-20)
+
+### Features
+
+- Add width-aware status line rendering for narrow terminals
+  ([`4f44935`](https://github.com/wpfleger96/claude-code-status-line/commit/4f44935e0257dea5116bb21aa0e8562b3069c681))
+
+
 ## v0.10.1 (2026-01-15)
 
 ### Bug Fixes

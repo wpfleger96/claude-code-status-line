@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v0.12.0 (2026-04-15)
+
+### Features
+
+- Use payload-direct fields for session clock and context percentage, add session-name widget
+  ([`61aba89`](https://github.com/wpfleger96/claude-code-status-line/commit/61aba8951502752175aeb7fea28baa9951d970a3))
+
+The CC status line payload now provides `cost.total_duration_ms` and
+  `context_window.used_percentage` directly. Using these as the primary data source reduces
+  transcript parsing and keeps percentage calculations in sync with Anthropic's formula. Transcript
+  timestamps and manual computation remain as fallbacks for older CC versions.
+
+Also adds an opt-in `session-name` widget for users who name sessions via `--name` or `/rename`, and
+  fixes a latent crash when the payload sends explicit `null` values for top-level objects like
+  `cost`.
+
+
 ## v0.11.0 (2026-03-20)
 
 ### Features

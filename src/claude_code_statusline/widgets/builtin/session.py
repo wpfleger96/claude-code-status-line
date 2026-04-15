@@ -38,7 +38,7 @@ class SessionIdWidget(Widget):
     "session-clock",
     display_name="Session Clock",
     default_color="none",
-    default_priority=60,
+    default_priority=76,
     description="Elapsed session time (e.g., 2hr 15m)",
 )
 class SessionClockWidget(Widget):

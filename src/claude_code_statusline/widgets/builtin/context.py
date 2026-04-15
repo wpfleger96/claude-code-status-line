@@ -92,13 +92,15 @@ class ContextPercentageWidget(Widget):
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
-        """Compact: progress bar + percentage, no label or token counts."""
+        """Compact: progress bar + percentage + token counts, no label."""
         data = self._get_context_data(context)
         if data is None:
             return None
 
-        _, colored_bar, pct_str, _, _ = data
-        return f"{colored_bar} {pct_str}"
+        _, colored_bar, pct_str, context_length, context_limit = data
+        current = format_number(context_length)
+        limit = format_number(context_limit)
+        return f"{colored_bar} {pct_str} ({current}/{limit})"
 
 
 @register_widget(

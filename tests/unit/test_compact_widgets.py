@@ -72,13 +72,14 @@ class TestContextPercentageCompact:
         assert compact is not None
         assert "Context:" not in compact
 
-    def test_compact_has_no_token_counts(self, context_with_data, widget_config):
+    def test_compact_has_token_counts(self, context_with_data, widget_config):
         widget = ContextPercentageWidget()
         compact = widget.render_compact(widget_config, context_with_data)
         assert compact is not None
-        # Should not contain the (current/limit) suffix
-        assert "(" not in compact
-        assert ")" not in compact
+        # Compact retains (current/limit) — only the label is dropped
+        assert "(" in compact
+        assert "/" in compact
+        assert ")" in compact
 
     def test_compact_preserves_progress_bar(self, context_with_data, widget_config):
         widget = ContextPercentageWidget()

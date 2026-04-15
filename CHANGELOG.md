@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.12.1 (2026-04-15)
+
+### Bug Fixes
+
+- Retain token counts in compact context widget, drop session-clock earlier
+  ([`0972786`](https://github.com/wpfleger96/claude-code-status-line/commit/0972786bde061ce190efa955bc694c5240c12c1a))
+
+Compact context-percentage was stripping (nK/1M) along with the label, leaving just the progress bar
+  + percentage — not actionable without knowing the absolute token counts. Now compact only drops
+  the "Context:" prefix. Also bumped session-clock priority from 60 to 76 so elapsed time is dropped
+  before line-change counts.
+
+
 ## v0.12.0 (2026-04-15)
 
 ### Features

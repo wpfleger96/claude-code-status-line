@@ -1,7 +1,6 @@
 """Data types for Claude Code Status Line."""
 
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, Optional
 
 
@@ -32,15 +31,6 @@ class GitStatus:
 
 
 @dataclass
-class SessionMetrics:
-    """Session timing and duration metrics."""
-
-    start_time: Optional[datetime] = None
-    last_activity: Optional[datetime] = None
-    duration_seconds: int = 0
-
-
-@dataclass
 class ContextWindow:
     """Context window data from Claude Code status payload."""
 
@@ -51,6 +41,7 @@ class ContextWindow:
     current_output_tokens: Optional[int] = None
     cache_creation_input_tokens: Optional[int] = None
     cache_read_input_tokens: Optional[int] = None
+    used_percentage: Optional[float] = None
 
     @property
     def current_context_tokens(self) -> int:
@@ -79,7 +70,7 @@ class RenderContext:
     data: dict[str, Any]
     token_metrics: Optional[TokenMetrics] = None
     git_status: Optional[GitStatus] = None
-    session_metrics: Optional[SessionMetrics] = None
+    duration_seconds: Optional[int] = None
     terminal_width: Optional[int] = None
     is_preview: bool = False
     context_window: Optional[ContextWindow] = None

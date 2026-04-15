@@ -26,7 +26,7 @@ class DirectoryWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render directory basename."""
-        workspace = context.data.get("workspace", {})
+        workspace = context.data.get("workspace") or {}
         current_dir: str | None = workspace.get("current_dir")
 
         if not current_dir:

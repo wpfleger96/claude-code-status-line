@@ -22,6 +22,12 @@ def _resolve_auto_color(widget_type: str, context: RenderContext) -> str:
         Resolved color name
     """
     if widget_type in ("context-percentage", "context-tokens"):
+        if (
+            context.context_window is not None
+            and context.context_window.used_percentage is not None
+        ):
+            return get_usage_color(context.context_window.used_percentage)
+
         context_limit = get_context_limit_for_render(context)
         context_length = get_current_context_length(context)
 
@@ -30,7 +36,7 @@ def _resolve_auto_color(widget_type: str, context: RenderContext) -> str:
             return get_usage_color(percentage)
 
     if widget_type == "cost":
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         total_cost = cost.get("total_cost_usd", 0)
         return get_cost_color(total_cost)
 

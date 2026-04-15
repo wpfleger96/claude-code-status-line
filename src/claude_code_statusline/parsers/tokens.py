@@ -2,27 +2,36 @@
 
 import json
 import os
+import re
 
 from datetime import datetime
 from typing import Optional
 
-from ..types import SessionMetrics, TokenMetrics
+from ..types import TokenMetrics
 from .jsonl import is_real_compact_boundary
+
+_ISO_TZ_RE = re.compile(r"Z$")
+
+
+def _parse_timestamp_seconds(ts: str) -> Optional[float]:
+    """Parse ISO timestamp string to epoch seconds for duration calculation."""
+    try:
+        dt = datetime.fromisoformat(_ISO_TZ_RE.sub("+00:00", ts))
+        return dt.timestamp()
+    except ValueError:
+        return None
 
 
 def parse_transcript(
     transcript_path: str,
-) -> tuple[TokenMetrics, Optional[SessionMetrics]]:
+) -> tuple[TokenMetrics, Optional[int]]:
     """Extract token metrics and session duration in single file read.
-
-    Combines the logic of get_token_metrics() and get_session_duration()
-    to avoid reading the transcript file twice.
 
     Args:
         transcript_path: Path to the JSONL transcript file
 
     Returns:
-        Tuple of (TokenMetrics, SessionMetrics) from single file pass
+        Tuple of (TokenMetrics, duration_seconds or None)
     """
     if not transcript_path or not os.path.isfile(transcript_path):
         return TokenMetrics(transcript_exists=False), None
@@ -32,11 +41,10 @@ def parse_transcript(
     cached_tokens = 0
     context_length = 0
 
-    most_recent_time: Optional[datetime] = None
     most_recent_usage: Optional[dict[str, int]] = None
 
-    first_timestamp: Optional[datetime] = None
-    last_timestamp: Optional[datetime] = None
+    first_ts: Optional[float] = None
+    last_ts: Optional[float] = None
 
     session_id = ""
     had_compact_boundary = False
@@ -59,22 +67,17 @@ def parse_transcript(
                         input_tokens = 0
                         output_tokens = 0
                         cached_tokens = 0
-                        most_recent_time = None
                         most_recent_usage = None
-                        first_timestamp = None
+                        first_ts = None
                         continue
 
                     timestamp_str = data.get("timestamp")
                     if timestamp_str:
-                        try:
-                            timestamp = datetime.fromisoformat(
-                                timestamp_str.replace("Z", "+00:00")
-                            )
-                            if first_timestamp is None:
-                                first_timestamp = timestamp
-                            last_timestamp = timestamp
-                        except ValueError:
-                            pass
+                        ts = _parse_timestamp_seconds(timestamp_str)
+                        if ts is not None:
+                            if first_ts is None:
+                                first_ts = ts
+                            last_ts = ts
 
                     usage = data.get("message", {}).get("usage")
                     if not usage:
@@ -88,19 +91,9 @@ def parse_transcript(
                     is_sidechain = data.get("isSidechain", False)
                     is_api_error = data.get("isApiErrorMessage", False)
 
-                    if not is_sidechain and not is_api_error and timestamp_str:
-                        try:
-                            entry_time = datetime.fromisoformat(
-                                timestamp_str.replace("Z", "+00:00")
-                            )
-                            if (
-                                most_recent_time is None
-                                or entry_time > most_recent_time
-                            ):
-                                most_recent_time = entry_time
-                                most_recent_usage = usage
-                        except ValueError:
-                            continue
+                    # JSONL entries are appended chronologically; last valid entry is most recent
+                    if not is_sidechain and not is_api_error:
+                        most_recent_usage = usage
 
                 except (json.JSONDecodeError, ValueError):
                     continue
@@ -128,16 +121,11 @@ def parse_transcript(
         had_compact_boundary=had_compact_boundary,
     )
 
-    session_metrics = None
-    if first_timestamp and last_timestamp:
-        duration_seconds = int((last_timestamp - first_timestamp).total_seconds())
-        session_metrics = SessionMetrics(
-            start_time=first_timestamp,
-            last_activity=last_timestamp,
-            duration_seconds=duration_seconds,
-        )
+    duration_seconds = None
+    if first_ts is not None and last_ts is not None:
+        duration_seconds = int(last_ts - first_ts)
 
-    return token_metrics, session_metrics
+    return token_metrics, duration_seconds
 
 
 def format_duration(duration_seconds: int) -> str:

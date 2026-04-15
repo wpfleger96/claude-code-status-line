@@ -48,10 +48,10 @@ class SessionClockWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render session duration."""
-        if not context.session_metrics:
+        if context.duration_seconds is None:
             return None
 
-        duration = format_duration(context.session_metrics.duration_seconds)
+        duration = format_duration(context.duration_seconds)
         colored_duration = colorize(duration, "cyan")
         return f"Elapsed: {colored_duration}"
 
@@ -59,8 +59,45 @@ class SessionClockWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Compact: duration with color, no label."""
-        if not context.session_metrics:
+        if context.duration_seconds is None:
             return None
 
-        duration = format_duration(context.session_metrics.duration_seconds)
+        duration = format_duration(context.duration_seconds)
         return colorize(duration, "cyan")
+
+
+MAX_SESSION_NAME_LENGTH = 30
+
+
+@register_widget(
+    "session-name",
+    display_name="Session Name",
+    default_color="cyan",
+    default_priority=82,
+    description="Custom session name (set via --name or /rename)",
+)
+class SessionNameWidget(Widget):
+    """Display custom session name."""
+
+    def _get_name(self, context: RenderContext) -> Optional[str]:
+        name: str | None = context.data.get("session_name")
+        if not name:
+            return None
+        if len(name) > MAX_SESSION_NAME_LENGTH:
+            return name[: MAX_SESSION_NAME_LENGTH - 1] + "\u2026"
+        return name
+
+    def render(
+        self, config: WidgetConfigModel, context: RenderContext
+    ) -> Optional[str]:
+        """Render session name."""
+        name = self._get_name(context)
+        if name is None:
+            return None
+        return f"Session: {name}"
+
+    def render_compact(
+        self, config: WidgetConfigModel, context: RenderContext
+    ) -> Optional[str]:
+        """Compact: just the name, no label."""
+        return self._get_name(context)

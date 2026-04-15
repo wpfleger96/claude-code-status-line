@@ -12,7 +12,6 @@ from claude_code_statusline.renderer import (
 from claude_code_statusline.types import (
     ContextWindow,
     RenderContext,
-    SessionMetrics,
     TokenMetrics,
 )
 from claude_code_statusline.utils.colors import visible_len
@@ -40,9 +39,7 @@ def rich_context():
             context_length=120000,
             transcript_exists=True,
         ),
-        session_metrics=SessionMetrics(
-            start_time=None, last_activity=None, duration_seconds=7800
-        ),
+        duration_seconds=7800,
         context_window=ContextWindow(
             total_input_tokens=50000,
             total_output_tokens=10000,

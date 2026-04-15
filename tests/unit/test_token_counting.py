@@ -202,7 +202,7 @@ class TestTokenParserCompactBoundary:
             transcript_path = f.name
 
         try:
-            token_metrics, _ = parse_transcript(transcript_path)
+            token_metrics, _duration = parse_transcript(transcript_path)
 
             assert token_metrics.input_tokens == 100
             assert token_metrics.output_tokens == 50
@@ -253,7 +253,7 @@ class TestTokenParserCompactBoundary:
             transcript_path = f.name
 
         try:
-            token_metrics, _ = parse_transcript(transcript_path)
+            token_metrics, _duration = parse_transcript(transcript_path)
 
             assert token_metrics.input_tokens == 300
             assert token_metrics.output_tokens == 150
@@ -294,7 +294,7 @@ class TestTokenParserCompactBoundary:
             transcript_path = f.name
 
         try:
-            token_metrics, _ = parse_transcript(transcript_path)
+            token_metrics, _duration = parse_transcript(transcript_path)
 
             assert token_metrics.input_tokens == 150
             assert token_metrics.output_tokens == 75

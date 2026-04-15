@@ -6,7 +6,6 @@ from claude_code_statusline.config.schema import WidgetConfigModel
 from claude_code_statusline.types import (
     GitStatus,
     RenderContext,
-    SessionMetrics,
     TokenMetrics,
 )
 from claude_code_statusline.widgets.builtin.context import (
@@ -30,6 +29,7 @@ from claude_code_statusline.widgets.builtin.separator import SeparatorWidget
 from claude_code_statusline.widgets.builtin.session import (
     SessionClockWidget,
     SessionIdWidget,
+    SessionNameWidget,
 )
 
 
@@ -58,9 +58,7 @@ def sample_context():
             context_length=120000,
             transcript_exists=True,
         ),
-        session_metrics=SessionMetrics(
-            start_time=None, last_activity=None, duration_seconds=7800
-        ),
+        duration_seconds=7800,
         git_status=GitStatus(
             branch="main",
             insertions=50,
@@ -306,8 +304,8 @@ class TestSessionClockWidget:
         assert result.startswith("Elapsed: ")
         assert "2hr 10m" in result
 
-    def test_returns_none_without_session_metrics(self, widget_config):
-        context = RenderContext(data={}, token_metrics=None, session_metrics=None)
+    def test_returns_none_without_duration(self, widget_config):
+        context = RenderContext(data={}, token_metrics=None, duration_seconds=None)
         widget = SessionClockWidget()
         result = widget.render(widget_config, context)
         assert result is None
@@ -401,3 +399,40 @@ class TestSeparatorWidget:
         widget = SeparatorWidget()
         result = widget.render(config, context)
         assert result == " • "
+
+
+class TestSessionNameWidget:
+    """Tests for SessionNameWidget."""
+
+    def test_renders_session_name(self, widget_config):
+        context = RenderContext(
+            data={"session_name": "my-feature-work"}, token_metrics=None
+        )
+        widget = SessionNameWidget()
+        result = widget.render(widget_config, context)
+        assert result == "Session: my-feature-work"
+
+    def test_returns_none_when_absent(self, widget_config):
+        context = RenderContext(data={}, token_metrics=None)
+        widget = SessionNameWidget()
+        result = widget.render(widget_config, context)
+        assert result is None
+
+    def test_truncates_long_name(self, widget_config):
+        long_name = "a" * 50
+        context = RenderContext(data={"session_name": long_name}, token_metrics=None)
+        widget = SessionNameWidget()
+        result = widget.render(widget_config, context)
+        assert result == "Session: " + "a" * 29 + "\u2026"
+
+    def test_compact_renders_name_only(self, widget_config):
+        context = RenderContext(data={"session_name": "my-session"}, token_metrics=None)
+        widget = SessionNameWidget()
+        result = widget.render_compact(widget_config, context)
+        assert result == "my-session"
+
+    def test_compact_returns_none_when_absent(self, widget_config):
+        context = RenderContext(data={}, token_metrics=None)
+        widget = SessionNameWidget()
+        result = widget.render_compact(widget_config, context)
+        assert result is None

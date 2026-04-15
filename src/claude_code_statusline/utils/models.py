@@ -213,7 +213,7 @@ def get_context_limit_for_render(context: RenderContext) -> int:
     if context.context_window and context.context_window.context_window_size > 0:
         return context.context_window.context_window_size
 
-    model = context.data.get("model", {})
+    model = context.data.get("model") or {}
     model_id = model.get("id", "")
     model_name = model.get("display_name", "")
     return get_context_limit(model_id, model_name)

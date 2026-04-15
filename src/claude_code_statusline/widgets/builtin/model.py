@@ -23,7 +23,7 @@ class ModelWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render model display name."""
-        model = context.data.get("model", {})
+        model = context.data.get("model") or {}
         display_name: str | None = model.get("display_name") or model.get("id")
 
         if not display_name:

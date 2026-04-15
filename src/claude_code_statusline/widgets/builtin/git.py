@@ -14,7 +14,7 @@ def _get_or_fetch_git_status(context: RenderContext) -> None:
     if context.git_status is not None:
         return
 
-    workspace = context.data.get("workspace", {})
+    workspace = context.data.get("workspace") or {}
     cwd = workspace.get("current_dir")
 
     if cwd:

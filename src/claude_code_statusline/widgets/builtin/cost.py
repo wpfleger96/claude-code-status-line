@@ -24,7 +24,7 @@ class CostWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render cost in USD."""
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         total_cost = cost.get("total_cost_usd")
 
         if total_cost is None:
@@ -39,7 +39,7 @@ class CostWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Compact: just the dollar amount with color, no label."""
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         total_cost = cost.get("total_cost_usd")
 
         if total_cost is None:
@@ -63,7 +63,7 @@ class LinesAddedWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render lines added."""
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         lines_added = cost.get("total_lines_added")
 
         if not lines_added or lines_added == 0:
@@ -75,7 +75,7 @@ class LinesAddedWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Compact: just +N, no label."""
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         lines_added = cost.get("total_lines_added")
 
         if not lines_added or lines_added == 0:
@@ -98,7 +98,7 @@ class LinesRemovedWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Render lines removed."""
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         lines_removed = cost.get("total_lines_removed")
 
         if not lines_removed or lines_removed == 0:
@@ -110,7 +110,7 @@ class LinesRemovedWidget(Widget):
         self, config: WidgetConfigModel, context: RenderContext
     ) -> Optional[str]:
         """Compact: just -N, no label."""
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         lines_removed = cost.get("total_lines_removed")
 
         if not lines_removed or lines_removed == 0:
@@ -130,7 +130,7 @@ class LinesChangedWidget(Widget):
     """Display lines added and removed in a single widget."""
 
     def _get_lines(self, context: RenderContext) -> tuple[int, int]:
-        cost = context.data.get("cost", {})
+        cost = context.data.get("cost") or {}
         return cost.get("total_lines_added", 0), cost.get("total_lines_removed", 0)
 
     def render(

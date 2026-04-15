@@ -24,32 +24,56 @@ class ContextPercentageWidget(Widget):
 
     def _get_context_data(
         self, context: RenderContext
-    ) -> Optional[tuple[float, str, str]]:
-        """Extract context percentage, colored bar, and formatted percentage."""
-        has_context_window = (
+    ) -> Optional[tuple[float, str, str, int, int]]:
+        """Extract context percentage, colored bar, formatted percentage, and token counts.
+
+        Returns (percentage, colored_bar, pct_str, context_length, context_limit)
+        with all values consistent — when used_percentage comes from the payload,
+        context_length is derived from it so the numbers agree.
+        """
+        # Priority 1: pre-calculated used_percentage from payload (0-100 scale)
+        if (
             context.context_window is not None
-            and context.context_window.has_current_usage
-        )
-        has_transcript = (
-            context.token_metrics is not None
-            and context.token_metrics.transcript_exists
-        )
+            and context.context_window.used_percentage is not None
+        ):
+            percentage = round(context.context_window.used_percentage, 1)
+            context_limit = get_context_limit_for_render(context)
+            context_length = (
+                int(percentage * context_limit / 100) if context_limit > 0 else 0
+            )
+        else:
+            # Priority 2: compute from token counts
+            has_context_window = (
+                context.context_window is not None
+                and context.context_window.has_current_usage
+            )
+            has_transcript = (
+                context.token_metrics is not None
+                and context.token_metrics.transcript_exists
+            )
 
-        if not has_context_window and not has_transcript:
-            return None
+            if not has_context_window and not has_transcript:
+                return None
 
-        context_limit = get_context_limit_for_render(context)
-        context_length = get_current_context_length(context)
+            context_limit = get_context_limit_for_render(context)
+            context_length = get_current_context_length(context)
 
-        if context_limit == 0:
-            return None
+            if context_limit == 0:
+                return None
 
-        percentage = round((context_length * 100) / context_limit, 1)
+            percentage = round((context_length * 100) / context_limit, 1)
+
         progress_bar = render_progress_bar(percentage)
         usage_color = get_usage_color(percentage)
         colored_bar = colorize(progress_bar, usage_color)
 
-        return percentage, colored_bar, format_percentage(percentage)
+        return (
+            percentage,
+            colored_bar,
+            format_percentage(percentage),
+            context_length,
+            context_limit,
+        )
 
     def render(
         self, config: WidgetConfigModel, context: RenderContext
@@ -59,10 +83,7 @@ class ContextPercentageWidget(Widget):
         if data is None:
             return None
 
-        _, colored_bar, pct_str = data
-
-        context_limit = get_context_limit_for_render(context)
-        context_length = get_current_context_length(context)
+        _, colored_bar, pct_str, context_length, context_limit = data
         current = format_number(context_length)
         limit = format_number(context_limit)
 
@@ -76,7 +97,7 @@ class ContextPercentageWidget(Widget):
         if data is None:
             return None
 
-        _, colored_bar, pct_str = data
+        _, colored_bar, pct_str, _, _ = data
         return f"{colored_bar} {pct_str}"
 
 

@@ -43,7 +43,7 @@ def find_transcript_path(data: dict[str, Any]) -> str:
         return transcript_path
 
     session_id = data.get("session_id", "")
-    workspace = data.get("workspace", {}).get("current_dir", "")
+    workspace = (data.get("workspace") or {}).get("current_dir", "")
 
     if session_id and workspace:
         # Claude Code stores transcripts in ~/.claude/projects/{encoded_path}/{session_id}.jsonl
@@ -83,6 +83,29 @@ def extract_session_id(data: dict[str, Any], transcript_path: str) -> str:
     return ""
 
 
+def resolve_duration_seconds(
+    data: dict[str, Any], transcript_duration: Optional[int]
+) -> Optional[int]:
+    """Resolve session duration, preferring payload over transcript.
+
+    Priority:
+    1. cost.total_duration_ms from payload (wall-clock time)
+    2. transcript_duration from timestamp parsing (fallback)
+
+    Args:
+        data: JSON input data from Claude Code
+        transcript_duration: Duration in seconds from transcript timestamps
+
+    Returns:
+        Duration in seconds, or None if neither source available
+    """
+    cost = data.get("cost") or {}
+    total_duration_ms = cost.get("total_duration_ms")
+    if total_duration_ms and total_duration_ms > 0:
+        return int(total_duration_ms // 1000)
+    return transcript_duration
+
+
 def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
     """Extract context_window data from Claude Code payload.
 
@@ -109,6 +132,7 @@ def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
         current_output_tokens=current_usage.get("output_tokens"),
         cache_creation_input_tokens=current_usage.get("cache_creation_input_tokens"),
         cache_read_input_tokens=current_usage.get("cache_read_input_tokens"),
+        used_percentage=cw.get("used_percentage"),
     )
 
 
@@ -189,10 +213,10 @@ def main() -> None:
 
     debug_log("=== SESSION START ===", session_id)
     debug_log(
-        f"Working Directory: {data.get('workspace', {}).get('current_dir', '')}",
+        f"Working Directory: {(data.get('workspace') or {}).get('current_dir', '')}",
         session_id,
     )
-    debug_log(f"Model ID: {data.get('model', {}).get('id', '')}", session_id)
+    debug_log(f"Model ID: {(data.get('model') or {}).get('id', '')}", session_id)
     debug_log(f"Transcript Path: {transcript_path}", session_id)
     debug_log(f"Context window from payload: {context_window is not None}", session_id)
 
@@ -201,24 +225,26 @@ def main() -> None:
         if not context_window or context_window.context_window_size == 0:
             executor.submit(prefetch_model_data)
 
-        token_metrics, session_metrics = transcript_future.result()
+        token_metrics, transcript_duration = transcript_future.result()
 
     if token_metrics.had_compact_boundary and token_metrics.session_id:
         data["session_id"] = token_metrics.session_id
+
+    duration_seconds = resolve_duration_seconds(data, transcript_duration)
 
     terminal_width = detect_terminal_width()
 
     context = RenderContext(
         data=data,
         token_metrics=token_metrics,
-        session_metrics=session_metrics,
+        duration_seconds=duration_seconds,
         git_status=None,
         context_window=context_window,
         terminal_width=terminal_width,
     )
 
     debug_log(f"Token metrics: {token_metrics}", session_id)
-    debug_log(f"Session metrics: {session_metrics}", session_id)
+    debug_log(f"Duration seconds: {duration_seconds}", session_id)
     debug_log("=" * 25, session_id)
 
     output = render_status_line_with_config(context)

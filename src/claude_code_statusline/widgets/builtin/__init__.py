@@ -9,7 +9,7 @@ from .directory import DirectoryWidget
 from .git import GitBranchWidget, GitChangesWidget, GitWorktreeWidget
 from .model import ModelWidget
 from .separator import SeparatorWidget
-from .session import SessionClockWidget, SessionIdWidget
+from .session import SessionClockWidget, SessionIdWidget, SessionNameWidget
 
 __all__ = [
     "SeparatorWidget",
@@ -23,6 +23,7 @@ __all__ = [
     "LinesRemovedWidget",
     "SessionIdWidget",
     "SessionClockWidget",
+    "SessionNameWidget",
     "GitBranchWidget",
     "GitChangesWidget",
     "GitWorktreeWidget",

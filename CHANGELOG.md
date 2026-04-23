@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.13.0 (2026-04-23)
+
+### Features
+
+- Add opt-in terminal tab title emission
+  ([`184415b`](https://github.com/wpfleger96/claude-code-status-line/commit/184415bd7ab5492d364406b4e65c12ad5bafff18))
+
+Emits OSC 2 escape sequence via GPG_TTY to set VS Code terminal tab title to the Claude Code session
+  name (session_name > slug > git branch). Disabled by default; enable with terminal_title.enabled:
+  true in config.yaml. Requires shell-configs VS Code template and precmd hook changes to display
+  correctly.
+
+
 ## v0.12.1 (2026-04-15)
 
 ### Bug Fixes

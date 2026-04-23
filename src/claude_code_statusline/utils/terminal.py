@@ -1,6 +1,7 @@
 """Terminal width detection for piped subprocess environments."""
 
 import os
+import re
 import sys
 
 from typing import Optional
@@ -57,3 +58,25 @@ def detect_terminal_width() -> Optional[int]:
         Terminal width in columns, or None if undetectable.
     """
     return _get_width_from_stderr() or _get_width_from_tty() or _get_width_from_env()
+
+
+def set_terminal_title(title: str) -> bool:
+    tty_path = os.environ.get("GPG_TTY", "")
+    if not tty_path:
+        return False
+
+    sanitized = re.sub(r"[\x00-\x1f\x7f-\x9f]", "", title)[:100]
+    if not sanitized:
+        return False
+
+    try:
+        fd = os.open(tty_path, os.O_WRONLY | os.O_NOCTTY | os.O_NOFOLLOW)
+        try:
+            if not os.isatty(fd):
+                return False
+            os.write(fd, b"\033]2;" + sanitized.encode("utf-8") + b"\007")
+            return True
+        finally:
+            os.close(fd)
+    except OSError:
+        return False

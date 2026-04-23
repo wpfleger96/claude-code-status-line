@@ -8,12 +8,14 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional, cast
 
+from .config.loader import load_config_file
 from .parsers.tokens import parse_transcript
 from .renderer import render_status_line_with_config
-from .types import ContextWindow, RenderContext
+from .types import ContextWindow, RenderContext, TokenMetrics
 from .utils.debug import debug_log
+from .utils.git import get_git_status
 from .utils.models import prefetch_model_data
-from .utils.terminal import detect_terminal_width
+from .utils.terminal import detect_terminal_width, set_terminal_title
 
 
 def parse_input_data() -> dict[str, Any]:
@@ -136,6 +138,25 @@ def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
     )
 
 
+def resolve_terminal_title(
+    data: dict[str, Any], token_metrics: Optional[TokenMetrics]
+) -> str:
+    session_name: str = data.get("session_name", "")
+    if session_name:
+        return session_name
+
+    if token_metrics and token_metrics.slug:
+        return token_metrics.slug
+
+    workspace = (data.get("workspace") or {}).get("current_dir", "")
+    if workspace:
+        git_status = get_git_status(workspace)
+        if git_status.branch:
+            return git_status.branch
+
+    return ""
+
+
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create the CLI argument parser with subcommands.
 
@@ -248,6 +269,13 @@ def main() -> None:
     debug_log("=" * 25, session_id)
 
     output = render_status_line_with_config(context)
+
+    config = load_config_file()
+    if config.terminal_title.enabled:
+        title = resolve_terminal_title(data, token_metrics)
+        if title:
+            set_terminal_title(title)
+
     print(output, end="")
 
 

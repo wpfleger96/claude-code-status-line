@@ -35,11 +35,18 @@ class WidgetOverride(BaseModel):
     enabled: bool = True
 
 
+class TerminalTitleConfig(BaseModel):
+    """Configuration for terminal tab title emission."""
+
+    enabled: bool = False
+
+
 class StatusLineConfigV2(BaseModel):
     """Simplified override-only configuration (v2)."""
 
     version: Literal[2] = 2
     widgets: dict[str, WidgetOverride] = Field(default_factory=dict)
     order: Optional[list[str]] = None
+    terminal_title: TerminalTitleConfig = Field(default_factory=TerminalTitleConfig)
 
     model_config = {"extra": "forbid"}

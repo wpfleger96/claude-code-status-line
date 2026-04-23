@@ -47,6 +47,7 @@ def parse_transcript(
     last_ts: Optional[float] = None
 
     session_id = ""
+    slug = ""
     had_compact_boundary = False
 
     try:
@@ -62,11 +63,17 @@ def parse_transcript(
                     if data.get("sessionId"):
                         session_id = data["sessionId"]
 
+                    if not slug:
+                        line_slug = data.get("slug")
+                        if line_slug and data.get("type") in ("user", "assistant"):
+                            slug = line_slug
+
                     if is_real_compact_boundary(data):
                         had_compact_boundary = True
                         input_tokens = 0
                         output_tokens = 0
                         cached_tokens = 0
+                        slug = ""
                         most_recent_usage = None
                         first_ts = None
                         continue
@@ -118,6 +125,7 @@ def parse_transcript(
         context_length=context_length,
         transcript_exists=True,
         session_id=session_id,
+        slug=slug,
         had_compact_boundary=had_compact_boundary,
     )
 

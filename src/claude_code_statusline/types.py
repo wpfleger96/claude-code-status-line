@@ -15,6 +15,7 @@ class TokenMetrics:
     context_length: int = 0
     transcript_exists: bool = False
     session_id: str = ""
+    slug: str = ""
     had_compact_boundary: bool = False
 
 

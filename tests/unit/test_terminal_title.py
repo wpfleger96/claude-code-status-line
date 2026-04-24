@@ -35,7 +35,7 @@ class TestSetTerminalTitle:
         ):
             assert set_terminal_title("test") is False
 
-    def test_writes_osc2_sequence_on_success(self):
+    def test_writes_osc0_sequence_on_success(self):
         with (
             patch.dict("os.environ", {"GPG_TTY": "/dev/pts/0"}),
             patch("claude_code_statusline.utils.terminal.os.open", return_value=3),
@@ -45,7 +45,7 @@ class TestSetTerminalTitle:
         ):
             result = set_terminal_title("my-session")
             assert result is True
-            mock_write.assert_called_once_with(3, b"\033]2;my-session\007")
+            mock_write.assert_called_once_with(3, b"\033]0;my-session\007")
 
     def test_strips_control_characters(self):
         with (
@@ -56,7 +56,7 @@ class TestSetTerminalTitle:
             patch("claude_code_statusline.utils.terminal.os.close"),
         ):
             set_terminal_title("te\x1b\x07st\x00na\x9cme")
-            mock_write.assert_called_once_with(3, b"\033]2;testname\007")
+            mock_write.assert_called_once_with(3, b"\033]0;testname\007")
 
     def test_truncates_to_100_chars(self):
         with (
@@ -69,7 +69,7 @@ class TestSetTerminalTitle:
             long_title = "a" * 200
             set_terminal_title(long_title)
             written = mock_write.call_args[0][1]
-            # OSC2 prefix \x1b]2; (4 bytes) + 100 chars + BEL (1 byte) = 105 bytes
+            # OSC0 prefix \x1b]0; (4 bytes) + 100 chars + BEL (1 byte) = 105 bytes
             assert len(written) == 105
 
 

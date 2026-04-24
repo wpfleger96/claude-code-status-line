@@ -74,7 +74,7 @@ def set_terminal_title(title: str) -> bool:
         try:
             if not os.isatty(fd):
                 return False
-            os.write(fd, b"\033]2;" + sanitized.encode("utf-8") + b"\007")
+            os.write(fd, b"\033]0;" + sanitized.encode("utf-8") + b"\007")
             return True
         finally:
             os.close(fd)

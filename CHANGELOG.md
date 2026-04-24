@@ -1,6 +1,18 @@
 # CHANGELOG
 
 
+## v0.13.1 (2026-04-24)
+
+### Bug Fixes
+
+- Switch terminal title from OSC 2 to OSC 0 for iTerm2 tab support
+  ([`d233c1f`](https://github.com/wpfleger96/claude-code-status-line/commit/d233c1f197715107cac5924cdd2e09aa57e164f2))
+
+OSC 2 only sets the window title in iTerm2, not the tab title. OSC 0 sets both, and VS Code's
+  ${sequence} captures it identically. This makes terminal tab renaming work in iTerm2 alongside VS
+  Code/Cursor.
+
+
 ## v0.13.0 (2026-04-23)
 
 ### Features

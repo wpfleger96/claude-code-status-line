@@ -27,7 +27,7 @@ claude-statusline = "claude_code_statusline.statusline:main"
 
 [dependency-groups]
 dev = [
-    "python-semantic-release>=9.0.0",
+    "python-semantic-release>=10.0.0",
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
     "pytest-benchmark>=4.0.0",
@@ -53,30 +53,10 @@ tag_format = "v{version}"
 branch = "main"
 commit_parser = "conventional"
 commit_message = "chore(release): {version}"
+allow_zero_version = true
 
-[tool.semantic_release.branches.main]
-match = "main"
-prerelease = false
-
-[tool.semantic_release.commit_parser_options]
+[tool.semantic_release.commit_parser_opts]
 allowed_types = ["feat", "fix", "chore", "ci", "docs", "style", "refactor", "test"]
-minor_tags = ["feat"]
-patch_tags = ["fix", "perf"]
-
-[tool.semantic_release.commit_type_map]
-chore = "patch"
-ci = "patch"
-docs = "patch"
-style = "patch"
-refactor = "patch"
-test = "patch"
-
-[tool.semantic_release.changelog]
-changelog_file = "CHANGELOG.md"
-exclude_commit_patterns = []
-
-[tool.semantic_release.remote]
-type = "github"
 
 [tool.ruff.lint]
 select = ["I", "F", "UP", "B"]  # isort, pyflakes, pyupgrade, bugbear

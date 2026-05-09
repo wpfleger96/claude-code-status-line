@@ -8,21 +8,33 @@ on:
     types:
       - completed
 
+permissions:
+  contents: write
+
 jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
+    concurrency:
+      group: release
+      cancel-in-progress: false
     if: github.event.workflow_run.conclusion == 'success'
 
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ssh-key: ${{ secrets.GH_ACTIONS_PRIVATE_KEY }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
 
@@ -31,18 +43,14 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install just
+        uses: extractions/setup-just@v4
+
       - name: Install dependencies
-        run: uv sync --no-config
+        run: just sync
 
       - name: Semantic Version Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v9.21.0
+        uses: python-semantic-release/python-semantic-release@v10.5.3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Trigger Publish Workflow
-        if: steps.release.outputs.released == 'true'
-        run: |
-          gh workflow run publish.yml -f tag=${{ steps.release.outputs.tag }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}

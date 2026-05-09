@@ -8,17 +8,19 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  test:
-    name: Test
+  checks:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
 
@@ -28,19 +30,19 @@ jobs:
           version: "latest"
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v4
 
       - name: Install dependencies
         run: just sync
 
-      - name: Type check
+      - name: Run type checks
         run: just type-check
 
-      - name: Lint
+      - name: Run linter
         run: just lint-check
 
-      - name: Format check
+      - name: Run formatter
         run: just format-check
 
-      - name: Test
+      - name: Run tests
         run: just test

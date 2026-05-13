@@ -1,5 +1,38 @@
 # CHANGELOG
 
+<!-- version list -->
+
+
+## v0.13.2 (2026-05-11)
+
+### Bug Fixes
+
+- Re-enable automatic CHANGELOG generation
+  ([`3cf77c4`](https://github.com/wpfleger96/claude-code-status-line/commit/3cf77c490572a7f42e7caa90efcd6ad70ac97e3f))
+
+PSR v10 dropped the implicit CHANGELOG defaults that v9 provided. Without an explicit
+  [tool.semantic_release.changelog] section, releases no longer update CHANGELOG.md. This adds the
+  required config to restore that behavior before the next release silently skips it.
+
+### Chores
+
+- Align CI/CD with golden path
+  ([`cac29d5`](https://github.com/wpfleger96/claude-code-status-line/commit/cac29d5f807e0d9c9216d3d2524378a28bd33e08))
+
+Standardize workflows to match the battle-tested pattern from ai-agent-rules: GitHub App token for
+  release (replacing SSH deploy key), Dependabot with auto-merge, least-privilege permissions,
+  consistent job naming, and on:release publish trigger.
+
+PSR config cleaned up for v10: removed bogus commit_type_map (silently ignored), removed
+  unnecessary sections (branches.main, changelog, remote), added allow_zero_version to prevent
+  accidental v1.0.0.
+
+- **deps**: Bump actions/create-github-app-token from 2 to 3
+  ([`6a19228`](https://github.com/wpfleger96/claude-code-status-line/commit/6a19228cb31fca4fd2c631c610aa5ceb2e3f1eca))
+
+- **deps**: Bump astral-sh/setup-uv from 3 to 7
+  ([`54e9e2b`](https://github.com/wpfleger96/claude-code-status-line/commit/54e9e2bd3d50ef8db67ec0027de1236dbaaf48c3))
+
 
 ## v0.13.1 (2026-04-24)
 

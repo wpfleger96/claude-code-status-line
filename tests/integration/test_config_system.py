@@ -3,6 +3,7 @@
 import pytest
 import yaml
 
+from claude_code_statusline.config import loader
 from claude_code_statusline.config.defaults import get_default_config
 from claude_code_statusline.config.loader import (
     get_effective_widgets,
@@ -19,6 +20,8 @@ from claude_code_statusline.config.schema import (
 def temp_config_dir(monkeypatch, tmp_path):
     """Create a temporary config directory."""
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setattr(loader, "_cached_config", None)
+    monkeypatch.setattr(loader, "_cached_mtime", 0.0)
     return tmp_path
 
 

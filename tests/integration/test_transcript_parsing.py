@@ -20,12 +20,24 @@ class TestRealSessionParsing:
 
         assert token_metrics.transcript_exists is True
         assert token_metrics.had_compact_boundary is True
+        # Post-boundary usage entries in this fixture have zero context tokens,
+        # confirming the reset cleared pre-boundary state
+        assert token_metrics.context_length == 0
 
     def test_image_not_inflating_token_count(self, image_session_file):
-        """Critical: verify base64 images don't inflate context length."""
+        """Critical: verify base64 images don't inflate context length.
+
+        The parser reads message.usage from API responses, not raw file
+        content — base64 image data in message content is never counted.
+        """
         token_metrics, _duration = parse_transcript(str(image_session_file))
+        file_size = image_session_file.stat().st_size
 
         assert token_metrics.transcript_exists is True
+        assert token_metrics.context_length > 0
+        # context_length (tokens from API usage) must be less than raw file
+        # byte count — if base64 were naively counted, this would fail
+        assert token_metrics.context_length < file_size
 
     def test_forked_session_extracts_session_id(self, forked_session_file):
         """Forked sessions have correct session_id parsed from JSONL."""

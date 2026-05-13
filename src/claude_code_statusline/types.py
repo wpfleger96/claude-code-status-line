@@ -8,10 +8,6 @@ from typing import Any, Optional
 class TokenMetrics:
     """Token usage extracted from JSONL message.usage fields."""
 
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cached_tokens: int = 0
-    total_tokens: int = 0
     context_length: int = 0
     transcript_exists: bool = False
     session_id: str = ""
@@ -35,11 +31,8 @@ class GitStatus:
 class ContextWindow:
     """Context window data from Claude Code status payload."""
 
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
     context_window_size: int = 0
     current_input_tokens: Optional[int] = None
-    current_output_tokens: Optional[int] = None
     cache_creation_input_tokens: Optional[int] = None
     cache_read_input_tokens: Optional[int] = None
     used_percentage: Optional[float] = None
@@ -73,5 +66,4 @@ class RenderContext:
     git_status: Optional[GitStatus] = None
     duration_seconds: Optional[int] = None
     terminal_width: Optional[int] = None
-    is_preview: bool = False
     context_window: Optional[ContextWindow] = None

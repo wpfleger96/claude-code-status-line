@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from claude_code_statusline.config import loader
-from claude_code_statusline.config.defaults import get_default_config
+from claude_code_statusline.config.defaults import get_default_widgets
 from claude_code_statusline.config.loader import (
     get_effective_widgets,
     load_config_file,
@@ -110,14 +110,14 @@ class TestEffectiveWidgets:
 
         config_data = {
             "version": 2,
-            "widgets": {"subscription": {"enabled": False}},
+            "widgets": {"directory": {"enabled": False}},
         }
         config_file.write_text(yaml.dump(config_data))
 
         widgets = get_effective_widgets()
 
         widget_types = [w.type for w in widgets if w.type != "separator"]
-        assert "subscription" not in widget_types
+        assert "directory" not in widget_types
         assert "model" in widget_types
 
     def test_custom_order(self, temp_config_dir):
@@ -151,12 +151,13 @@ class TestDefaultConfig:
     """Tests for default configuration."""
 
     def test_default_config_structure(self):
-        """Test that default config has expected structure."""
-        config = get_default_config()
+        """Test that default widgets list is non-empty and contains expected types."""
+        widgets = get_default_widgets()
 
-        assert config.version == 1
-        assert len(config.lines) > 0
-        assert len(config.lines[0]) > 0
+        assert len(widgets) > 0
+        widget_types = [w.type for w in widgets]
+        assert "model" in widget_types
+        assert "directory" in widget_types
 
 
 class TestConfigSaving:

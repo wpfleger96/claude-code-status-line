@@ -17,15 +17,6 @@ class WidgetConfigModel(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
-class StatusLineConfig(BaseModel):
-    """Complete status line configuration (v1 - deprecated)."""
-
-    version: int = 1
-    lines: list[list[WidgetConfigModel]] = Field(default_factory=list)
-
-    model_config = {"extra": "forbid"}
-
-
 class WidgetOverride(BaseModel):
     """Override settings for a single widget."""
 

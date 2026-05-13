@@ -9,7 +9,7 @@ import yaml
 
 from pydantic import ValidationError
 
-from .defaults import get_default_config
+from .defaults import get_default_widgets
 from .schema import StatusLineConfigV2, WidgetConfigModel, WidgetOverride
 
 _cached_config: Optional[StatusLineConfigV2] = None
@@ -92,12 +92,12 @@ def get_effective_widgets() -> list[WidgetConfigModel]:
         List of widgets with separators interleaved, ready for rendering
     """
     config = load_config_file()
-    defaults = get_default_config()
+    default_widgets = get_default_widgets()
 
     if config.order:
         widget_types = config.order
     else:
-        widget_types = [w.type for w in defaults.lines[0] if w.type != "separator"]
+        widget_types = [w.type for w in default_widgets]
 
     widgets = []
     for wtype in widget_types:
@@ -105,7 +105,7 @@ def get_effective_widgets() -> list[WidgetConfigModel]:
         if not override.enabled:
             continue
 
-        default = next((w for w in defaults.lines[0] if w.type == wtype), None)
+        default = next((w for w in default_widgets if w.type == wtype), None)
         if default:
             widget = default.model_copy()
             if override.color:

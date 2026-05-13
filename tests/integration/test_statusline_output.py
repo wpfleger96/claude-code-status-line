@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from claude_code_statusline.parsers.jsonl import parse_transcript
+from claude_code_statusline.parsers.tokens import parse_transcript
 from claude_code_statusline.statusline import parse_input_data
 
 
@@ -57,6 +57,6 @@ class TestSessionIdFallback:
 
     def test_falls_back_to_jsonl_session_id(self, forked_session_file):
         """When payload lacks session_id, fall back to JSONL parsing."""
-        transcript = parse_transcript(str(forked_session_file))
+        token_metrics, _duration = parse_transcript(str(forked_session_file))
 
-        assert transcript.session_id != ""
+        assert token_metrics.session_id != ""

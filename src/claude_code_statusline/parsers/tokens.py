@@ -36,9 +36,6 @@ def parse_transcript(
     if not transcript_path or not os.path.isfile(transcript_path):
         return TokenMetrics(transcript_exists=False), None
 
-    input_tokens = 0
-    output_tokens = 0
-    cached_tokens = 0
     context_length = 0
 
     most_recent_usage: Optional[dict[str, int]] = None
@@ -70,9 +67,6 @@ def parse_transcript(
 
                     if is_real_compact_boundary(data):
                         had_compact_boundary = True
-                        input_tokens = 0
-                        output_tokens = 0
-                        cached_tokens = 0
                         slug = ""
                         most_recent_usage = None
                         first_ts = None
@@ -89,11 +83,6 @@ def parse_transcript(
                     usage = data.get("message", {}).get("usage")
                     if not usage:
                         continue
-
-                    input_tokens += usage.get("input_tokens", 0)
-                    output_tokens += usage.get("output_tokens", 0)
-                    cached_tokens += usage.get("cache_read_input_tokens", 0)
-                    cached_tokens += usage.get("cache_creation_input_tokens", 0)
 
                     is_sidechain = data.get("isSidechain", False)
                     is_api_error = data.get("isApiErrorMessage", False)
@@ -115,13 +104,7 @@ def parse_transcript(
             + most_recent_usage.get("cache_creation_input_tokens", 0)
         )
 
-    total_tokens = input_tokens + output_tokens + cached_tokens
-
     token_metrics = TokenMetrics(
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
-        cached_tokens=cached_tokens,
-        total_tokens=total_tokens,
         context_length=context_length,
         transcript_exists=True,
         session_id=session_id,

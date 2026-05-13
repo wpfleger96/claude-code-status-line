@@ -90,9 +90,9 @@ tests/
 
 **Widget System**: All widgets extend `Widget` base class with `render(context: RenderContext) -> Optional[str]`. Register with `@register_widget(display_name, default_color, description, fallback_text)`.
 
-**RenderContext**: Dataclass passed to all widgets containing `data`, `token_metrics`, `git_status`, `session_metrics`, `subscription_info`, `context_window`.
+**RenderContext**: Dataclass passed to all widgets containing `data`, `token_metrics`, `git_status`, `duration_seconds`, `terminal_width`, `context_window`.
 
-**Parallel I/O**: `statusline.py` uses `ThreadPoolExecutor(max_workers=3)` for transcript parsing, subscription loading, and model prefetch.
+**Parallel I/O**: `statusline.py` uses `ThreadPoolExecutor(max_workers=2)` for transcript parsing and model prefetch.
 
 **Config Caching**: `config/loader.py` caches config files by mtime to avoid re-reading unchanged files.
 
@@ -141,7 +141,7 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
 | Modify token counting | `parsers/tokens.py`, `tests/unit/test_token_counting.py` |
 | Context window handling | `types.py`, `statusline.py`, `utils/models.py`, `tests/unit/test_context_window.py` |
 | Status line rendering | `renderer.py`, `config/defaults.py` |
-| Config schema changes | `config/schema.py`, `config/loader.py`, `tests/integration/test_config.py` |
+| Config schema changes | `config/schema.py`, `config/loader.py`, `tests/integration/test_config_system.py` |
 | CLI commands (install/doctor) | `cli/commands.py`, `statusline.py` (argparse setup) |
 | Git status display | `utils/git.py`, `widgets/builtin/git.py` |
 | Installation automation | `scripts/install.sh`, `scripts/uninstall.sh` |

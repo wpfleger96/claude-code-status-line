@@ -57,12 +57,3 @@ def get_widget(widget_type: str) -> Optional[Widget]:
         Widget instance or None if not found
     """
     return _WIDGET_REGISTRY.get(widget_type)
-
-
-def get_all_widgets() -> dict[str, Widget]:
-    """Get all registered widgets as instances.
-
-    Returns:
-        Dictionary mapping widget type to instance
-    """
-    return dict(_WIDGET_REGISTRY)

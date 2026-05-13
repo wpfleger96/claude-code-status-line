@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from claude_code_statusline.parsers.jsonl import parse_transcript
+from claude_code_statusline.parsers.tokens import parse_transcript
 from claude_code_statusline.utils.models import get_context_limit
 
 
@@ -37,16 +37,16 @@ class TestPerformanceBenchmarks:
         transcript = tmp_path / "perf_1k.jsonl"
         generate_large_transcript(1000, transcript)
 
-        result = benchmark(parse_transcript, str(transcript))
-        assert result.is_jsonl is True
+        token_metrics, _duration = benchmark(parse_transcript, str(transcript))
+        assert token_metrics.transcript_exists is True
 
     def test_transcript_parsing_10k(self, benchmark, tmp_path):
         """Benchmark parsing a 10K line transcript."""
         transcript = tmp_path / "perf_10k.jsonl"
         generate_large_transcript(10000, transcript)
 
-        result = benchmark(parse_transcript, str(transcript))
-        assert result.is_jsonl is True
+        token_metrics, _duration = benchmark(parse_transcript, str(transcript))
+        assert token_metrics.transcript_exists is True
 
     def test_model_lookup_known(self, benchmark):
         """Benchmark known Claude model context limit lookup."""

@@ -56,10 +56,10 @@ Commands:
   help     - Show this help message
 
 Typical workflow:
-  1. ./script/benchmark.sh save          # Initial baseline
+  1. ./scripts/benchmark.sh save          # Initial baseline
   2. [make changes]
-  3. ./script/benchmark.sh compare       # See if faster (iterate)
-  4. ./script/benchmark.sh record        # Save the good result
+  3. ./scripts/benchmark.sh compare       # See if faster (iterate)
+  4. ./scripts/benchmark.sh record        # Save the good result
 EOF
         ;;
 esac

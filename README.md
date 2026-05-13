@@ -131,25 +131,20 @@ This checks:
 Customize your status line by creating `~/.config/claude-statusline/config.yaml`:
 
 ```yaml
-version: 1
-lines:
-  - - type: model
-      color: cyan
-    - type: separator
-    - type: directory
-      color: blue
-    - type: separator
-    - type: git-branch
-      color: magenta
-    - type: separator
-    - type: context-percentage
-      color: auto  # auto-colors based on usage
-    - type: separator
-    - type: cost
-      color: auto  # auto-colors based on amount
-    - type: separator
-    - type: session-clock
-      color: white
+version: 2
+widgets:
+  model:
+    color: cyan
+  directory:
+    color: blue
+  git-branch:
+    color: magenta
+  context-percentage:
+    color: auto  # auto-colors based on usage
+  cost:
+    color: auto  # auto-colors based on amount
+  session-clock:
+    color: white
 ```
 
 **Widget Options:**
@@ -160,15 +155,8 @@ lines:
 
 **Color Options:** `white`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `dim`, `auto`, `none`
 
-**Auto-Generated Config:**
-If no config file exists, one is automatically created with all widgets enabled. Delete `~/.config/claude-statusline/config.yaml` to regenerate defaults.
-
-**Stale Config Warning:**
-When new widgets are added, the script warns you:
-```
-Warning: Config is missing widgets from defaults: session-clock.
-Delete ~/.config/claude-statusline/config.yaml to regenerate with new defaults.
-```
+**Default Config:**
+If no config file exists, all default widgets are shown with built-in defaults. Create `~/.config/claude-statusline/config.yaml` to customize colors, ordering, or disable specific widgets.
 
 ## Features
 
@@ -177,11 +165,9 @@ Delete ~/.config/claude-statusline/config.yaml to regenerate with new defaults.
 - **Built-in Widgets**: 14 widgets including model, directory, git status, context, cost, session info
 - **Flexible Styling**: Per-widget color customization and bold formatting
 - **Automatic Fallback**: Missing config uses sensible defaults with all widgets enabled
-- **Stale Config Detection**: Warns when config is missing newly-added widgets
 
 **Available Widgets:**
 - `model` - Claude model name (e.g., "Sonnet 4.5")
-- `subscription` - Subscription type (Pro/Max) or API usage indicator
 - `directory` - Current working directory
 - `git-branch` - Active git branch name
 - `git-changes` - Staged/unstaged changes count
@@ -207,7 +193,6 @@ Delete ~/.config/claude-statusline/config.yaml to regenerate with new defaults.
 - **Priority-Based Sources**: Prefers `context_window` payload data → transcript parsing → model lookups
 - **Session Metrics**: Continues parsing transcripts for session duration and compact boundary detection
 - **Backwards Compatible**: Gracefully handles missing or null `context_window` data from older Claude Code versions
-- **Calibration Tool**: Includes `calibrate_token_counting.py` to validate and improve accuracy
 
 ### Token Calculation
 
@@ -343,60 +328,6 @@ Debug logs are written to **per-session files** in the `logs/` directory:
 
 ---
 
-## Token Counting Calibration Tool
-
-The project includes `claude-calibrate`, a command-line tool to verify and improve token counting accuracy against Claude's official measurements.
-
-### Purpose
-- Compare script calculations against Claude's official `/context` command output
-- Identify discrepancies and suggest calibration factors
-- Validate token counting accuracy when new Claude Code versions are released
-
-### Usage
-
-#### Semi-Automated Mode (Default)
-```bash
-uv run --no-config claude-calibrate session1.jsonl session2.jsonl --verbose
-```
-The tool provides precise instructions for resuming each session and prompts you to enter the official token counts.
-
-#### Manual Override Mode
-```bash
-uv run --no-config claude-calibrate session1.jsonl session2.jsonl \
-  --known-tokens 17.5k 68k --verbose
-```
-Provide known token counts to skip automatic session resumption (useful for sessions that can't be resumed).
-
-#### Auto-Discovery Mode
-```bash
-uv run --no-config claude-calibrate --max-sessions 3 --verbose
-```
-Automatically finds recent session files from all Claude Code project directories and provides instructions for manual calibration.
-
-### Example Calibration Report
-```
-📊 Successfully calibrated 2 session(s)
-
-INDIVIDUAL RESULTS:
-❌ session1.jsonl: Script 46,520 vs Claude 68,000 tokens (+31.6% difference)
-✅ session2.jsonl: Script 17,470 vs Claude 17,500 tokens (+0.2% difference)
-
-SUMMARY:
-Average discrepancy: +15.9% | Suggested calibration factor: 1.231
-⚠️  Token counting has moderate accuracy - consider adjusting CHARS_PER_TOKEN ratio
-```
-
-### Features
-- **Auto-discovery**: Finds recent sessions from all Claude Code project directories
-- **Semi-automated**: Provides precise resumption instructions for manual token collection
-- **Directory decoding**: Handles hyphenated paths (`-Users-name-Project` → `/Users/name/Project`)
-- **Flexible input**: Accepts raw numbers, K-suffixed values, or full `/context` output
-- **Accuracy validation**: Compares against Claude's official measurements
-- **Calibration recommendations**: Suggests specific improvements and correction factors
-- **uv compatibility**: Uses `uv run` for portable execution across Python environments
-
----
-
 ## Development
 
 ### Setup
@@ -405,19 +336,19 @@ Average discrepancy: +15.9% | Suggested calibration factor: 1.231
    ```bash
    git clone https://github.com/wpfleger96/claude-code-status-line.git
    cd claude-code-status-line
-   uv sync --no-config
+   uv sync
    ```
 
 2. **Configure Claude Code to use local version:**
    ```bash
-   uv run --no-config claude-statusline install
+   uv run claude-statusline install
    ```
 
 ### Testing Changes
 
 ```bash
 # Test statusline output
-echo '{"workspace": {"current_dir": "/test"}, "transcript_path": "", "model": {"id": "test", "display_name": "Test"}, "cost": {}, "version": "test"}' | uv run --no-config claude-statusline
+echo '{"workspace": {"current_dir": "/test"}, "transcript_path": "", "model": {"id": "test", "display_name": "Test"}, "cost": {}, "version": "test"}' | uv run claude-statusline
 
 # Run test suite
 uv run pytest

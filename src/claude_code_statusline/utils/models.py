@@ -26,8 +26,6 @@ CACHE_FILE_NAME = "claude_code_model_data_cache.json"
 CACHE_FILE = os.path.join(tempfile.gettempdir(), CACHE_FILE_NAME)
 CACHE_TTL_SECONDS = 604800  # 1 week (7 days)
 
-DEFAULT_SYSTEM_OVERHEAD_TOKENS = 21400
-
 MODEL_INFO: dict[str, ModelInfo] = {
     "default": ModelInfo("Unknown Model", 200000),
     "claude": ModelInfo("Claude", 200000),

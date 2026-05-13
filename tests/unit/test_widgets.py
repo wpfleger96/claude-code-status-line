@@ -51,10 +51,6 @@ def sample_context():
             "session_id": "abc123-def456-789",
         },
         token_metrics=TokenMetrics(
-            input_tokens=85000,
-            output_tokens=15000,
-            cached_tokens=5000,
-            total_tokens=105000,
             context_length=120000,
             transcript_exists=True,
         ),

@@ -4,8 +4,6 @@ import tempfile
 import pytest
 
 from claude_code_statusline.parsers.jsonl import (
-    ParsedTranscript,
-    calculate_total_tokens,
     extract_message_content_chars,
     is_real_compact_boundary,
     should_exclude_line,
@@ -125,26 +123,6 @@ class TestImageFiltering:
 
 
 @pytest.mark.unit
-class TestTokenCalculation:
-    """Test the token calculation formula."""
-
-    def test_includes_system_overhead(self):
-        """Verify total includes conversation + overhead."""
-        transcript = ParsedTranscript(context_chars=4000)
-        tokens = calculate_total_tokens(transcript)
-
-        conversation_tokens = int(4000 // 3.31)
-        assert tokens > conversation_tokens
-
-    def test_zero_context_still_has_overhead(self):
-        """Even empty sessions have system overhead."""
-        transcript = ParsedTranscript(context_chars=0)
-        tokens = calculate_total_tokens(transcript)
-
-        assert tokens > 0
-
-
-@pytest.mark.unit
 class TestTokenParserCompactBoundary:
     """Test that tokens.py parser handles compact boundaries correctly."""
 
@@ -204,15 +182,8 @@ class TestTokenParserCompactBoundary:
         try:
             token_metrics, _duration = parse_transcript(transcript_path)
 
-            assert token_metrics.input_tokens == 100
-            assert token_metrics.output_tokens == 50
-            assert token_metrics.cached_tokens == 20
-            assert token_metrics.total_tokens == 170
-
             assert token_metrics.context_length == 120
-
             assert token_metrics.had_compact_boundary is True
-
             assert token_metrics.session_id == "new-session-456"
         finally:
             import os
@@ -255,14 +226,8 @@ class TestTokenParserCompactBoundary:
         try:
             token_metrics, _duration = parse_transcript(transcript_path)
 
-            assert token_metrics.input_tokens == 300
-            assert token_metrics.output_tokens == 150
-            assert token_metrics.total_tokens == 450
-
             assert token_metrics.context_length == 200
-
             assert token_metrics.had_compact_boundary is False
-
             assert token_metrics.session_id == "session-123"
         finally:
             import os
@@ -296,12 +261,7 @@ class TestTokenParserCompactBoundary:
         try:
             token_metrics, _duration = parse_transcript(transcript_path)
 
-            assert token_metrics.input_tokens == 150
-            assert token_metrics.output_tokens == 75
-            assert token_metrics.cached_tokens == 40
-
             assert token_metrics.context_length == 190
-
             assert token_metrics.session_id == "session-789"
         finally:
             import os

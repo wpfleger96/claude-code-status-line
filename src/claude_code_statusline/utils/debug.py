@@ -21,11 +21,7 @@ def debug_log(message: str, session_id: str = "", transcript_path: str = "") -> 
     if not effective_session_id and transcript_path:
         filename = os.path.basename(transcript_path)
         if filename.endswith(".jsonl"):
-            potential_session_id = filename[:-6]
-            if len(potential_session_id) == 36 and potential_session_id.count("-") == 4:
-                effective_session_id = potential_session_id
-            else:
-                effective_session_id = potential_session_id
+            effective_session_id = filename[:-6]
 
     if not effective_session_id:
         effective_session_id = "unknown"

@@ -127,11 +127,8 @@ def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
     current_usage = cw.get("current_usage") or {}
 
     return ContextWindow(
-        total_input_tokens=cw.get("total_input_tokens", 0),
-        total_output_tokens=cw.get("total_output_tokens", 0),
         context_window_size=cw.get("context_window_size", 0),
         current_input_tokens=current_usage.get("input_tokens"),
-        current_output_tokens=current_usage.get("output_tokens"),
         cache_creation_input_tokens=current_usage.get("cache_creation_input_tokens"),
         cache_read_input_tokens=current_usage.get("cache_read_input_tokens"),
         used_percentage=cw.get("used_percentage"),

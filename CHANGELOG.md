@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.13.3 (2026-05-13)
+
+### Bug Fixes
+
+- Add PSR v10 changelog insertion flag and backfill missing entries
+  ([#5](https://github.com/wpfleger96/claude-code-status-line/pull/5),
+  [`c55ef6a`](https://github.com/wpfleger96/claude-code-status-line/commit/c55ef6ab7d36333e83bbc2f31db3920b8addd481))
+
 
 ## v0.13.2 (2026-05-11)
 

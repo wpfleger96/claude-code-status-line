@@ -2,6 +2,29 @@
 
 <!-- version list -->
 
+## v0.13.4 (2026-05-13)
+
+### Bug Fixes
+
+- Add PSR build_command to sync lockfile on release
+  ([#6](https://github.com/wpfleger96/claude-code-status-line/pull/6),
+  [`ea99ba3`](https://github.com/wpfleger96/claude-code-status-line/commit/ea99ba3836dfe4572b09b12f145f4249605c6e8b))
+
+- Address review feedback on dead code cleanup
+  ([#6](https://github.com/wpfleger96/claude-code-status-line/pull/6),
+  [`ea99ba3`](https://github.com/wpfleger96/claude-code-status-line/commit/ea99ba3836dfe4572b09b12f145f4249605c6e8b))
+
+- Install uv in PSR Docker container before lockfile sync
+  ([#7](https://github.com/wpfleger96/claude-code-status-line/pull/7),
+  [`73a171a`](https://github.com/wpfleger96/claude-code-status-line/commit/73a171a419bd7c08c6a7a33f69a53fc1157e16aa))
+
+### Refactoring
+
+- Remove dead code, deprecated v1 schema, and fix stale docs
+  ([#6](https://github.com/wpfleger96/claude-code-status-line/pull/6),
+  [`ea99ba3`](https://github.com/wpfleger96/claude-code-status-line/commit/ea99ba3836dfe4572b09b12f145f4249605c6e8b))
+
+
 ## v0.13.3 (2026-05-13)
 
 ### Bug Fixes

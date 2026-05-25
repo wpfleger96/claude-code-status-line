@@ -39,6 +39,23 @@ pre-commit: sync type-check lint format test
 test:
     uv run pytest
 
+test-unit:
+    uv run pytest -m unit
+
+test-integration:
+    uv run pytest -m integration
+
+# Build & Package
+build: sync
+    uv build
+
+clean-build:
+    rm -rf dist/ build/ src/*.egg-info
+
+rebuild: clean-build build
+
 # CI workflow (matches CI steps)
 ci: sync type-check lint-check format-check test
     @echo "CI checks passed"
+
+import? 'local.just'

@@ -1,7 +1,5 @@
 """Cost and line change widgets."""
 
-from typing import Optional
-
 from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ...utils.colors import colorize, get_cost_color
@@ -20,9 +18,7 @@ from ..registry import register_widget
 class CostWidget(Widget):
     """Display session cost in USD."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render cost in USD."""
         cost = context.data.get("cost") or {}
         total_cost = cost.get("total_cost_usd")
@@ -37,7 +33,7 @@ class CostWidget(Widget):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Compact: just the dollar amount with color, no label."""
         cost = context.data.get("cost") or {}
         total_cost = cost.get("total_cost_usd")
@@ -59,9 +55,7 @@ class CostWidget(Widget):
 class LinesAddedWidget(Widget):
     """Display lines added."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render lines added."""
         cost = context.data.get("cost") or {}
         lines_added = cost.get("total_lines_added")
@@ -73,7 +67,7 @@ class LinesAddedWidget(Widget):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Compact: just +N, no label."""
         cost = context.data.get("cost") or {}
         lines_added = cost.get("total_lines_added")
@@ -94,9 +88,7 @@ class LinesAddedWidget(Widget):
 class LinesRemovedWidget(Widget):
     """Display lines removed."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render lines removed."""
         cost = context.data.get("cost") or {}
         lines_removed = cost.get("total_lines_removed")
@@ -108,7 +100,7 @@ class LinesRemovedWidget(Widget):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Compact: just -N, no label."""
         cost = context.data.get("cost") or {}
         lines_removed = cost.get("total_lines_removed")
@@ -133,9 +125,7 @@ class LinesChangedWidget(Widget):
         cost = context.data.get("cost") or {}
         return cost.get("total_lines_added", 0), cost.get("total_lines_removed", 0)
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render lines changed."""
         lines_added, lines_removed = self._get_lines(context)
 
@@ -155,7 +145,7 @@ class LinesChangedWidget(Widget):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Compact: +N/-M with colors, no labels."""
         lines_added, lines_removed = self._get_lines(context)
 

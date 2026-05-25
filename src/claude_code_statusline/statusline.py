@@ -6,7 +6,7 @@ import os
 import sys
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from .config.loader import load_config_file
 from .parsers.tokens import parse_transcript
@@ -27,7 +27,7 @@ def parse_input_data() -> dict[str, Any]:
     try:
         input_data = sys.stdin.read()
         return cast(dict[str, Any], json.loads(input_data))
-    except (json.JSONDecodeError, ValueError):
+    except json.JSONDecodeError, ValueError:
         return {}
 
 
@@ -86,8 +86,8 @@ def extract_session_id(data: dict[str, Any], transcript_path: str) -> str:
 
 
 def resolve_duration_seconds(
-    data: dict[str, Any], transcript_duration: Optional[int]
-) -> Optional[int]:
+    data: dict[str, Any], transcript_duration: int | None
+) -> int | None:
     """Resolve session duration, preferring payload over transcript.
 
     Priority:
@@ -108,7 +108,7 @@ def resolve_duration_seconds(
     return transcript_duration
 
 
-def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
+def extract_context_window(data: dict[str, Any]) -> ContextWindow | None:
     """Extract context_window data from Claude Code payload.
 
     Args:
@@ -136,7 +136,7 @@ def extract_context_window(data: dict[str, Any]) -> Optional[ContextWindow]:
 
 
 def resolve_terminal_title(
-    data: dict[str, Any], token_metrics: Optional[TokenMetrics]
+    data: dict[str, Any], token_metrics: TokenMetrics | None
 ) -> str:
     session_name: str = data.get("session_name", "")
     if session_name:

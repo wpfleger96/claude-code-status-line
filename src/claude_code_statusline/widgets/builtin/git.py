@@ -1,7 +1,5 @@
 """Git-related widgets."""
 
-from typing import Optional
-
 from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ...utils.git import get_git_status
@@ -32,9 +30,7 @@ def _get_or_fetch_git_status(context: RenderContext) -> None:
 class GitBranchWidget(Widget):
     """Display current git branch name."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render git branch name."""
         _get_or_fetch_git_status(context)
 
@@ -56,9 +52,7 @@ class GitBranchWidget(Widget):
 class GitChangesWidget(Widget):
     """Display git insertions and deletions."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render git changes (+insertions/-deletions)."""
         _get_or_fetch_git_status(context)
 
@@ -89,9 +83,7 @@ class GitChangesWidget(Widget):
 class GitWorktreeWidget(Widget):
     """Display git worktree name."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render git worktree name."""
         _get_or_fetch_git_status(context)
 

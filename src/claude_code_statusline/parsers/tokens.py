@@ -5,7 +5,6 @@ import os
 import re
 
 from datetime import datetime
-from typing import Optional
 
 from ..types import TokenMetrics
 from .jsonl import is_real_compact_boundary
@@ -13,7 +12,7 @@ from .jsonl import is_real_compact_boundary
 _ISO_TZ_RE = re.compile(r"Z$")
 
 
-def _parse_timestamp_seconds(ts: str) -> Optional[float]:
+def _parse_timestamp_seconds(ts: str) -> float | None:
     """Parse ISO timestamp string to epoch seconds for duration calculation."""
     try:
         dt = datetime.fromisoformat(_ISO_TZ_RE.sub("+00:00", ts))
@@ -24,7 +23,7 @@ def _parse_timestamp_seconds(ts: str) -> Optional[float]:
 
 def parse_transcript(
     transcript_path: str,
-) -> tuple[TokenMetrics, Optional[int]]:
+) -> tuple[TokenMetrics, int | None]:
     """Extract token metrics and session duration in single file read.
 
     Args:
@@ -38,10 +37,10 @@ def parse_transcript(
 
     context_length = 0
 
-    most_recent_usage: Optional[dict[str, int]] = None
+    most_recent_usage: dict[str, int] | None = None
 
-    first_ts: Optional[float] = None
-    last_ts: Optional[float] = None
+    first_ts: float | None = None
+    last_ts: float | None = None
 
     session_id = ""
     slug = ""
@@ -91,7 +90,7 @@ def parse_transcript(
                     if not is_sidechain and not is_api_error:
                         most_recent_usage = usage
 
-                except (json.JSONDecodeError, ValueError):
+                except json.JSONDecodeError, ValueError:
                     continue
 
     except OSError:

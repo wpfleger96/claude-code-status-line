@@ -1,7 +1,5 @@
 """Main rendering pipeline for status line."""
 
-from typing import Optional
-
 from .config.loader import get_effective_widgets
 from .config.schema import WidgetConfigModel
 from .types import RenderContext
@@ -67,7 +65,7 @@ def _apply_color(
 
 def render_widget(
     widget_config: WidgetConfigModel, context: RenderContext
-) -> Optional[str]:
+) -> str | None:
     """Render a single widget with colors applied.
 
     Args:
@@ -94,7 +92,7 @@ def render_widget(
 
 def render_widget_compact(
     widget_config: WidgetConfigModel, context: RenderContext
-) -> Optional[str]:
+) -> str | None:
     """Render a widget in compact mode with colors applied."""
     widget = get_widget(widget_config.type)
     if not widget:
@@ -112,7 +110,7 @@ def render_widget_compact(
 
 
 def _remove_orphaned_separators(
-    pairs: list[tuple[WidgetConfigModel, Optional[str]]],
+    pairs: list[tuple[WidgetConfigModel, str | None]],
 ) -> list[str]:
     """Remove separators that have no adjacent content.
 
@@ -150,7 +148,7 @@ def _remove_orphaned_separators(
 
 
 def _render_line(
-    pairs: list[tuple[WidgetConfigModel, Optional[str]]],
+    pairs: list[tuple[WidgetConfigModel, str | None]],
 ) -> str:
     """Render a list of widget pairs into a single line string."""
     parts = _remove_orphaned_separators(pairs)
@@ -168,7 +166,7 @@ def _get_widget_priority(widget_config: WidgetConfigModel) -> int:
 
 
 def _find_split_index(
-    pairs: list[tuple[WidgetConfigModel, Optional[str]]], target_width: int
+    pairs: list[tuple[WidgetConfigModel, str | None]], target_width: int
 ) -> int:
     """Find the best index to split widget pairs into two balanced lines.
 
@@ -198,8 +196,8 @@ def _find_split_index(
 
 
 def _try_two_line_split(
-    pairs: list[tuple[WidgetConfigModel, Optional[str]]], terminal_width: int
-) -> Optional[str]:
+    pairs: list[tuple[WidgetConfigModel, str | None]], terminal_width: int
+) -> str | None:
     """Try to split widget pairs into two lines that both fit."""
     total_width = sum(visible_len(r) for _, r in pairs if r is not None)
     split_idx = _find_split_index(pairs, total_width // 2)
@@ -259,7 +257,7 @@ def render_status_line_width_aware(
     4. Drop lowest-priority widgets until two-line fits
     """
     # Step 1: full render
-    full_pairs: list[tuple[WidgetConfigModel, Optional[str]]] = [
+    full_pairs: list[tuple[WidgetConfigModel, str | None]] = [
         (cfg, render_widget(cfg, context)) for cfg in widgets
     ]
     full_line = _render_line(full_pairs)
@@ -267,7 +265,7 @@ def render_status_line_width_aware(
         return full_line
 
     # Step 2: compact render
-    compact_pairs: list[tuple[WidgetConfigModel, Optional[str]]] = [
+    compact_pairs: list[tuple[WidgetConfigModel, str | None]] = [
         (cfg, render_widget_compact(cfg, context)) for cfg in widgets
     ]
     compact_line = _render_line(compact_pairs)

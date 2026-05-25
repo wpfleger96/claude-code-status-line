@@ -1,6 +1,6 @@
 """Widget registry for managing available widgets."""
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from .base import Widget
 
@@ -13,7 +13,7 @@ def register_widget(
     default_color: str = "white",
     default_priority: int = 50,
     description: str = "",
-    fallback_text: Optional[str] = None,
+    fallback_text: str | None = None,
 ) -> Callable[[type[Widget]], type[Widget]]:
     """Decorator to register widget classes with metadata.
 
@@ -47,7 +47,7 @@ def register_widget(
     return decorator
 
 
-def get_widget(widget_type: str) -> Optional[Widget]:
+def get_widget(widget_type: str) -> Widget | None:
     """Get widget instance by type name.
 
     Args:

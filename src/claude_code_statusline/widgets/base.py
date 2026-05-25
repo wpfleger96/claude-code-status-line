@@ -1,7 +1,6 @@
 """Base widget interface for status line components."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from ..config.schema import WidgetConfigModel
 from ..types import RenderContext
@@ -18,12 +17,10 @@ class Widget(ABC):
     description: str = ""
     default_color: str = "white"
     default_priority: int = 50
-    fallback_text: Optional[str] = None
+    fallback_text: str | None = None
 
     @abstractmethod
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render widget content.
 
         Args:
@@ -37,7 +34,7 @@ class Widget(ABC):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Render a shorter representation for narrow terminals.
 
         Override in subclasses to provide a compact form (e.g. drop labels).

@@ -5,15 +5,14 @@ import subprocess
 import time
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
 
 from ..types import GitStatus
 
-_git_cache: Optional[tuple[float, Optional[str], GitStatus]] = None
+_git_cache: tuple[float, str | None, GitStatus] | None = None
 GIT_CACHE_TTL = 2.0  # seconds
 
 
-def _run_git(args: list[str], cwd: Optional[str] = None) -> Optional[str]:
+def _run_git(args: list[str], cwd: str | None = None) -> str | None:
     """Run git command and return stdout, or None on error.
 
     Args:
@@ -32,11 +31,11 @@ def _run_git(args: list[str], cwd: Optional[str] = None) -> Optional[str]:
             cwd=cwd,
         )
         return result.stdout.strip() if result.returncode == 0 else None
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+    except subprocess.TimeoutExpired, FileNotFoundError, OSError:
         return None
 
 
-def get_git_status(cwd: Optional[str] = None) -> GitStatus:
+def get_git_status(cwd: str | None = None) -> GitStatus:
     """Get comprehensive git repository status with 2-second TTL cache.
 
     Args:

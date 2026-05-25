@@ -2,8 +2,6 @@
 
 import os
 
-from typing import Optional
-
 from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ..base import Widget
@@ -22,9 +20,7 @@ from .git import _get_or_fetch_git_status
 class DirectoryWidget(Widget):
     """Display current working directory basename."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render directory basename."""
         workspace = context.data.get("workspace") or {}
         current_dir: str | None = workspace.get("current_dir")

@@ -2,6 +2,70 @@
 
 <!-- version list -->
 
+## v0.13.5 (2026-05-26)
+
+### Bug Fixes
+
+- Regenerate lockfile for Python 3.14
+  ([#18](https://github.com/wpfleger96/claude-code-status-line/pull/18),
+  [`9bc7af7`](https://github.com/wpfleger96/claude-code-status-line/commit/9bc7af7dbcecf6da886338c5ba09b1c9becd234a))
+
+### Chores
+
+- Add uv.lock for reproducible installs
+  ([#12](https://github.com/wpfleger96/claude-code-status-line/pull/12),
+  [`a9ce188`](https://github.com/wpfleger96/claude-code-status-line/commit/a9ce188dbcf8dc3ca4ba128258b79fbbb0c913ef))
+
+- Remove Dependabot config (migrated to Renovate)
+  ([#8](https://github.com/wpfleger96/claude-code-status-line/pull/8),
+  [`b50d476`](https://github.com/wpfleger96/claude-code-status-line/commit/b50d4768492638deb1832df18c97da3cc0532986))
+
+- Sync Justfile
+  ([`dc2f142`](https://github.com/wpfleger96/claude-code-status-line/commit/dc2f1428ef425768f68b94b36cb6a3ff30e9237d))
+
+- Upgrade to Python 3.14 ([#18](https://github.com/wpfleger96/claude-code-status-line/pull/18),
+  [`9bc7af7`](https://github.com/wpfleger96/claude-code-status-line/commit/9bc7af7dbcecf6da886338c5ba09b1c9becd234a))
+
+- **deps**: Bump idna in the uv group across 1 directory
+  ([#14](https://github.com/wpfleger96/claude-code-status-line/pull/14),
+  [`a402bc4`](https://github.com/wpfleger96/claude-code-status-line/commit/a402bc452cabe93262ca3e86fea879da9bbad085))
+
+- **deps**: Update astral-sh/setup-uv action to v8
+  ([#10](https://github.com/wpfleger96/claude-code-status-line/pull/10),
+  [`d4343ed`](https://github.com/wpfleger96/claude-code-status-line/commit/d4343edcbe8c791b18ff740a787f5071da6bd726))
+
+- **deps**: Update dependency pytest to v9.0.3 [SECURITY]
+  ([#13](https://github.com/wpfleger96/claude-code-status-line/pull/13),
+  [`ca896a1`](https://github.com/wpfleger96/claude-code-status-line/commit/ca896a18af53aa017cfa35f294df3a8f7ab11cd8))
+
+- **deps**: Update python Docker tag to v3.14
+  ([#9](https://github.com/wpfleger96/claude-code-status-line/pull/9),
+  [`588c737`](https://github.com/wpfleger96/claude-code-status-line/commit/588c7374c60b405c72ba0454b3f1e1a7661c83d4))
+
+### Code Style
+
+- Apply ruff fixes for Python 3.14 target
+  ([#18](https://github.com/wpfleger96/claude-code-status-line/pull/18),
+  [`9bc7af7`](https://github.com/wpfleger96/claude-code-status-line/commit/9bc7af7dbcecf6da886338c5ba09b1c9becd234a))
+
+### Continuous Integration
+
+- Sync publish workflow
+  ([`9f777a9`](https://github.com/wpfleger96/claude-code-status-line/commit/9f777a91e6576856daeb8782dad0f4d846a1549a))
+
+- Sync publish workflow
+  ([`cf72703`](https://github.com/wpfleger96/claude-code-status-line/commit/cf7270301498688096cd41f41535e104376c5499))
+
+- Sync release workflow
+  ([`179bd1f`](https://github.com/wpfleger96/claude-code-status-line/commit/179bd1f3da7e7f933c8e22b27669bfe103090ee8))
+
+- Sync shared files
+  ([`ea6834e`](https://github.com/wpfleger96/claude-code-status-line/commit/ea6834e41d9665c8362036a3c219f8825fc2c6d4))
+
+- Sync shared files
+  ([`a648094`](https://github.com/wpfleger96/claude-code-status-line/commit/a6480943cfac7a4ddad1cdd2fa2d2f8f5b649306))
+
+
 ## v0.13.4 (2026-05-13)
 
 ### Bug Fixes

@@ -9,7 +9,7 @@ description = "A Python script for Claude Code statusline with context usage tra
 readme = "README.md"
 license = "MIT"
 authors = [{name = "Will Pfleger", email = "pfleger.will@gmail.com"}]
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 dependencies = [
     "pyyaml>=6.0",
     "pydantic>=2.0",
@@ -72,7 +72,6 @@ select = ["I", "F", "UP", "B"]  # isort, pyflakes, pyupgrade, bugbear
 lines-between-types = 1
 
 [tool.mypy]
-python_version = "3.13"
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true

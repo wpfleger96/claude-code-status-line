@@ -1,7 +1,5 @@
 """Session-related widgets."""
 
-from typing import Optional
-
 from ...config.schema import WidgetConfigModel
 from ...parsers.tokens import format_duration
 from ...types import RenderContext
@@ -21,9 +19,7 @@ from ..registry import register_widget
 class SessionIdWidget(Widget):
     """Display session ID."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render session ID."""
         session_id = context.data.get("session_id")
 
@@ -44,9 +40,7 @@ class SessionIdWidget(Widget):
 class SessionClockWidget(Widget):
     """Display session elapsed time."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render session duration."""
         if context.duration_seconds is None:
             return None
@@ -57,7 +51,7 @@ class SessionClockWidget(Widget):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Compact: duration with color, no label."""
         if context.duration_seconds is None:
             return None
@@ -79,7 +73,7 @@ MAX_SESSION_NAME_LENGTH = 30
 class SessionNameWidget(Widget):
     """Display custom session name."""
 
-    def _get_name(self, context: RenderContext) -> Optional[str]:
+    def _get_name(self, context: RenderContext) -> str | None:
         name: str | None = context.data.get("session_name")
         if not name:
             return None
@@ -87,9 +81,7 @@ class SessionNameWidget(Widget):
             return name[: MAX_SESSION_NAME_LENGTH - 1] + "\u2026"
         return name
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render session name."""
         name = self._get_name(context)
         if name is None:
@@ -98,6 +90,6 @@ class SessionNameWidget(Widget):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Compact: just the name, no label."""
         return self._get_name(context)

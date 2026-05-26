@@ -9,7 +9,7 @@ import urllib.error
 import urllib.request
 
 from dataclasses import dataclass
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from ..types import RenderContext
 
@@ -51,13 +51,13 @@ MODEL_INFO: dict[str, ModelInfo] = {
 }
 
 
-def extract_token_limit(model_info: dict[str, Any]) -> Optional[int]:
+def extract_token_limit(model_info: dict[str, Any]) -> int | None:
     """Extract token limit from model info dictionary."""
     limit = model_info.get("max_input_tokens") or model_info.get("max_tokens")
     return int(limit) if limit else None
 
 
-def get_cached_or_fetch_data() -> Optional[dict[str, Any]]:
+def get_cached_or_fetch_data() -> dict[str, Any] | None:
     """Get model data from cache or fetch from API if cache is expired or does not exist."""
     try:
         if os.path.exists(CACHE_FILE):
@@ -65,7 +65,7 @@ def get_cached_or_fetch_data() -> Optional[dict[str, Any]]:
             if cache_age <= CACHE_TTL_SECONDS:
                 with open(CACHE_FILE) as f:
                     return cast(dict[str, Any], json.load(f))
-    except (OSError, json.JSONDecodeError):
+    except OSError, json.JSONDecodeError:
         pass
 
     url = "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"

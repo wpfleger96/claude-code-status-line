@@ -5,7 +5,7 @@ import shutil
 import time
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 __all__ = [
     "get_settings_path",
@@ -40,11 +40,11 @@ def read_settings() -> dict[str, Any]:
         with open(settings_path, encoding="utf-8") as f:
             data = json.load(f)
             return data if isinstance(data, dict) else {}
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError, OSError:
         return {}
 
 
-def write_settings(data: dict[str, Any], backup: bool = True) -> Optional[Path]:
+def write_settings(data: dict[str, Any], backup: bool = True) -> Path | None:
     """Write Claude Code settings.
 
     Args:

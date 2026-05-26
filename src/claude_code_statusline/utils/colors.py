@@ -2,8 +2,6 @@
 
 import re
 
-from typing import Optional
-
 # Matches SGR (Select Graphic Rendition) sequences only — the only ANSI
 # escape sequences this codebase emits (colors, bold, dim, reset).
 _ANSI_SGR_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -39,7 +37,7 @@ def visible_len(text: str) -> int:
     return len(_ANSI_SGR_RE.sub("", text))
 
 
-def get_color_code(color_name: Optional[str]) -> str:
+def get_color_code(color_name: str | None) -> str:
     """Get ANSI color code by name.
 
     Args:
@@ -53,7 +51,7 @@ def get_color_code(color_name: Optional[str]) -> str:
     return COLORS.get(color_name.lower(), "")
 
 
-def colorize(text: str, color: Optional[str] = None, bold: bool = False) -> str:
+def colorize(text: str, color: str | None = None, bold: bool = False) -> str:
     """Apply color to text with ANSI codes.
 
     Args:

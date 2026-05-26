@@ -1,7 +1,5 @@
 """Context usage widgets."""
 
-from typing import Optional
-
 from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ...utils.colors import colorize, get_usage_color
@@ -24,7 +22,7 @@ class ContextPercentageWidget(Widget):
 
     def _get_context_data(
         self, context: RenderContext
-    ) -> Optional[tuple[float, str, str, int, int]]:
+    ) -> tuple[float, str, str, int, int] | None:
         """Extract context percentage, colored bar, formatted percentage, and token counts.
 
         Returns (percentage, colored_bar, pct_str, context_length, context_limit)
@@ -75,9 +73,7 @@ class ContextPercentageWidget(Widget):
             context_limit,
         )
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render context percentage with progress bar and token count."""
         data = self._get_context_data(context)
         if data is None:
@@ -91,7 +87,7 @@ class ContextPercentageWidget(Widget):
 
     def render_compact(
         self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    ) -> str | None:
         """Compact: progress bar + percentage + token counts, no label."""
         data = self._get_context_data(context)
         if data is None:
@@ -114,9 +110,7 @@ class ContextPercentageWidget(Widget):
 class ContextTokensWidget(Widget):
     """Display token count (current/limit)."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render token count display."""
         has_context_window = (
             context.context_window is not None

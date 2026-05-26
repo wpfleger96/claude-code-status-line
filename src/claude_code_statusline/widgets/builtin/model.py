@@ -1,7 +1,5 @@
 """Model name widget."""
 
-from typing import Optional
-
 from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ..base import Widget
@@ -19,9 +17,7 @@ from ..registry import register_widget
 class ModelWidget(Widget):
     """Display Claude model name."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render model display name."""
         model = context.data.get("model") or {}
         display_name: str | None = model.get("display_name") or model.get("id")

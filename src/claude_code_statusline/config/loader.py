@@ -3,7 +3,6 @@
 import os
 
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -12,7 +11,7 @@ from pydantic import ValidationError
 from .defaults import get_default_widgets
 from .schema import StatusLineConfigV2, WidgetConfigModel, WidgetOverride
 
-_cached_config: Optional[StatusLineConfigV2] = None
+_cached_config: StatusLineConfigV2 | None = None
 _cached_mtime: float = 0.0
 
 

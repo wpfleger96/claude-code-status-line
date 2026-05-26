@@ -4,21 +4,19 @@ import os
 import re
 import sys
 
-from typing import Optional
 
-
-def _get_width_from_stderr() -> Optional[int]:
+def _get_width_from_stderr() -> int | None:
     """Try to get terminal width from stderr fd."""
     try:
         width = os.get_terminal_size(sys.stderr.fileno()).columns
         if width > 0:
             return width
-    except (OSError, ValueError, AttributeError):
+    except OSError, ValueError, AttributeError:
         pass
     return None
 
 
-def _get_width_from_tty() -> Optional[int]:
+def _get_width_from_tty() -> int | None:
     """Try to get terminal width via /dev/tty ioctl."""
     try:
         import fcntl
@@ -33,12 +31,12 @@ def _get_width_from_tty() -> Optional[int]:
                 return width
         finally:
             os.close(fd)
-    except (OSError, ImportError):
+    except OSError, ImportError:
         pass
     return None
 
 
-def _get_width_from_env() -> Optional[int]:
+def _get_width_from_env() -> int | None:
     """Try to get terminal width from COLUMNS env var."""
     columns = os.environ.get("COLUMNS")
     if columns and columns.isdigit() and int(columns) > 0:
@@ -46,7 +44,7 @@ def _get_width_from_env() -> Optional[int]:
     return None
 
 
-def detect_terminal_width() -> Optional[int]:
+def detect_terminal_width() -> int | None:
     """Detect terminal width, accounting for piped stdin/stdout.
 
     Claude Code pipes stdin/stdout when invoking status line commands,

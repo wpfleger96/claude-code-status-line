@@ -1,7 +1,5 @@
 """Separator widget for visual division."""
 
-from typing import Optional
-
 from ...config.schema import WidgetConfigModel
 from ...types import RenderContext
 from ..base import Widget
@@ -17,9 +15,7 @@ from ..registry import register_widget
 class SeparatorWidget(Widget):
     """Visual separator between widgets."""
 
-    def render(
-        self, config: WidgetConfigModel, context: RenderContext
-    ) -> Optional[str]:
+    def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render separator from config or default."""
         separator = config.metadata.get("text", "|")
         return f" {separator} "

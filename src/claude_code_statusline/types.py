@@ -1,7 +1,7 @@
 """Data types for Claude Code Status Line."""
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -19,11 +19,11 @@ class TokenMetrics:
 class GitStatus:
     """Git repository status information."""
 
-    branch: Optional[str] = None
+    branch: str | None = None
     insertions: int = 0
     deletions: int = 0
-    worktree: Optional[str] = None
-    repo_name: Optional[str] = None
+    worktree: str | None = None
+    repo_name: str | None = None
     is_git_repo: bool = False
 
 
@@ -32,10 +32,10 @@ class ContextWindow:
     """Context window data from Claude Code status payload."""
 
     context_window_size: int = 0
-    current_input_tokens: Optional[int] = None
-    cache_creation_input_tokens: Optional[int] = None
-    cache_read_input_tokens: Optional[int] = None
-    used_percentage: Optional[float] = None
+    current_input_tokens: int | None = None
+    cache_creation_input_tokens: int | None = None
+    cache_read_input_tokens: int | None = None
+    used_percentage: float | None = None
 
     @property
     def current_context_tokens(self) -> int:
@@ -62,8 +62,8 @@ class RenderContext:
     """Context passed to widgets during rendering."""
 
     data: dict[str, Any]
-    token_metrics: Optional[TokenMetrics] = None
-    git_status: Optional[GitStatus] = None
-    duration_seconds: Optional[int] = None
-    terminal_width: Optional[int] = None
-    context_window: Optional[ContextWindow] = None
+    token_metrics: TokenMetrics | None = None
+    git_status: GitStatus | None = None
+    duration_seconds: int | None = None
+    terminal_width: int | None = None
+    context_window: ContextWindow | None = None

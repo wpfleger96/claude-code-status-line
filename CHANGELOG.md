@@ -2,6 +2,41 @@
 
 <!-- version list -->
 
+## v0.13.6 (2026-05-28)
+
+### Bug Fixes
+
+- **release**: Include uv.lock in semantic-release commit
+  ([#22](https://github.com/wpfleger96/claude-code-status-line/pull/22),
+  [`b74bae5`](https://github.com/wpfleger96/claude-code-status-line/commit/b74bae5eb297179ca55b4c2f48221d6bb402d8e5))
+
+### Chores
+
+- Sync Justfile
+  ([`d191054`](https://github.com/wpfleger96/claude-code-status-line/commit/d191054db06ed695eff16bdbac4fbdb26da4d11e))
+
+- **deps**: Lock file maintenance
+  ([#21](https://github.com/wpfleger96/claude-code-status-line/pull/21),
+  [`95cb374`](https://github.com/wpfleger96/claude-code-status-line/commit/95cb37429f4a79e9df75b343eb234a52b9a6ba67))
+
+### Continuous Integration
+
+- Sync publish workflow
+  ([`0c124fa`](https://github.com/wpfleger96/claude-code-status-line/commit/0c124fa6254ed285a4b28205e2b14c02dcc80f1e))
+
+- Sync release workflow
+  ([`b9f74e2`](https://github.com/wpfleger96/claude-code-status-line/commit/b9f74e28202fd5c9d1906008ea1a14e119b91e3d))
+
+- Sync shared files
+  ([`8517516`](https://github.com/wpfleger96/claude-code-status-line/commit/851751640f334e2c0fd17b85bcf7cbdd929f7d15))
+
+- Sync shared files
+  ([`9880891`](https://github.com/wpfleger96/claude-code-status-line/commit/988089196dc423f8064f96e92dfda4ab66788e84))
+
+- Sync shared files
+  ([`fd3b64f`](https://github.com/wpfleger96/claude-code-status-line/commit/fd3b64f03f1c21c0b00cc2084a2bef585fde633e))
+
+
 ## v0.13.5 (2026-05-26)
 
 ### Bug Fixes

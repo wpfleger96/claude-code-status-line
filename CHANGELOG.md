@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [0.13.7](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.6...v0.13.7) (2026-06-01)
+
+
+### Continuous Integration
+
+* migrate to release-please ([#23](https://github.com/wpfleger96/claude-code-status-line/issues/23)) ([0a8f724](https://github.com/wpfleger96/claude-code-status-line/commit/0a8f724f2fe0d428519742d9016f724646bf0167))
+* sync CI workflow ([240ebf7](https://github.com/wpfleger96/claude-code-status-line/commit/240ebf7b0425181fa4f9bc5823e130243c64013a))
+* sync release workflow ([86a6579](https://github.com/wpfleger96/claude-code-status-line/commit/86a6579554ca4f3855055d101b1f1e2053eb4576))
+* sync release workflow ([c5027e4](https://github.com/wpfleger96/claude-code-status-line/commit/c5027e4eb244d503ac6b91163379d34be44b02f3))
+* sync release workflow ([b357cb5](https://github.com/wpfleger96/claude-code-status-line/commit/b357cb54a6d33f5215d45da3553c68722d82fd0b))
+* sync release workflow ([8db1d72](https://github.com/wpfleger96/claude-code-status-line/commit/8db1d72e142a53e54c83cb1d7dbed105b15fa942))
+
 ## v0.13.6 (2026-05-28)
 
 ### Bug Fixes

@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [0.13.8](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.7...v0.13.8) (2026-06-16)
+
+
+### Chores
+
+* add .tokeignore to restrict LOC badge to Python source ([#29](https://github.com/wpfleger96/claude-code-status-line/issues/29)) ([2ec8c5f](https://github.com/wpfleger96/claude-code-status-line/commit/2ec8c5f919666a1988cd2a0d30a92ed16d42e925))
+* add .tokeignore to restrict tokei LOC badge to Python source ([2ec8c5f](https://github.com/wpfleger96/claude-code-status-line/commit/2ec8c5f919666a1988cd2a0d30a92ed16d42e925))
+* sync Justfile ([e1fe46f](https://github.com/wpfleger96/claude-code-status-line/commit/e1fe46f30fa2311b31327dddac87ace02f76bf10))
+* sync Justfile ([8bcadae](https://github.com/wpfleger96/claude-code-status-line/commit/8bcadae12fb59d753b03e3aae4735bdb2311404d))
+* sync Justfile ([d749a0f](https://github.com/wpfleger96/claude-code-status-line/commit/d749a0f6aa6efaa68e6c3293e5b0244154c2c907))
+* sync pre-commit hook ([430ad23](https://github.com/wpfleger96/claude-code-status-line/commit/430ad232f8ab786c87efe881bf11e3b21e3f5390))
+* sync pre-commit hook ([bc906fc](https://github.com/wpfleger96/claude-code-status-line/commit/bc906fc25025c4c56a271c85ce8f49722ff4a3fc))
+
+
+### Continuous Integration
+
+* sync CI workflow ([9c98c38](https://github.com/wpfleger96/claude-code-status-line/commit/9c98c38e45e815c4f8c6290abedb41cb695e8297))
+* sync CI workflow ([bdb121b](https://github.com/wpfleger96/claude-code-status-line/commit/bdb121beadaeea17fd2ccd3b590cdf39a17184d0))
+* sync publish workflow ([369e53a](https://github.com/wpfleger96/claude-code-status-line/commit/369e53a0736a3bda323e3cced1ead326d44d7e2b))
+* sync release workflow ([8e8af45](https://github.com/wpfleger96/claude-code-status-line/commit/8e8af45173c463c3e8f6a24b7b341bd9cd9539c9))
+
 ## [0.13.7](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.6...v0.13.7) (2026-06-01)
 
 

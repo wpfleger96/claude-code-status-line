@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [0.13.9](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.8...v0.13.9) (2026-06-19)
+
+
+### Chores
+
+* **deps:** Lock file maintenance ([#30](https://github.com/wpfleger96/claude-code-status-line/issues/30)) ([b2cde76](https://github.com/wpfleger96/claude-code-status-line/commit/b2cde76f2cdc5efecb82b318839719deeb7a9433))
+* downgrade Python 3.14 to 3.13 and fix bare-comma except clauses ([#32](https://github.com/wpfleger96/claude-code-status-line/issues/32)) ([6d50186](https://github.com/wpfleger96/claude-code-status-line/commit/6d50186f48f1c0b7cdbe1fa23179a396fc66217f))
+
 ## [0.13.8](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.7...v0.13.8) (2026-06-16)
 
 

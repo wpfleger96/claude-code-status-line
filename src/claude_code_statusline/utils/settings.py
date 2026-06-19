@@ -40,7 +40,7 @@ def read_settings() -> dict[str, Any]:
         with open(settings_path, encoding="utf-8") as f:
             data = json.load(f)
             return data if isinstance(data, dict) else {}
-    except json.JSONDecodeError, OSError:
+    except (json.JSONDecodeError, OSError):
         return {}
 
 

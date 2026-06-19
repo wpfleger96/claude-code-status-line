@@ -11,7 +11,7 @@ def _get_width_from_stderr() -> int | None:
         width = os.get_terminal_size(sys.stderr.fileno()).columns
         if width > 0:
             return width
-    except OSError, ValueError, AttributeError:
+    except (OSError, ValueError, AttributeError):
         pass
     return None
 
@@ -31,7 +31,7 @@ def _get_width_from_tty() -> int | None:
                 return width
         finally:
             os.close(fd)
-    except OSError, ImportError:
+    except (OSError, ImportError):
         pass
     return None
 

@@ -51,7 +51,7 @@ def cmd_install(force: bool = False) -> int:
             if response not in ("y", "yes"):
                 print("Aborted.")
                 return 1
-        except EOFError, KeyboardInterrupt:
+        except (EOFError, KeyboardInterrupt):
             print("\nAborted.")
             return 1
 

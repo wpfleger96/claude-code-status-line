@@ -65,7 +65,7 @@ def get_cached_or_fetch_data() -> dict[str, Any] | None:
             if cache_age <= CACHE_TTL_SECONDS:
                 with open(CACHE_FILE) as f:
                     return cast(dict[str, Any], json.load(f))
-    except OSError, json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError):
         pass
 
     url = "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"

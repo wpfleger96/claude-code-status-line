@@ -27,7 +27,7 @@ def parse_input_data() -> dict[str, Any]:
     try:
         input_data = sys.stdin.read()
         return cast(dict[str, Any], json.loads(input_data))
-    except json.JSONDecodeError, ValueError:
+    except (json.JSONDecodeError, ValueError):
         return {}
 
 

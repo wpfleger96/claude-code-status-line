@@ -31,7 +31,7 @@ def _run_git(args: list[str], cwd: str | None = None) -> str | None:
             cwd=cwd,
         )
         return result.stdout.strip() if result.returncode == 0 else None
-    except subprocess.TimeoutExpired, FileNotFoundError, OSError:
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return None
 
 

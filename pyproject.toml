@@ -9,7 +9,7 @@ description = "A Python script for Claude Code statusline with context usage tra
 readme = "README.md"
 license = "MIT"
 authors = [{name = "Will Pfleger", email = "pfleger.will@gmail.com"}]
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "pyyaml>=6.0",
     "pydantic>=2.0",

@@ -90,7 +90,7 @@ def parse_transcript(
                     if not is_sidechain and not is_api_error:
                         most_recent_usage = usage
 
-                except json.JSONDecodeError, ValueError:
+                except (json.JSONDecodeError, ValueError):
                     continue
 
     except OSError:

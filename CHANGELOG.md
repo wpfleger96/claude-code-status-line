@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.14.1](https://github.com/wpfleger96/claude-code-status-line/compare/v0.14.0...v0.14.1) (2026-07-02)
+
+
+### Continuous Integration
+
+* sync CI workflow ([16da212](https://github.com/wpfleger96/claude-code-status-line/commit/16da21245bdfa519043be06384a71b3b48f55c6c))
+
 ## [0.14.0](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.9...v0.14.0) (2026-07-02)
 
 

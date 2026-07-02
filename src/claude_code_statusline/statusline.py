@@ -163,7 +163,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     from . import __version__
 
     parser = argparse.ArgumentParser(
-        prog="claude-statusline",
+        prog="claude-code-statusline",
         description="Claude Code statusline - context usage tracking for Claude Code",
         epilog="When no subcommand is provided, reads JSON from stdin and outputs the statusline.",
     )
@@ -178,7 +178,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
     install_parser = subparsers.add_parser(
         "install",
-        help="Configure Claude Code to use claude-statusline",
+        help="Configure Claude Code to use claude-code-statusline",
     )
     install_parser.add_argument(
         "--yes",
@@ -189,7 +189,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser(
         "uninstall",
-        help="Remove claude-statusline from Claude Code configuration",
+        help="Remove claude-code-statusline from Claude Code configuration",
     )
 
     subparsers.add_parser(

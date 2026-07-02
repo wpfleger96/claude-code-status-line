@@ -76,7 +76,7 @@ def write_settings(data: dict[str, Any], backup: bool = True) -> Path | None:
 
 
 def configure_statusline() -> tuple[bool, str]:
-    """Configure Claude Code to use claude-statusline.
+    """Configure Claude Code to use claude-code-statusline.
 
     Adds or updates the statusLine configuration in settings.json.
     Creates a backup if statusLine already exists.
@@ -90,7 +90,7 @@ def configure_statusline() -> tuple[bool, str]:
 
     settings["statusLine"] = {
         "type": "command",
-        "command": "claude-statusline",
+        "command": "claude-code-statusline",
         "padding": 0,
     }
 

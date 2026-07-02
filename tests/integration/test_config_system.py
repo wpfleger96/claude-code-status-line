@@ -39,7 +39,7 @@ class TestConfigV2Loading:
 
     def test_loads_v2_config(self, temp_config_dir):
         """Test loading a v2 configuration file."""
-        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file = temp_config_dir / "claude-code-statusline" / "config.yaml"
         config_file.parent.mkdir(parents=True)
 
         config_data = {
@@ -59,7 +59,7 @@ class TestConfigV2Loading:
 
     def test_deletes_v1_config(self, temp_config_dir):
         """Test that v1 configs are deleted."""
-        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file = temp_config_dir / "claude-code-statusline" / "config.yaml"
         config_file.parent.mkdir(parents=True)
 
         v1_config = {
@@ -89,7 +89,7 @@ class TestEffectiveWidgets:
 
     def test_applies_color_override(self, temp_config_dir):
         """Test that color overrides are applied."""
-        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file = temp_config_dir / "claude-code-statusline" / "config.yaml"
         config_file.parent.mkdir(parents=True)
 
         config_data = {
@@ -105,7 +105,7 @@ class TestEffectiveWidgets:
 
     def test_hides_disabled_widgets(self, temp_config_dir):
         """Test that disabled widgets are hidden."""
-        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file = temp_config_dir / "claude-code-statusline" / "config.yaml"
         config_file.parent.mkdir(parents=True)
 
         config_data = {
@@ -122,7 +122,7 @@ class TestEffectiveWidgets:
 
     def test_custom_order(self, temp_config_dir):
         """Test custom widget ordering."""
-        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file = temp_config_dir / "claude-code-statusline" / "config.yaml"
         config_file.parent.mkdir(parents=True)
 
         config_data = {
@@ -169,7 +169,7 @@ class TestConfigSaving:
 
         save_config(config)
 
-        config_file = temp_config_dir / "claude-statusline" / "config.yaml"
+        config_file = temp_config_dir / "claude-code-statusline" / "config.yaml"
         assert config_file.exists()
 
         with open(config_file) as f:

@@ -1,6 +1,8 @@
 """CLI commands for installation and maintenance."""
 
 import json
+import os
+import shutil
 import subprocess
 import sys
 
@@ -13,10 +15,32 @@ from ..utils.settings import (
     read_settings,
     remove_statusline,
 )
+from .bootstrap import ensure_command_installed
+
+
+def _migrate_legacy_config() -> str | None:
+    """Copy a pre-rename config.yaml into the new config dir, once.
+
+    Before the rename the config lived at ``~/.config/claude-statusline/``. If a
+    user has one there and no config at the new location yet, copy it so their
+    customizations survive the rename. Returns a message when a file was migrated.
+    """
+    new_path = get_config_path()
+    if new_path.exists():
+        return None
+
+    config_home = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+    legacy = Path(config_home) / "claude-statusline" / "config.yaml"
+    if not legacy.is_file():
+        return None
+
+    new_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(legacy, new_path)
+    return f"Migrated existing config from {legacy} to {new_path}"
 
 
 def cmd_install(force: bool = False) -> int:
-    """Configure Claude Code to use claude-statusline.
+    """Configure Claude Code to use claude-code-statusline.
 
     Args:
         force: If True, skip confirmation prompt for existing config
@@ -24,6 +48,17 @@ def cmd_install(force: bool = False) -> int:
     Returns:
         Exit code (0 for success, 1 for failure)
     """
+    ok, message = ensure_command_installed()
+    if not ok:
+        print(f"✗ {message}", file=sys.stderr)
+        return 1
+    if message:
+        print(message)
+
+    migrated = _migrate_legacy_config()
+    if migrated:
+        print(migrated)
+
     settings_path = get_settings_path()
     settings = read_settings()
 
@@ -33,7 +68,7 @@ def cmd_install(force: bool = False) -> int:
         existing = settings["statusLine"]
         new_config = {
             "type": "command",
-            "command": "claude-statusline",
+            "command": "claude-code-statusline",
             "padding": 0,
         }
 
@@ -70,7 +105,7 @@ def cmd_install(force: bool = False) -> int:
 
 
 def cmd_uninstall() -> int:
-    """Remove claude-statusline from Claude Code configuration.
+    """Remove claude-code-statusline from Claude Code configuration.
 
     Returns:
         Exit code (0 for success, 1 for failure)
@@ -100,7 +135,7 @@ def cmd_doctor() -> int:
     """
     from .. import __version__
 
-    print(f"claude-statusline v{__version__}")
+    print(f"claude-code-statusline v{__version__}")
     print("\nChecking installation...\n")
 
     issues = 0
@@ -117,11 +152,11 @@ def cmd_doctor() -> int:
 
             if "statusLine" not in settings:
                 print("      ⚠ No statusLine configuration found")
-                print("      → Run 'claude-statusline install' to configure")
+                print("      → Run 'claude-code-statusline install' to configure")
                 issues += 1
             else:
                 statusline_config = settings["statusLine"]
-                expected_command = "claude-statusline"
+                expected_command = "claude-code-statusline"
                 actual_command = statusline_config.get("command", "")
 
                 if expected_command in actual_command:
@@ -129,6 +164,7 @@ def cmd_doctor() -> int:
                 else:
                     print(f"      ⚠ Unexpected command: {actual_command}")
                     print(f"      → Expected: {expected_command}")
+                    print("      → Run 'claude-code-statusline install' to update")
                     issues += 1
 
         except (json.JSONDecodeError, OSError) as e:
@@ -162,7 +198,7 @@ def cmd_doctor() -> int:
 
     try:
         result = subprocess.run(
-            ["claude-statusline"],
+            ["claude-code-statusline"],
             input=test_input,
             capture_output=True,
             text=True,
@@ -178,7 +214,7 @@ def cmd_doctor() -> int:
             issues += 1
 
     except FileNotFoundError:
-        print("      ✗ claude-statusline command not found")
+        print("      ✗ claude-code-statusline command not found")
         print("      → Install with: uv tool install claude-code-statusline")
         print("                  or: pipx install claude-code-statusline")
         issues += 1

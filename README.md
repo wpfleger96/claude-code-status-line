@@ -59,20 +59,28 @@ This will:
 
 **Requirements:** Either `uv` or `pipx`
 
+Or, if you have [`uv`](https://docs.astral.sh/uv/), install and configure in a single command:
+
+```bash
+uvx claude-code-statusline install
+```
+
+This installs the tool persistently (via `uv tool`) and then writes the `statusLine` config to `~/.claude/settings.json`.
+
 ### Manual Installation
 
 #### Option 1: Using uv tool
 
 ```bash
 uv tool install claude-code-statusline
-claude-statusline install
+claude-code-statusline install
 ```
 
 #### Option 2: Using pipx
 
 ```bash
 pipx install claude-code-statusline
-claude-statusline install
+claude-code-statusline install
 ```
 
 ### Upgrading
@@ -87,6 +95,8 @@ uv tool upgrade claude-code-statusline
 pipx upgrade claude-code-statusline
 ```
 
+> **Upgrading from a version that used the `claude-statusline` command?** The command was renamed to `claude-code-statusline`. After upgrading, re-run `claude-code-statusline install` to update `~/.claude/settings.json` — your `~/.config` widget config is migrated automatically. If a stale `claude-statusline` command lingers on your `PATH`, run `uv tool uninstall claude-code-statusline` (or `pipx uninstall claude-code-statusline`) and reinstall.
+
 ### Uninstalling
 
 To uninstall:
@@ -96,18 +106,18 @@ To uninstall:
 curl -fsSL https://raw.githubusercontent.com/wpfleger96/claude-code-status-line/main/scripts/uninstall.sh | bash
 
 # Or manually
-claude-statusline uninstall
+claude-code-statusline uninstall
 uv tool uninstall claude-code-statusline  # or: pipx uninstall claude-code-statusline
 ```
 
 ## CLI Commands
 
 ```bash
-claude-statusline              # Output statusline (reads JSON from stdin)
-claude-statusline install      # Configure Claude Code integration
-claude-statusline uninstall    # Remove Claude Code configuration
-claude-statusline doctor       # Verify installation health
-claude-statusline --version    # Show version
+claude-code-statusline              # Output statusline (reads JSON from stdin)
+claude-code-statusline install      # Configure Claude Code integration
+claude-code-statusline uninstall    # Remove Claude Code configuration
+claude-code-statusline doctor       # Verify installation health
+claude-code-statusline --version    # Show version
 ```
 
 ### Health Check
@@ -115,7 +125,7 @@ claude-statusline --version    # Show version
 Verify your installation is working correctly:
 
 ```bash
-claude-statusline doctor
+claude-code-statusline doctor
 ```
 
 This checks:
@@ -128,7 +138,7 @@ This checks:
 
 ### Widget Customization
 
-Customize your status line by creating `~/.config/claude-statusline/config.yaml`:
+Customize your status line by creating `~/.config/claude-code-statusline/config.yaml`:
 
 ```yaml
 version: 2
@@ -156,12 +166,12 @@ widgets:
 **Color Options:** `white`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `dim`, `auto`, `none`
 
 **Default Config:**
-If no config file exists, all default widgets are shown with built-in defaults. Create `~/.config/claude-statusline/config.yaml` to customize colors, ordering, or disable specific widgets.
+If no config file exists, all default widgets are shown with built-in defaults. Create `~/.config/claude-code-statusline/config.yaml` to customize colors, ordering, or disable specific widgets.
 
 ## Features
 
 ### Customizable Widget System
-- **Configurable Layout**: Customize which widgets appear and in what order via `~/.config/claude-statusline/config.yaml`
+- **Configurable Layout**: Customize which widgets appear and in what order via `~/.config/claude-code-statusline/config.yaml`
 - **Built-in Widgets**: 14 widgets including model, directory, git status, context, cost, session info
 - **Flexible Styling**: Per-widget color customization and bold formatting
 - **Automatic Fallback**: Missing config uses sensible defaults with all widgets enabled
@@ -341,14 +351,14 @@ Debug logs are written to **per-session files** in the `logs/` directory:
 
 2. **Configure Claude Code to use local version:**
    ```bash
-   uv run claude-statusline install
+   uv run claude-code-statusline install
    ```
 
 ### Testing Changes
 
 ```bash
 # Test statusline output
-echo '{"workspace": {"current_dir": "/test"}, "transcript_path": "", "model": {"id": "test", "display_name": "Test"}, "cost": {}, "version": "test"}' | uv run claude-statusline
+echo '{"workspace": {"current_dir": "/test"}, "transcript_path": "", "model": {"id": "test", "display_name": "Test"}, "cost": {}, "version": "test"}' | uv run claude-code-statusline
 
 # Run test suite
 uv run pytest

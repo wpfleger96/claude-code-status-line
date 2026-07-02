@@ -1,4 +1,4 @@
-"""CLI commands for claude-statusline."""
+"""CLI commands for claude-code-statusline."""
 
 from .commands import cmd_doctor, cmd_install, cmd_uninstall
 

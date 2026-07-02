@@ -45,10 +45,10 @@ echo "Package installed successfully!"
 echo ""
 echo "Configuring Claude Code..."
 
-if ! claude-statusline install --yes; then
+if ! claude-code-statusline install --yes; then
     echo ""
     echo "Error: Configuration failed"
-    echo "You can try manually running: claude-statusline install"
+    echo "You can try manually running: claude-code-statusline install"
     exit 1
 fi
 
@@ -58,7 +58,7 @@ echo ""
 echo "Next steps:"
 echo "1. Restart Claude Code or start a new session"
 echo "2. The statusline should appear automatically"
-echo "3. Customize via ~/.config/claude-statusline/config.yaml"
+echo "3. Customize via ~/.config/claude-code-statusline/config.yaml"
 echo ""
 echo "For more information, visit:"
 echo "  https://github.com/wpfleger96/claude-code-status-line"

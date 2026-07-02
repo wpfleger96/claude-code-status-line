@@ -23,7 +23,7 @@ Documentation = "https://github.com/wpfleger96/claude-code-status-line#readme"
 Changelog = "https://github.com/wpfleger96/claude-code-status-line/blob/main/CHANGELOG.md"
 
 [project.scripts]
-claude-statusline = "claude_code_statusline.statusline:main"
+claude-code-statusline = "claude_code_statusline.statusline:main"
 
 [dependency-groups]
 dev = [

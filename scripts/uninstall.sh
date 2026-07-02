@@ -3,7 +3,7 @@
 set -e
 
 PACKAGE_NAME="claude-code-statusline"
-CONFIG_DIR="$HOME/.config/claude-statusline"
+CONFIG_DIR="$HOME/.config/claude-code-statusline"
 
 echo "Uninstalling $PACKAGE_NAME..."
 echo ""
@@ -13,9 +13,9 @@ if [ "$1" = "--purge" ]; then
     PURGE=1
 fi
 
-if command -v claude-statusline &> /dev/null; then
+if command -v claude-code-statusline &> /dev/null; then
     echo "Removing statusLine configuration..."
-    if claude-statusline uninstall; then
+    if claude-code-statusline uninstall; then
         echo ""
     else
         echo "Warning: Failed to remove statusLine configuration"
@@ -23,7 +23,7 @@ if command -v claude-statusline &> /dev/null; then
         echo ""
     fi
 else
-    echo "claude-statusline command not found"
+    echo "claude-code-statusline command not found"
     echo "Skipping configuration cleanup"
     echo ""
 fi

@@ -28,7 +28,7 @@ class TestConfigureStatusline:
         result = json.loads(settings_file.read_text())
         assert "statusLine" in result
         assert result["statusLine"]["type"] == "command"
-        assert result["statusLine"]["command"] == "claude-statusline"
+        assert result["statusLine"]["command"] == "claude-code-statusline"
         assert result["statusLine"]["padding"] == 0
 
     def test_preserves_other_settings(self, tmp_path, monkeypatch):
@@ -59,7 +59,7 @@ class TestConfigureStatusline:
         result = json.loads(settings_file.read_text())
         assert result["someOtherSetting"] is True
         assert result["anotherKey"]["nested"] == "value"
-        assert result["statusLine"]["command"] == "claude-statusline"
+        assert result["statusLine"]["command"] == "claude-code-statusline"
 
 
 class TestRemoveStatusline:
@@ -73,7 +73,7 @@ class TestRemoveStatusline:
                 {
                     "statusLine": {
                         "type": "command",
-                        "command": "claude-statusline",
+                        "command": "claude-code-statusline",
                     }
                 }
             )
@@ -101,7 +101,7 @@ class TestRemoveStatusline:
                     "anotherKey": {"nested": "value"},
                     "statusLine": {
                         "type": "command",
-                        "command": "claude-statusline",
+                        "command": "claude-code-statusline",
                     },
                 }
             )

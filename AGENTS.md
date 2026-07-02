@@ -32,11 +32,11 @@ uv run pytest -m integration                    # Integration tests only
 uv run pytest -m performance                    # Performance benchmarks (opt-in)
 
 # CLI testing (local development)
-uv run claude-statusline                        # Test with stdin
-echo '{"transcript_path": "..."}' | uv run claude-statusline
-uv run claude-statusline install                # Install local version to Claude Code
-uv run claude-statusline doctor                 # Verify installation health
-uv run claude-statusline --version              # Show version
+uv run claude-code-statusline                        # Test with stdin
+echo '{"transcript_path": "..."}' | uv run claude-code-statusline
+uv run claude-code-statusline install                # Install local version to Claude Code
+uv run claude-code-statusline doctor                 # Verify installation health
+uv run claude-code-statusline --version              # Show version
 
 # Installation scripts (for end users)
 curl -fsSL https://raw.githubusercontent.com/wpfleger96/claude-code-status-line/main/scripts/install.sh | bash
@@ -111,10 +111,10 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
 
 ## Common Gotchas
 
-1. **Local dev vs installed tool** - **CRITICAL**: Always use `uv run claude-statusline` when developing locally:
-   - **Local dev (from repo)**: `uv run claude-statusline <args>` → runs YOUR local code changes
-   - **Installed tool (any directory)**: `claude-statusline <args>` → runs installed version from `~/.local/share/uv/tools/`
-   - Running `claude-statusline` without `uv run` will NOT reflect local changes
+1. **Local dev vs installed tool** - **CRITICAL**: Always use `uv run claude-code-statusline` when developing locally:
+   - **Local dev (from repo)**: `uv run claude-code-statusline <args>` → runs YOUR local code changes
+   - **Installed tool (any directory)**: `claude-code-statusline <args>` → runs installed version from `~/.local/share/uv/tools/`
+   - Running `claude-code-statusline` without `uv run` will NOT reflect local changes
    - **NEVER use editable install** (`uv pip install -e .`) - risks conflicts, unnecessary complexity
 
 2. **Context window priority** (Claude Code 2.0.70+): `context_window` field from payload takes priority over transcript parsing for token counts. Falls back to transcript if `context_window` missing/null. This is the authoritative source.
@@ -129,7 +129,7 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
 
 7. **Performance tests opt-in**: Excluded by default. Run with `uv run pytest -m performance`.
 
-8. **Installation scripts handle both uv and pipx**: `scripts/install.sh` checks for uv first, falls back to pipx. Auto-configures Claude Code with `claude-statusline install --yes`.
+8. **Installation scripts handle both uv and pipx**: `scripts/install.sh` checks for uv first, falls back to pipx. Auto-configures Claude Code with `claude-code-statusline install --yes`.
 
 9. **Debug logging per-session**: Set `CLAUDE_CODE_STATUSLINE_DEBUG=1` → creates `logs/statusline_debug_<session_id>.log` with token breakdown, compact boundaries, parsing errors.
 

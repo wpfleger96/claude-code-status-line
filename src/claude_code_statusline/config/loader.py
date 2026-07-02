@@ -18,7 +18,7 @@ _cached_mtime: float = 0.0
 def get_config_dir() -> Path:
     """Get the configuration directory path."""
     config_home = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
-    return Path(config_home) / "claude-statusline"
+    return Path(config_home) / "claude-code-statusline"
 
 
 def get_config_path() -> Path:

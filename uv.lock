@@ -58,7 +58,7 @@ wheels = [
 
 [[package]]
 name = "claude-code-statusline"
-version = "0.13.9"
+version = "0.14.0"
 source = { editable = "." }
 dependencies = [
     { name = "pydantic" },

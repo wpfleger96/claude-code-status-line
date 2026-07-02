@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [0.14.0](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.9...v0.14.0) (2026-07-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* users on the old `claude-statusline` command must re-run `claude-code-statusline install` after upgrading (widget config migrates automatically).
+
+### Features
+
+* standardize on claude-code-statusline and self-install ([#39](https://github.com/wpfleger96/claude-code-status-line/issues/39)) ([2d3c44e](https://github.com/wpfleger96/claude-code-status-line/commit/2d3c44e3709d13de80a65e306ead51f87a04c5e0))
+
+
+### Chores
+
+* **deps:** Lock file maintenance ([#35](https://github.com/wpfleger96/claude-code-status-line/issues/35)) ([9609fd2](https://github.com/wpfleger96/claude-code-status-line/commit/9609fd24ff9e237fdb196cd6b41c6ad4f4d7eef6))
+* **deps:** Lock file maintenance ([#36](https://github.com/wpfleger96/claude-code-status-line/issues/36)) ([cdcc3c1](https://github.com/wpfleger96/claude-code-status-line/commit/cdcc3c16022a519dfdbe0df71c6b3bab7466a6ab))
+* **deps:** Lock file maintenance ([#37](https://github.com/wpfleger96/claude-code-status-line/issues/37)) ([65bffe4](https://github.com/wpfleger96/claude-code-status-line/commit/65bffe4ff3292e6df2fc318d0137aa127a25706a))
+* **deps:** Lock file maintenance ([#38](https://github.com/wpfleger96/claude-code-status-line/issues/38)) ([32d04d2](https://github.com/wpfleger96/claude-code-status-line/commit/32d04d2793a0b7c1c0838b6875f6c446f5f3c790))
+* sync pre-commit hook ([7879f8a](https://github.com/wpfleger96/claude-code-status-line/commit/7879f8ac1d3b13c7ae8bfab3337dad34480d32db))
+
+
+### Continuous Integration
+
+* sync CI workflow ([34e04bf](https://github.com/wpfleger96/claude-code-status-line/commit/34e04bff74891695fd6e1b3eaaf695d0ee65a1f4))
+* sync CI workflow ([9d4744a](https://github.com/wpfleger96/claude-code-status-line/commit/9d4744a3d7459bc776866fdc7592209bf1536045))
+* sync CI workflow ([1d5d11f](https://github.com/wpfleger96/claude-code-status-line/commit/1d5d11ff82a068720089dfdb51b2430f5a44eed2))
+* sync CI workflow ([7d2be2d](https://github.com/wpfleger96/claude-code-status-line/commit/7d2be2d22beb6357e47c37019701afa0bb48b455))
+* sync publish workflow ([2037f87](https://github.com/wpfleger96/claude-code-status-line/commit/2037f8703a573cc1dbe17f2f462d8ab8c6daa0da))
+* sync release workflow ([4203ea8](https://github.com/wpfleger96/claude-code-status-line/commit/4203ea83fcfe664ca1e26e4e894f942b4eb87372))
+
 ## [0.13.9](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.8...v0.13.9) (2026-06-19)
 
 

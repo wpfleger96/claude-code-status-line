@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## [0.14.1](https://github.com/wpfleger96/claude-code-status-line/compare/v0.14.0...v0.14.1) (2026-09-03)
+
+
+### Chores
+
+* **deps:** Lock file maintenance ([#42](https://github.com/wpfleger96/claude-code-status-line/issues/42)) ([6c85d77](https://github.com/wpfleger96/claude-code-status-line/commit/6c85d775ee9ecb9f9459b4203e99952e5d1ac4a1))
+* **deps:** Lock file maintenance ([#44](https://github.com/wpfleger96/claude-code-status-line/issues/44)) ([eeb63ac](https://github.com/wpfleger96/claude-code-status-line/commit/eeb63ac13371c433ec2247dcf5e5ae9a803da469))
+* **deps:** Lock file maintenance ([#45](https://github.com/wpfleger96/claude-code-status-line/issues/45)) ([cf8bf5a](https://github.com/wpfleger96/claude-code-status-line/commit/cf8bf5aec395ec24e8489ca5f0dababbcaa6394f))
+* **deps:** Lock file maintenance ([#47](https://github.com/wpfleger96/claude-code-status-line/issues/47)) ([5155b24](https://github.com/wpfleger96/claude-code-status-line/commit/5155b24d4a8ffd3f2ae111ff35f4c1ed963f8728))
+* **deps:** Lock file maintenance ([#48](https://github.com/wpfleger96/claude-code-status-line/issues/48)) ([f3d8c9a](https://github.com/wpfleger96/claude-code-status-line/commit/f3d8c9a708edbfbb20c6481d35395a6135d363bb))
+* **deps:** Lock file maintenance ([#49](https://github.com/wpfleger96/claude-code-status-line/issues/49)) ([01a0384](https://github.com/wpfleger96/claude-code-status-line/commit/01a0384396fb1526aac1e62e5835759cae3ab684))
+* **deps:** Lock file maintenance ([#51](https://github.com/wpfleger96/claude-code-status-line/issues/51)) ([24425be](https://github.com/wpfleger96/claude-code-status-line/commit/24425bee1cc03760438e03367a79c3a79743a51d))
+* **deps:** Lock file maintenance ([#52](https://github.com/wpfleger96/claude-code-status-line/issues/52)) ([4ebff0f](https://github.com/wpfleger96/claude-code-status-line/commit/4ebff0ff43043076833cedc084208c0dce47dee5))
+* **deps:** Lock file maintenance ([#53](https://github.com/wpfleger96/claude-code-status-line/issues/53)) ([fcfad1f](https://github.com/wpfleger96/claude-code-status-line/commit/fcfad1f12fb18222b98074bdc38eeb53c173844e))
+* **deps:** Update astral-sh/setup-uv action to v8.3.2 ([#43](https://github.com/wpfleger96/claude-code-status-line/issues/43)) ([ce0256d](https://github.com/wpfleger96/claude-code-status-line/commit/ce0256df9529ab5acfa1959873271e68db347991))
+* **deps:** Update python Docker tag to v3.14 ([#41](https://github.com/wpfleger96/claude-code-status-line/issues/41)) ([5dce2b8](https://github.com/wpfleger96/claude-code-status-line/commit/5dce2b8b077c6b603542b47d8df61494f91f68d0))
+* sync Justfile ([fdc1a4a](https://github.com/wpfleger96/claude-code-status-line/commit/fdc1a4a75cf8e7c51fd6849828d595b679587bc3))
+* sync pre-commit hook ([4393c27](https://github.com/wpfleger96/claude-code-status-line/commit/4393c2766b39cf6dcea6a261754d12b2a2d32543))
+
+
+### Continuous Integration
+
+* sync CI workflow ([d5dc978](https://github.com/wpfleger96/claude-code-status-line/commit/d5dc9784a4336af8de80a64b85fb12196e4e47d7))
+* sync CI workflow ([2309b62](https://github.com/wpfleger96/claude-code-status-line/commit/2309b624c91cad21b84dab364d6affe9bf40cf01))
+* sync CI workflow ([c3a595a](https://github.com/wpfleger96/claude-code-status-line/commit/c3a595aa447ae899d57d31a2b03614e07a4c8ffc))
+* sync CI workflow ([78da7e6](https://github.com/wpfleger96/claude-code-status-line/commit/78da7e6365a99b51478983d3df89aaf298e8c8fb))
+* sync CI workflow ([16da212](https://github.com/wpfleger96/claude-code-status-line/commit/16da21245bdfa519043be06384a71b3b48f55c6c))
+* sync publish workflow ([d8b10f7](https://github.com/wpfleger96/claude-code-status-line/commit/d8b10f74b93cd2c7d9e00a3334c46edd720f241e))
+* sync publish workflow ([eb4d416](https://github.com/wpfleger96/claude-code-status-line/commit/eb4d416fc4f636f394407719c9a250ed78a7f626))
+* sync release workflow ([83795c4](https://github.com/wpfleger96/claude-code-status-line/commit/83795c4a1c3d0449a7af98959be4271063f864ef))
+* sync release workflow ([9013e00](https://github.com/wpfleger96/claude-code-status-line/commit/9013e0056a3e5682449dbb1b747c63924e8be55b))
+
 ## [0.14.0](https://github.com/wpfleger96/claude-code-status-line/compare/v0.13.9...v0.14.0) (2026-07-02)
 
 

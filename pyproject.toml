@@ -27,7 +27,9 @@ claude-code-statusline = "claude_code_statusline.statusline:main"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0",
+    # pytest 9.2 removed Item._nodeid, which pytest-benchmark 5.3.0 still reads.
+    # Drop the cap once a release with https://github.com/ionelmc/pytest-benchmark/issues/321 ships.
+    "pytest>=8.0.0,<9.2",
     "pytest-cov>=4.0.0",
     "pytest-benchmark>=4.0.0",
     "mypy>=1.0.0",

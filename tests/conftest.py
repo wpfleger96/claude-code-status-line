@@ -12,6 +12,29 @@ def pytest_configure(config):
     )
 
 
+def pytest_collection_modifyitems(config, items):
+    """Deselect benchmarks unless the active -m expression mentions them.
+
+    A command-line -m, such as the one in `just test`, replaces the -m in addopts,
+    so `not performance` there does not keep benchmarks out of every run.
+    """
+    if "performance" in config.getoption("markexpr"):
+        return
+
+    benchmarks = [item for item in items if item.get_closest_marker("performance")]
+    rest = [item for item in items if not item.get_closest_marker("performance")]
+    config.hook.pytest_deselected(items=benchmarks)
+    items[:] = rest
+
+
+@pytest.fixture(autouse=True)
+def fresh_model_cache(monkeypatch):
+    """Report the model cache as fresh so no test starts a background download."""
+    monkeypatch.setattr(
+        "claude_code_statusline.utils.models._is_cache_stale", lambda: False
+    )
+
+
 @pytest.fixture
 def mock_stdin(monkeypatch):
     """Factory fixture to mock stdin with custom content."""

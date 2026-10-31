@@ -98,11 +98,16 @@ def _is_cache_stale() -> bool:
         return True
 
 
+_refresh_started = False
+
+
 def _maybe_refresh_cache_background() -> None:
-    """Refresh model cache in background if stale (non-blocking)."""
-    if _is_cache_stale():
-        thread = threading.Thread(target=get_cached_or_fetch_data, daemon=True)
-        thread.start()
+    """Refresh model cache in background if stale, at most once per process."""
+    global _refresh_started
+    if _refresh_started or not _is_cache_stale():
+        return
+    _refresh_started = True
+    threading.Thread(target=get_cached_or_fetch_data, daemon=True).start()
 
 
 _prefetched_model_data = None

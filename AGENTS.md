@@ -63,7 +63,7 @@ src/claude_code_statusline/
 └── widgets/
     ├── base.py            # Abstract Widget base class
     ├── registry.py        # @register_widget() decorator
-    └── builtin/           # 14 built-in widgets (context, cost, directory, git, model, etc.)
+    └── builtin/           # 17 built-in widgets (context, cost, usage, directory, git, model, etc.)
 scripts/
 ├── install.sh             # One-liner automated installation
 └── uninstall.sh           # Clean removal script

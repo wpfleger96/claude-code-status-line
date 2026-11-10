@@ -172,7 +172,7 @@ If no config file exists, all default widgets are shown with built-in defaults. 
 
 ### Customizable Widget System
 - **Configurable Layout**: Customize which widgets appear and in what order via `~/.config/claude-code-statusline/config.yaml`
-- **Built-in Widgets**: 14 widgets including model, directory, git status, context, cost, session info
+- **Built-in Widgets**: 17 widgets including model, directory, git status, context, cost, subscription usage, session info
 - **Flexible Styling**: Per-widget color customization and bold formatting
 - **Automatic Fallback**: Missing config uses sensible defaults with all widgets enabled
 
@@ -185,11 +185,14 @@ If no config file exists, all default widgets are shown with built-in defaults. 
 - `context-percentage` - Context usage with progress bar
 - `context-tokens` - Token count (current/limit)
 - `cost` - Session cost in USD
+- `usage-5h` - 5-hour subscription rate-limit usage with reset countdown (Pro/Max only)
+- `usage-7d` - Weekly subscription rate-limit usage with reset countdown (Pro/Max only)
 - `lines-added` - Lines added in session
 - `lines-removed` - Lines removed in session
 - `lines-changed` - Combined added/removed
 - `session-id` - Claude Code session UUID
 - `session-clock` - Elapsed session time
+- `session-name` - Custom session name (set via `--name` or `/rename`)
 - `separator` - Visual separator (default: "|")
 
 ### Real Token Counting
@@ -267,6 +270,11 @@ Cache benefits: Faster rendering, reduced network dependency, automatic refresh.
 - `git-branch`: Shows current branch with fallback text when not in a repo
 - `git-changes`: Displays staged/unstaged changes (e.g., "+5 ~3 -2")
 - `git-worktree`: Shows worktree name if working in a linked worktree
+
+**Subscription Usage** (percentage colored green <50%, yellow 50-79%, red 80%+):
+- `usage-5h`: 5-hour rate-limit window usage with time until reset (e.g., "5h: 24% (resets in 2hr 14m)")
+- `usage-7d`: Weekly rate-limit window usage with time until reset (e.g., "7d: 41% (resets in 4d 3hr)")
+- Both read Claude Code's `rate_limits` payload field, which is only sent to Pro/Max subscribers after the first API response in a session; the widgets hide otherwise
 
 **Session Tracking**:
 - `session-id`: Complete Claude Code session UUID for file matching

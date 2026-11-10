@@ -1,9 +1,13 @@
 import json
+import re
 
 import pytest
 
+from claude_code_statusline.config import loader
 from claude_code_statusline.parsers.tokens import parse_transcript
+from claude_code_statusline.renderer import render_status_line_with_config
 from claude_code_statusline.statusline import parse_input_data
+from claude_code_statusline.types import RenderContext
 
 
 @pytest.mark.integration
@@ -60,3 +64,29 @@ class TestSessionIdFallback:
         token_metrics, _duration = parse_transcript(str(forked_session_file))
 
         assert token_metrics.session_id != ""
+
+
+@pytest.mark.integration
+class TestRateLimitOutput:
+    """Test that the payload's rate_limits field reaches the rendered status line."""
+
+    def test_rate_limits_payload_renders_usage_widgets(
+        self, mock_stdin, monkeypatch, tmp_path
+    ):
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+        monkeypatch.setattr(loader, "_cached_config", None)
+        monkeypatch.setattr(loader, "_cached_mtime", 0.0)
+        payload = {
+            "model": {"display_name": "Opus"},
+            "rate_limits": {
+                "five_hour": {"used_percentage": 23.5},
+                "seven_day": {"used_percentage": 81},
+            },
+        }
+        mock_stdin(json.dumps(payload))
+
+        output = render_status_line_with_config(RenderContext(data=parse_input_data()))
+
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", output)
+        assert "5h: 24%" in plain
+        assert "7d: 81%" in plain

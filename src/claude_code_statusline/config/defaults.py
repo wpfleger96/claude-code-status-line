@@ -11,6 +11,8 @@ def get_default_widgets() -> list[WidgetConfigModel]:
         WidgetConfigModel(type="git-branch", color="magenta"),
         WidgetConfigModel(type="context-percentage"),
         WidgetConfigModel(type="cost"),
+        WidgetConfigModel(type="usage-5h"),
+        WidgetConfigModel(type="usage-7d"),
         WidgetConfigModel(type="lines-changed"),
         WidgetConfigModel(type="session-id"),
         WidgetConfigModel(type="session-clock"),

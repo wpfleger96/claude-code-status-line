@@ -57,7 +57,7 @@ class TestMissingData:
         assert widget.render_compact(widget_config, context) is None
 
     def test_only_five_hour_present_renders_5h_only(self, widget_config):
-        context = make_context({"five_hour": {"used_percentage": 23.5}})
+        context = make_context({"five_hour": {"used_percentage": 23.7}})
 
         five_hour = render_plain(FiveHourUsageWidget(), widget_config, context)
         weekly = WeeklyUsageWidget().render(widget_config, context)
@@ -65,7 +65,10 @@ class TestMissingData:
         assert five_hour == "5h: 24%"
         assert weekly is None
 
-    @pytest.mark.parametrize("bad_pct", ["23.5", None, True, float("nan")])
+    @pytest.mark.parametrize(
+        "bad_pct",
+        ["23.5", None, True, float("nan"), float("inf"), -1, 100.1, 10**400],
+    )
     def test_invalid_used_percentage_returns_none(self, bad_pct, widget_config):
         context = make_context({"five_hour": {"used_percentage": bad_pct}})
         widget = FiveHourUsageWidget()
@@ -89,7 +92,18 @@ class TestResetCountdown:
 
         assert render_plain(FiveHourUsageWidget(), widget_config, context) == "5h: 40%"
 
-    @pytest.mark.parametrize("resets_at", [None, "soon", 1.5e9, True])
+    @pytest.mark.parametrize(
+        "resets_at",
+        [
+            None,
+            "soon",
+            True,
+            float("nan"),
+            float("inf"),
+            NOW + 8 * 86400 + 1,
+            10**400,
+        ],
+    )
     def test_missing_or_invalid_resets_at_omits_suffix(self, resets_at, widget_config):
         window = {"used_percentage": 40}
         if resets_at is not None:
@@ -97,6 +111,15 @@ class TestResetCountdown:
         context = make_context({"five_hour": window})
 
         assert render_plain(FiveHourUsageWidget(), widget_config, context) == "5h: 40%"
+
+    def test_float_resets_at_shows_countdown(self, widget_config):
+        context = make_context(
+            {"five_hour": {"used_percentage": 40, "resets_at": NOW + 3600.9}}
+        )
+
+        rendered = render_plain(FiveHourUsageWidget(), widget_config, context)
+
+        assert rendered == "5h: 40% (resets in 1hr)"
 
     def test_reset_under_a_day_uses_hours_and_minutes(self, widget_config):
         context = make_context(
@@ -137,7 +160,7 @@ class TestResetCountdown:
 
     def test_compact_omits_reset_info(self, widget_config):
         context = make_context(
-            {"five_hour": {"used_percentage": 23.5, "resets_at": NOW + 8000}}
+            {"five_hour": {"used_percentage": 23.7, "resets_at": NOW + 8000}}
         )
 
         compact = FiveHourUsageWidget().render_compact(widget_config, context)
@@ -148,6 +171,27 @@ class TestResetCountdown:
 
 @pytest.mark.unit
 class TestColor:
+    @pytest.mark.parametrize(
+        ("pct", "text", "color"),
+        [
+            (49, "49%", "green"),
+            (49.5, "50%", "yellow"),
+            (50, "50%", "yellow"),
+            (79, "79%", "yellow"),
+            (79.5, "80%", "red"),
+            (80, "80%", "red"),
+            (2.5, "3%", "green"),
+        ],
+    )
+    def test_color_matches_displayed_rounded_percentage(
+        self, pct, text, color, widget_config
+    ):
+        context = make_context({"seven_day": {"used_percentage": pct}})
+
+        rendered = WeeklyUsageWidget().render_compact(widget_config, context)
+
+        assert rendered == f"7d {COLORS[color]}{text}{COLORS['reset']}"
+
     def test_high_usage_colors_only_percentage_red(self, widget_config):
         context = make_context(
             {"five_hour": {"used_percentage": 90, "resets_at": NOW + 600}}

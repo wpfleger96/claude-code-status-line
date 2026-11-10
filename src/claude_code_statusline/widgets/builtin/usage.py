@@ -1,7 +1,8 @@
 """Subscription rate-limit usage widgets (5-hour and weekly windows)."""
 
-import math
 import time
+
+from typing import TypeGuard
 
 from ...config.schema import WidgetConfigModel
 from ...parsers.tokens import format_duration
@@ -11,6 +12,16 @@ from ..base import Widget
 from ..registry import register_widget
 
 _SECONDS_PER_DAY = 86400
+_MAX_RESET_SECONDS = 8 * _SECONDS_PER_DAY
+
+
+def _is_number(value: object) -> TypeGuard[int | float]:
+    """True for JSON numbers; excludes bools, which are ints in Python.
+
+    Callers bound-check with comparisons only, which reject NaN/inf and never
+    convert huge ints to float (that would raise OverflowError).
+    """
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _format_countdown(seconds: int) -> str:
@@ -38,21 +49,17 @@ class _RateLimitWidget(Widget):
             return None
 
         pct = window.get("used_percentage")
-        if (
-            isinstance(pct, bool)
-            or not isinstance(pct, (int, float))
-            or not math.isfinite(pct)
-        ):
+        if not (_is_number(pct) and 0 <= pct <= 100):
             return None
+        rounded_pct = int(pct + 0.5)  # half-up; round() is banker's rounding
 
         resets_at = window.get("resets_at")
+        now = time.time()
         seconds_left = None
-        if isinstance(resets_at, int) and not isinstance(resets_at, bool):
-            seconds_left = resets_at - int(time.time())
-            if seconds_left <= 0:
-                seconds_left = None
+        if _is_number(resets_at) and now < resets_at <= now + _MAX_RESET_SECONDS:
+            seconds_left = int(resets_at - now)
 
-        return colorize(f"{pct:.0f}%", get_usage_color(pct)), seconds_left
+        return colorize(f"{rounded_pct}%", get_usage_color(rounded_pct)), seconds_left
 
     def render(self, config: WidgetConfigModel, context: RenderContext) -> str | None:
         """Render usage with reset countdown, e.g. `5h: 24% (resets in 2hr 14m)`."""

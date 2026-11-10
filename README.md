@@ -192,7 +192,6 @@ If no config file exists, all default widgets are shown with built-in defaults. 
 - `lines-changed` - Combined added/removed
 - `session-id` - Claude Code session UUID
 - `session-clock` - Elapsed session time
-- `session-name` - Custom session name (set via `--name` or `/rename`)
 - `separator` - Visual separator (default: "|")
 
 ### Real Token Counting
@@ -275,6 +274,7 @@ Cache benefits: Faster rendering, reduced network dependency, automatic refresh.
 - `usage-5h`: 5-hour rate-limit window usage with time until reset (e.g., "5h: 24% (resets in 2hr 14m)")
 - `usage-7d`: Weekly rate-limit window usage with time until reset (e.g., "7d: 41% (resets in 4d 3hr)")
 - Both read Claude Code's `rate_limits` payload field, which is only sent to Pro/Max subscribers after the first API response in a session; the widgets hide otherwise
+- If your config sets a custom `order:`, add `usage-5h` / `usage-7d` to it to show them
 
 **Session Tracking**:
 - `session-id`: Complete Claude Code session UUID for file matching

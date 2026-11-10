@@ -79,7 +79,7 @@ class TestRateLimitOutput:
         payload = {
             "model": {"display_name": "Opus"},
             "rate_limits": {
-                "five_hour": {"used_percentage": 23.5},
+                "five_hour": {"used_percentage": 23.7},
                 "seven_day": {"used_percentage": 81},
             },
         }

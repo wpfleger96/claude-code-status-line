@@ -1,5 +1,7 @@
 """Unit tests for width-aware rendering."""
 
+import re
+
 import pytest
 
 from claude_code_statusline.config.loader import get_effective_widgets
@@ -8,6 +10,7 @@ from claude_code_statusline.renderer import (
     render_status_line,
     render_status_line_width_aware,
     render_status_line_with_config,
+    render_widget,
 )
 from claude_code_statusline.types import (
     ContextWindow,
@@ -50,6 +53,17 @@ def default_widgets():
     return get_effective_widgets()
 
 
+def _strip_ansi(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
+def _separator_text(widgets, context) -> str:
+    separator = next(cfg for cfg in widgets if cfg.type == "separator")
+    rendered = render_widget(separator, context)
+    assert rendered
+    return _strip_ansi(rendered)
+
+
 class TestNoWidthPreservesCurrentBehavior:
     def test_no_terminal_width_uses_standard_render(
         self, rich_context, default_widgets
@@ -80,18 +94,56 @@ class TestFullRenderFits:
 
 
 class TestCompactRender:
-    def test_triggers_compact_when_full_too_wide(self, rich_context, default_widgets):
-        """When full render doesn't fit but compact does, use compact."""
-        full_line = render_status_line(default_widgets, rich_context)
-        full_width = visible_len(full_line)
+    def test_unsplittable_full_too_wide_uses_compact(self, rich_context):
+        """A lone widget can't split, so compact wins once full overflows."""
+        widgets = [WidgetConfigModel(type="context-percentage")]
+        full_width = visible_len(render_status_line(widgets, rich_context))
 
-        # Width just below full but should fit compact
-        result = render_status_line_width_aware(
-            default_widgets, rich_context, full_width - 5
-        )
+        result = render_status_line_width_aware(widgets, rich_context, full_width - 1)
 
-        result_width = visible_len(result.split("\n")[0])
-        assert result_width < full_width
+        assert "\n" not in result
+        assert "Context:" not in result
+        assert visible_len(result) <= full_width - 1
+
+
+class TestFullTwoLine:
+    def test_full_fits_on_two_lines_keeps_labels(self, rich_context, default_widgets):
+        """Full form on two lines is preferred over compact on one or two."""
+        full_width = visible_len(render_status_line(default_widgets, rich_context))
+        assert full_width > 120
+
+        result = render_status_line_width_aware(default_widgets, rich_context, 120)
+
+        lines = result.split("\n")
+        assert len(lines) == 2
+        assert all(visible_len(line) <= 120 for line in lines)
+        for label in ("Context:", "USD", "Elapsed:"):
+            assert label in result
+
+    def test_full_too_wide_for_two_lines_uses_compact(
+        self, rich_context, default_widgets
+    ):
+        result = render_status_line_width_aware(default_widgets, rich_context, 60)
+
+        lines = result.split("\n")
+        assert len(lines) == 2
+        assert all(visible_len(line) <= 60 for line in lines)
+        assert "Context:" not in result
+
+
+class TestFillFirstSplit:
+    @pytest.mark.parametrize("width", [120, 100, 80, 60])
+    def test_line_one_cannot_fit_next_widget(
+        self, rich_context, default_widgets, width
+    ):
+        """Moving line 2's first widget onto line 1 would overflow the width."""
+        separator = _separator_text(default_widgets, rich_context)
+
+        result = render_status_line_width_aware(default_widgets, rich_context, width)
+
+        line1, line2 = (_strip_ansi(line) for line in result.split("\n"))
+        next_widget = line2.split(separator)[0]
+        assert len(line1 + separator + next_widget) > width
 
 
 class TestTwoLineSplit:

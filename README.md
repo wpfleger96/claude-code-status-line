@@ -357,10 +357,14 @@ Debug logs are written to **per-session files** in the `logs/` directory:
    uv sync
    ```
 
-2. **Configure Claude Code to use local version:**
-   ```bash
-   uv run claude-code-statusline install
+2. **Configure Claude Code to use local version** by pointing `statusLine.command` in `~/.claude/settings.json` at the checkout's virtualenv entry point (`claude-code-statusline install` always points at the globally installed tool instead, even when run via `uv run`):
+   ```json
+   "statusLine": {
+     "type": "command",
+     "command": "/absolute/path/to/claude-code-status-line/.venv/bin/claude-code-statusline"
+   }
    ```
+   Changes to the checkout take effect on the next status line refresh; no reinstall needed.
 
 ### Testing Changes
 

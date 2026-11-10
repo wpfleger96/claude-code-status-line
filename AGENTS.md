@@ -34,7 +34,7 @@ uv run pytest -m performance                    # Performance benchmarks (opt-in
 # CLI testing (local development)
 uv run claude-code-statusline                        # Test with stdin
 echo '{"transcript_path": "..."}' | uv run claude-code-statusline
-uv run claude-code-statusline install                # Install local version to Claude Code
+uv run claude-code-statusline install                # Point Claude Code at the globally installed tool (NOT local code)
 uv run claude-code-statusline doctor                 # Verify installation health
 uv run claude-code-statusline --version              # Show version
 
@@ -63,7 +63,7 @@ src/claude_code_statusline/
 └── widgets/
     ├── base.py            # Abstract Widget base class
     ├── registry.py        # @register_widget() decorator
-    └── builtin/           # 14 built-in widgets (context, cost, directory, git, model, etc.)
+    └── builtin/           # 17 built-in widgets (context, cost, usage, directory, git, model, etc.)
 scripts/
 ├── install.sh             # One-liner automated installation
 └── uninstall.sh           # Clean removal script
@@ -115,6 +115,7 @@ Fixtures in `tests/conftest.py`: `mock_stdin`, `sample_input_payload`, `basic_se
    - **Local dev (from repo)**: `uv run claude-code-statusline <args>` → runs YOUR local code changes
    - **Installed tool (any directory)**: `claude-code-statusline <args>` → runs installed version from `~/.local/share/uv/tools/`
    - Running `claude-code-statusline` without `uv run` will NOT reflect local changes
+   - **`install` never wires up local code**: even via `uv run`, it writes `"command": "claude-code-statusline"` to `~/.claude/settings.json`, which resolves to the global tool. To see local changes in the Claude Code TUI, set `statusLine.command` to the absolute path of `.venv/bin/claude-code-statusline` in your checkout, then send a message to trigger a refresh
    - **NEVER use editable install** (`uv pip install -e .`) - risks conflicts, unnecessary complexity
 
 2. **Context window priority** (Claude Code 2.0.70+): `context_window` field from payload takes priority over transcript parsing for token counts. Falls back to transcript if `context_window` missing/null. This is the authoritative source.

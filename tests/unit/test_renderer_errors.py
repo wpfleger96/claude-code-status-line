@@ -21,7 +21,7 @@ def test_widget_exception_uses_fallback(monkeypatch, compact, fallback):
     )
     monkeypatch.setattr(renderer, "get_widget", lambda name: widget)
     log = Mock()
-    monkeypatch.setattr(renderer, "debug_log", log, raising=False)
+    monkeypatch.setattr(renderer, "debug_log", log)
     render = renderer.render_widget_compact if compact else renderer.render_widget
 
     result = render(
@@ -52,7 +52,7 @@ def test_widget_exception_preserves_rest_of_line(monkeypatch, width):
     )
     widgets = {"cost": broken, "model": healthy}
     monkeypatch.setattr(renderer, "get_widget", widgets.get)
-    monkeypatch.setattr(renderer, "debug_log", Mock(), raising=False)
+    monkeypatch.setattr(renderer, "debug_log", Mock())
     config = [WidgetConfigModel(type=name, color="none") for name in widgets]
     context = RenderContext(data={})
 
@@ -75,3 +75,27 @@ def test_process_interrupts_are_not_swallowed(monkeypatch, compact):
     render = renderer.render_widget_compact if compact else renderer.render_widget
     with pytest.raises(KeyboardInterrupt):
         render(WidgetConfigModel(type="cost"), RenderContext(data={}))
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("compact", [False, True])
+@pytest.mark.parametrize("content", [None, "rendered"])
+def test_auto_color_exception_returns_uncolored_fallback(monkeypatch, compact, content):
+    widget = SimpleNamespace(
+        render=Mock(return_value=content),
+        render_compact=Mock(return_value=content),
+        fallback_text="unavailable",
+    )
+    monkeypatch.setattr(renderer, "get_widget", lambda name: widget)
+    log = Mock()
+    monkeypatch.setattr(renderer, "debug_log", log)
+    render = renderer.render_widget_compact if compact else renderer.render_widget
+
+    result = render(
+        WidgetConfigModel(type="cost", color="auto"),
+        RenderContext(data={"cost": "oops"}),
+    )
+
+    assert result == "unavailable"
+    log.assert_called_once()
+    assert "AttributeError" in log.call_args.args[0]

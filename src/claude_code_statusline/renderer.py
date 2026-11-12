@@ -82,20 +82,17 @@ def render_widget(
 
     try:
         content = widget.render(widget_config, context)
+        if content is None:
+            content = widget.fallback_text
+        if content is None:
+            return None
+        return _apply_color(content, widget_config, context)
     except Exception as exc:
         debug_log(
             f"Widget {widget_config.type!r} failed in render: {exc!r}",
             context.data.get("session_id", ""),
         )
-        content = None
-
-    if content is None:
-        if widget.fallback_text is not None:
-            content = widget.fallback_text
-        else:
-            return None
-
-    return _apply_color(content, widget_config, context)
+        return widget.fallback_text
 
 
 def render_widget_compact(
@@ -108,20 +105,17 @@ def render_widget_compact(
 
     try:
         content = widget.render_compact(widget_config, context)
+        if content is None:
+            content = widget.fallback_text
+        if content is None:
+            return None
+        return _apply_color(content, widget_config, context)
     except Exception as exc:
         debug_log(
             f"Widget {widget_config.type!r} failed in render_compact: {exc!r}",
             context.data.get("session_id", ""),
         )
-        content = None
-
-    if content is None:
-        if widget.fallback_text is not None:
-            content = widget.fallback_text
-        else:
-            return None
-
-    return _apply_color(content, widget_config, context)
+        return widget.fallback_text
 
 
 def _remove_orphaned_separators(

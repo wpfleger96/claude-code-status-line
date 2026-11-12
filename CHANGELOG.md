@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.15.1](https://github.com/wpfleger96/claude-code-status-line/compare/v0.15.0...v0.15.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* isolate widget rendering failures ([#75](https://github.com/wpfleger96/claude-code-status-line/issues/75)) ([c5b9999](https://github.com/wpfleger96/claude-code-status-line/commit/c5b99998d5407eeb1fe74f9540f5c14ed79bb03d))
+
 ## [0.15.0](https://github.com/wpfleger96/claude-code-status-line/compare/v0.14.0...v0.15.0) (2026-11-10)
 
 

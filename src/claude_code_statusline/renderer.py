@@ -4,6 +4,7 @@ from .config.loader import get_effective_widgets
 from .config.schema import WidgetConfigModel
 from .types import RenderContext
 from .utils.colors import colorize, get_cost_color, get_usage_color, visible_len
+from .utils.debug import debug_log
 from .utils.models import get_context_limit_for_render, get_current_context_length
 from .widgets import builtin  # noqa: F401
 from .widgets.registry import get_widget
@@ -79,15 +80,19 @@ def render_widget(
     if not widget:
         return None
 
-    content = widget.render(widget_config, context)
-
-    if content is None:
-        if widget.fallback_text is not None:
+    try:
+        content = widget.render(widget_config, context)
+        if content is None:
             content = widget.fallback_text
-        else:
+        if content is None:
             return None
-
-    return _apply_color(content, widget_config, context)
+        return _apply_color(content, widget_config, context)
+    except Exception as exc:
+        debug_log(
+            f"Widget {widget_config.type!r} failed in render: {exc!r}",
+            context.data.get("session_id", ""),
+        )
+        return widget.fallback_text
 
 
 def render_widget_compact(
@@ -98,15 +103,19 @@ def render_widget_compact(
     if not widget:
         return None
 
-    content = widget.render_compact(widget_config, context)
-
-    if content is None:
-        if widget.fallback_text is not None:
+    try:
+        content = widget.render_compact(widget_config, context)
+        if content is None:
             content = widget.fallback_text
-        else:
+        if content is None:
             return None
-
-    return _apply_color(content, widget_config, context)
+        return _apply_color(content, widget_config, context)
+    except Exception as exc:
+        debug_log(
+            f"Widget {widget_config.type!r} failed in render_compact: {exc!r}",
+            context.data.get("session_id", ""),
+        )
+        return widget.fallback_text
 
 
 def _remove_orphaned_separators(
